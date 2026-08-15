@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id" class="scrollbar-hide">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Kosly')</title>
+
+    {{-- DARK MODE: Cek localStorage sebelum render apapun --}}
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme') || 'light';
+            if (theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        })();
+    </script>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] {
+            display: none !important;
+        }
+
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-200 dark:bg-gray-950">
+
+    <div id="app-container"
+        x-data="{ sidebarOpen: false }"
+        class="relative w-full max-w-[430px] mx-auto min-h-screen bg-gray-50 dark:bg-gray-950 shadow-2xl overflow-hidden isolate">
+
+        @include('components.navbar')
+
+        <div x-show="sidebarOpen"
+            x-cloak
+            x-transition.opacity.duration.300ms
+            @click="sidebarOpen = false"
+            class="absolute inset-0 bg-black/60 backdrop-blur-sm z-40"></div>
+
+        @include('components.sidebar')
+
+        <main class="absolute top-16 left-0 right-0 bottom-12 overflow-y-auto no-scrollbar">
+            <div class="p-4 pb-6">
+                @if(session('success'))
+                @include('components.toast', ['type' => 'success', 'message' => session('success')])
+                @endif
+                @if(session('error'))
+                @include('components.toast', ['type' => 'error', 'message' => session('error')])
+                @endif
+
+                @yield('content')
+            </div>
+        </main>
+
+        @include('components.footer')
+
+    </div>
+
+    @stack('scripts')
+</body>
+
+</html>
