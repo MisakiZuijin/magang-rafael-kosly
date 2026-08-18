@@ -17,33 +17,41 @@ class AdminPenggunaController extends Controller
         $mitras = $this->userService->getActiveByRole('mitra');
         $penghunis = $this->userService->getActiveByRole('penghuni');
 
-        return view('admin.pengguna.index', compact('mitras', 'penghunis'));
+        $view = request()->is('superadmin*') ? 'superadmin.pengguna.index' : 'admin.pengguna.index';
+        return view($view, compact('mitras', 'penghunis'));
     }
 
     public function create()
     {
-        return view('admin.pengguna.create');
+        $view = request()->is('superadmin*') ? 'superadmin.pengguna.create' : 'admin.pengguna.create';
+        return view($view);
     }
 
     public function store(Request $request)
     {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        $allowedRoles = $currentUser->role === 'super_admin' ? 'in:admin,mitra,penghuni' : 'in:mitra,penghuni';
+
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'no_hp' => 'nullable|string|max:20',
-            'role' => 'required|in:mitra,penghuni',
+            'role' => 'required|' . $allowedRoles,
         ]);
 
         $this->userService->createUser($validated);
 
-        return redirect()->route('admin.pengguna.index')->with('success', 'Pengguna berhasil dibuat.');
+        $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
+        return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil dibuat.');
     }
 
     public function edit(int $id)
     {
         $user = $this->userService->getUserById($id);
-        return view('admin.pengguna.edit', compact('user'));
+        $view = request()->is('superadmin*') ? 'superadmin.pengguna.edit' : 'admin.pengguna.edit';
+        return view($view, compact('user'));
     }
 
     public function update(Request $request, int $id)
@@ -58,7 +66,8 @@ class AdminPenggunaController extends Controller
 
         $this->userService->updateUser($id, $validated);
 
-        return redirect()->route('admin.pengguna.index')->with('success', 'Pengguna berhasil diupdate.');
+        $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
+        return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil diupdate.');
     }
 
     public function toggleActive(int $id)

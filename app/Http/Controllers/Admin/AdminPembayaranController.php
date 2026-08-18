@@ -19,7 +19,8 @@ class AdminPembayaranController extends Controller
         $terverifikasi = $this->pembayaranService->getTerverifikasi();
         $ditolak = $this->pembayaranService->getDitolak();
 
-        return view('admin.pembayaran.index', compact('pending', 'terverifikasi', 'ditolak'));
+        $view = request()->is('superadmin*') ? 'superadmin.pembayaran.index' : 'admin.pembayaran.index';
+        return view($view, compact('pending', 'terverifikasi', 'ditolak'));
     }
 
     public function verify(Request $request, int $id)

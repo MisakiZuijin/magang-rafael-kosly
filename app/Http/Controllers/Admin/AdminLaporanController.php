@@ -27,7 +27,8 @@ class AdminLaporanController extends Controller
         $pembayarans = $this->pembayaranService->getTerverifikasi();
         $kosList = $this->kosService->getWithKamar();
 
-        return view('admin.laporan.index', compact(
+        $view = request()->is('superadmin*') ? 'superadmin.laporan.index' : 'admin.laporan.index';
+        return view($view, compact(
             'totalKamar',
             'kamarTerisi',
             'kamarKosong',
