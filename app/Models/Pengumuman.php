@@ -15,6 +15,7 @@ class Pengumuman extends Model
         'judul',
         'isi',
         'tipe',
+        'channel',
         'dibuat_oleh',
     ];
 
@@ -30,7 +31,17 @@ class Pengumuman extends Model
         return $this->belongsTo(User::class, 'dibuat_oleh');
     }
 
+    public function pembuat()
+    {
+        return $this->belongsTo(User::class, 'dibuat_oleh');
+    }
+
     public function targets()
+    {
+        return $this->hasMany(PengumumanTarget::class, 'pengumuman_id');
+    }
+
+    public function target()
     {
         return $this->hasMany(PengumumanTarget::class, 'pengumuman_id');
     }

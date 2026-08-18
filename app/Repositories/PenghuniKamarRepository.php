@@ -32,7 +32,10 @@ class PenghuniKamarRepository extends BaseRepository implements PenghuniKamarRep
 
     public function getByKamar(int $kamarId): Collection
     {
-        return $this->model->where('kamar_id', $kamarId)->latest()->get();
+        return $this->model->where('kamar_id', $kamarId)
+            ->with(['penghuni', 'kamar.kos', 'pembayaran'])
+            ->latest()
+            ->get();
     }
 
     public function getAktifByKos(int $kosId): Collection
@@ -41,14 +44,17 @@ class PenghuniKamarRepository extends BaseRepository implements PenghuniKamarRep
             ->whereHas('kamar', function ($q) use ($kosId) {
                 $q->where('kos_id', $kosId);
             })
-            ->with(['kamar', 'penghuni'])
+            ->with(['kamar.kos', 'penghuni', 'pembayaran'])
             ->latest()
             ->get();
     }
 
     public function getSelesai(): Collection
     {
-        return $this->model->where('status', 'selesai')->latest()->get();
+        return $this->model->where('status', 'selesai')
+            ->with(['penghuni', 'kamar.kos', 'pembayaran'])
+            ->latest()
+            ->get();
     }
 
     public function updateStatus(int $id, string $status): PenghuniKamar

@@ -13,6 +13,7 @@ return new class extends Migration
             $table->string('judul', 200);
             $table->text('isi');
             $table->enum('tipe', ['pembayaran', 'aturan', 'info'])->default('info');
+            $table->enum('channel', ['web', 'whatsapp', 'keduanya'])->default('web');
             $table->foreignId('dibuat_oleh')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });

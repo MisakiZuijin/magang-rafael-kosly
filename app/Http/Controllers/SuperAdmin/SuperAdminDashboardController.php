@@ -3,11 +3,12 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kantor;
 use App\Services\DashboardService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 
-class SuperAdminController extends Controller
+class SuperAdminDashboardController extends Controller
 {
     public function __construct(
         protected DashboardService $dashboardService,
@@ -19,6 +20,10 @@ class SuperAdminController extends Controller
         $data = $this->dashboardService->getSuperAdminData();
         return view('superadmin.dashboard', compact('data'));
     }
+
+    // ==========================================
+    // KELOLA ADMIN
+    // ==========================================
 
     public function adminIndex()
     {
@@ -41,9 +46,89 @@ class SuperAdminController extends Controller
         return redirect()->route('superadmin.admin.index')->with('success', 'Admin berhasil dibuat.');
     }
 
+    public function adminUpdate(Request $request, int $id)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:100',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'password' => 'nullable|min:6',
+            'no_hp' => 'nullable|string|max:20',
+        ]);
+
+        $this->userService->updateUser($id, array_filter($validated));
+
+        return redirect()->route('superadmin.admin.index')->with('success', 'Data admin berhasil diupdate.');
+    }
+
     public function adminToggle(int $id)
     {
         $this->userService->toggleActive($id);
-        return redirect()->back()->with('success', 'Status admin diubah.');
+        return redirect()->back()->with('success', 'Status admin berhasil diubah.');
+    }
+
+    public function adminDestroy(int $id)
+    {
+        $user = \App\Models\User::where('role', 'admin')->findOrFail($id);
+        $user->delete();
+
+        return redirect()->route('superadmin.admin.index')->with('success', 'Akun admin berhasil dihapus.');
+    }
+
+    // ==========================================
+    // KELOLA LOKASI KANTOR
+    // ==========================================
+
+    public function kantorIndex()
+    {
+        $kantors = Kantor::latest()->get();
+        return view('superadmin.kantor.index', compact('kantors'));
+    }
+
+    public function kantorStore(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:100',
+            'alamat' => 'nullable|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'no_telp' => 'nullable|string|max:30',
+        ]);
+
+        Kantor::create($validated);
+
+        return redirect()->route('superadmin.kantor.index')->with('success', 'Lokasi kantor baru berhasil ditambahkan.');
+    }
+
+    public function kantorUpdate(Request $request, int $id)
+    {
+        $kantor = Kantor::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama' => 'required|string|max:100',
+            'alamat' => 'nullable|string',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'no_telp' => 'nullable|string|max:30',
+        ]);
+
+        $kantor->update($validated);
+
+        return redirect()->route('superadmin.kantor.index')->with('success', 'Data lokasi kantor berhasil diupdate.');
+    }
+
+    public function kantorToggle(int $id)
+    {
+        $kantor = Kantor::findOrFail($id);
+        $kantor->update(['is_active' => !$kantor->is_active]);
+
+        return redirect()->back()->with('success', 'Status kantor berhasil diubah.');
+    }
+
+    public function kantorDestroy(int $id)
+    {
+        $kantor = Kantor::findOrFail($id);
+        $kantor->delete();
+
+        return redirect()->route('superadmin.kantor.index')->with('success', 'Data lokasi kantor berhasil dihapus.');
     }
 }

@@ -13,8 +13,8 @@ return new class extends Migration
             $table->foreignId('mitra_id')->constrained('users')->onDelete('cascade');
             $table->string('nama', 100);
             $table->text('alamat')->nullable();
-            $table->decimal('latitude', 10, 8)->nullable();
-            $table->decimal('longitude', 11, 8)->nullable();
+            $table->decimal('latitude', 30, 8)->nullable();
+            $table->decimal('longitude', 30, 8)->nullable();
             $table->text('deskripsi')->nullable();
             $table->string('no_rekening', 50)->nullable();
             $table->string('bank', 50)->nullable();

@@ -15,11 +15,11 @@ class AturanKosRepository extends BaseRepository implements AturanKosRepositoryI
 
     public function getByKos(int $kosId): Collection
     {
-        return $this->model->where('kos_id', $kosId)->latest()->get();
+        return $this->model->where('kos_id', $kosId)->with('kos')->latest()->get();
     }
 
     public function getLatestByKos(int $kosId): ?AturanKos
     {
-        return $this->model->where('kos_id', $kosId)->latest()->first();
+        return $this->model->where('kos_id', $kosId)->with('kos')->latest()->first();
     }
 }

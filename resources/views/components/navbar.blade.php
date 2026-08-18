@@ -16,21 +16,12 @@
     <!-- Kanan: Notif + Profile -->
     <div class="flex items-center gap-1 ml-auto">
         <!-- Notifikasi -->
-        <div class="relative" x-data="{ open: false }">
-            <button @click="open = !open" class="p-2.5 rounded-xl active:bg-gray-100 dark:active:bg-gray-800 dark:text-white min-w-[44px] min-h-[44px] flex items-center justify-center relative">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <span id="notif-badge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-900 hidden"></span>
-            </button>
-
-            <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-[60] overflow-hidden" x-cloak>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 dark:text-white font-semibold text-sm">Notifikasi</div>
-                <div class="max-h-64 overflow-y-auto no-scrollbar p-2">
-                    <a href="{{ route('notifikasi.index') }}" class="block p-3 text-xs text-center text-emerald-600 font-medium rounded-xl active:bg-gray-50 dark:active:bg-gray-700">Lihat Semua</a>
-                </div>
-            </div>
-        </div>
+        <a href="{{ route('notifikasi.index') }}" class="p-2.5 rounded-xl active:bg-gray-100 dark:active:bg-gray-800 dark:text-white min-w-[44px] min-h-[44px] flex items-center justify-center relative">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span id="notif-badge" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-900 hidden"></span>
+        </a>
 
         <!-- Profile -->
         <div class="relative" x-data="{ open: false }">
@@ -42,7 +33,7 @@
 
             <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 w-60 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-200 dark:border-gray-700 z-[60] py-2 overflow-hidden" x-cloak>
                 <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                    <p class="text-sm font-bold truncate">{{ Auth::user()->nama }}</p>
+                    <p class="text-sm font-bold truncate dark:text-white">{{ Auth::user()->nama }}</p>
                     <p class="text-xs text-gray-500 truncate mt-0.5">{{ Auth::user()->email }}</p>
                     <span class="inline-block mt-2 px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold rounded-full 
                         {{ Auth::user()->role === 'super_admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : '' }}
@@ -52,7 +43,7 @@
                         {{ str_replace('_', ' ', Auth::user()->role) }}
                     </span>
                 </div>
-                <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium active:bg-gray-50 dark:active:bg-gray-700">
+                <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium active:bg-gray-50 dark:text-white dark:active:bg-gray-700">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>

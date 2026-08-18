@@ -16,12 +16,9 @@ class RoleMiddleware
             return redirect()->route('login');
         }
 
-        if ($user->role === 'super_admin') {
-            return $next($request);
-        }
-
+        // Enforce strict role boundary check for ALL users including super_admin
         if (!in_array($user->role, $roles)) {
-            abort(403, 'Akses ditolak. Role ' . $user->role . ' tidak memiliki izin.');
+            abort(403, 'Akses ditolak. Peran ' . $user->role . ' tidak memiliki izin mengakses halaman ini.');
         }
 
         return $next($request);

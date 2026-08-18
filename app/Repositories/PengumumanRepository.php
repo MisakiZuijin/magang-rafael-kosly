@@ -15,12 +15,12 @@ class PengumumanRepository extends BaseRepository implements PengumumanRepositor
 
     public function getByTipe(string $tipe): Collection
     {
-        return $this->model->where('tipe', $tipe)->latest()->get();
+        return $this->model->where('tipe', $tipe)->with(['targets', 'dibuatOleh'])->latest()->get();
     }
 
     public function getByDibuatOleh(int $userId): Collection
     {
-        return $this->model->where('dibuat_oleh', $userId)->latest()->get();
+        return $this->model->where('dibuat_oleh', $userId)->with(['targets', 'dibuatOleh'])->latest()->get();
     }
 
     public function getWithTargets(): Collection
@@ -30,6 +30,6 @@ class PengumumanRepository extends BaseRepository implements PengumumanRepositor
 
     public function getLatest(int $limit = 10): Collection
     {
-        return $this->model->with(['targets'])->latest()->limit($limit)->get();
+        return $this->model->with(['targets', 'dibuatOleh'])->latest()->limit($limit)->get();
     }
 }

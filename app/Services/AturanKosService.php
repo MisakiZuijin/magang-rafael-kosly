@@ -29,6 +29,21 @@ class AturanKosService
         return $this->repository->create($data);
     }
 
+    public function getAll(): Collection
+    {
+        return $this->repository->all();
+    }
+
+    public function update(int $id, array $data): AturanKos
+    {
+        return $this->repository->update($id, $data);
+    }
+
+    public function delete(int $id): bool
+    {
+        return $this->repository->delete($id);
+    }
+
     public function shouldShowPopup(int $penghuniId, int $kosId): bool
     {
         $todayLog = $this->logRepository->getTodayByPenghuniAndKos($penghuniId, $kosId);
