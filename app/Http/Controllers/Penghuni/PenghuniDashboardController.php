@@ -10,17 +10,27 @@ use App\Services\PembayaranService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Services\PenghuniKamarService;
+
 class PenghuniDashboardController extends Controller
 {
     public function __construct(
         protected DashboardService $dashboardService,
         protected PembayaranService $pembayaranService,
-        protected AturanKosService $aturanKosService
+        protected AturanKosService $aturanKosService,
+        protected PenghuniKamarService $penghuniKamarService
     ) {}
 
     public function index()
     {
-        $data = $this->dashboardService->getPenghuniData(Auth::id());
+        /** @var User $user */
+        $user = Auth::user();
+        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
+        if ($penghuniKamar) {
+            $this->pembayaranService->checkAndGenerateAutoBilling($penghuniKamar);
+        }
+
+        $data = $this->dashboardService->getPenghuniData($user->id);
         return view('penghuni.dashboard', compact('data'));
     }
 
@@ -28,7 +38,7 @@ class PenghuniDashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->penghuniKamar()->where('status', 'aktif')->first();
+        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos'])->where('status', 'aktif')->first();
 
         if (!$penghuniKamar) {
             return redirect()->back()->with('error', 'Anda belum terdaftar di kamar manapun.');
@@ -53,11 +63,13 @@ class PenghuniDashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->penghuniKamar()->where('status', 'aktif')->first();
+        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
 
         if (!$penghuniKamar) {
             return view('penghuni.pembayaran', ['pembayarans' => collect(), 'rekening' => null]);
         }
+
+        $this->pembayaranService->checkAndGenerateAutoBilling($penghuniKamar);
 
         $pembayarans = $this->pembayaranService->getByPenghuniKamar($penghuniKamar->id);
         $rekening = $penghuniKamar->kamar->kos;
@@ -83,5 +95,31 @@ class PenghuniDashboardController extends Controller
         );
 
         return redirect()->back()->with('success', 'Bukti pembayaran berhasil diupload.');
+    }
+
+    public function selfCheckout()
+    {
+        /** @var User $user */
+        $user = Auth::user();
+        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos'])->where('status', 'aktif')->first();
+
+        if (!$penghuniKamar) {
+            return redirect()->back()->with('error', 'Anda tidak sedang aktif menempati kamar manapun.');
+        }
+
+        $kodeKamar = $penghuniKamar->kamar->kode_kamar ?? '-';
+        $kosNama = $penghuniKamar->kamar->kos->nama ?? 'Kos';
+
+        $this->penghuniKamarService->checkout($penghuniKamar->id);
+
+        \App\Models\Notifikasi::create([
+            'user_id' => $user->id,
+            'judul' => 'Checkout Berhasil',
+            'pesan' => "Anda telah berhasil melakukan checkout dari Kamar {$kodeKamar} ({$kosNama}). Terima kasih!",
+            'channel' => 'web',
+            'status' => 'terkirim',
+        ]);
+
+        return redirect()->route('penghuni.dashboard')->with('success', 'Berhasil checkout sewa kamar kos.');
     }
 }

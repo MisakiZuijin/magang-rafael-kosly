@@ -1,17 +1,74 @@
 @props(['show' => false, 'title' => ''])
 
-<div x-data="{ open: {{ $show ? 'true' : 'false' }} }" x-show="open" x-cloak class="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-sm" x-transition.opacity.duration.200ms>
-    <div @click.away="open = false" class="bg-white dark:bg-gray-900 rounded-t-3xl sm:rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[90vh] overflow-y-auto" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full sm:translate-y-0 sm:scale-95" x-transition:enter-end="translate-y-0 sm:scale-100">
+@php
+$showString = is_bool($show) ? ($show ? 'true' : 'false') : (string)$show;
+$isLiteral = in_array(strtolower($showString), ['true', 'false', '1', '0']);
+$showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true' : 'false') : $showString;
+@endphp
+
+@if($isLiteral)
+<div x-data="{ open: {{ $showExpr }} }" 
+     x-show="open" 
+     x-cloak 
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" 
+     x-transition.opacity.duration.200ms>
+    <div @click.away="open = false" 
+         class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] overflow-y-auto my-auto relative transform transition-all" 
+         x-transition:enter="transition ease-out duration-300" 
+         x-transition:enter-start="opacity-0 scale-95" 
+         x-transition:enter-end="opacity-100 scale-100">
         @if($title)
-        <h3 class="font-bold text-lg mb-1">{{ $title }}</h3>
+        <div class="flex items-center justify-between mb-3 border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug">{{ $title }}</h3>
+            <button type="button" @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
         @endif
-        <div class="text-sm text-gray-600 dark:text-gray-300 mb-6 leading-relaxed">
+        <div class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed space-y-3">
             {{ $slot }}
         </div>
         @if(isset($footer))
-        <div class="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+        <div class="flex flex-col gap-2 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
             {{ $footer }}
         </div>
         @endif
     </div>
 </div>
+@else
+<div x-data="{ 
+         get open() { return {{ $showExpr }}; }, 
+         set open(val) { {{ $showExpr }} = val; } 
+     }" 
+     x-show="open" 
+     x-cloak 
+     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" 
+     x-transition.opacity.duration.200ms>
+    <div @click.away="open = false" 
+         class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] overflow-y-auto my-auto relative transform transition-all" 
+         x-transition:enter="transition ease-out duration-300" 
+         x-transition:enter-start="opacity-0 scale-95" 
+         x-transition:enter-end="opacity-100 scale-100">
+        @if($title)
+        <div class="flex items-center justify-between mb-3 border-b border-gray-100 dark:border-gray-800 pb-2">
+            <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug">{{ $title }}</h3>
+            <button type="button" @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        @endif
+        <div class="text-xs text-gray-600 dark:text-gray-300 leading-relaxed space-y-3">
+            {{ $slot }}
+        </div>
+        @if(isset($footer))
+        <div class="flex flex-col gap-2 pt-3 mt-3 border-t border-gray-100 dark:border-gray-800">
+            {{ $footer }}
+        </div>
+        @endif
+    </div>
+</div>
+@endif

@@ -45,4 +45,9 @@ class Pembayaran extends Model
     {
         return $this->belongsTo(User::class, 'diverifikasi_oleh');
     }
+
+    public function verifier()
+    {
+        return $this->belongsTo(User::class, 'diverifikasi_oleh');
+    }
 }

@@ -72,7 +72,7 @@
 </x-card>
 
 {{-- Info Akun --}}
-<x-card title="Informasi Akun" class="mb-4">
+<x-card title="Informasi Akun" class="mb-4 dark:text-white">
     <div class="space-y-3 text-sm">
         <div class="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-800">
             <span class="text-gray-500 dark:text-gray-400">Bergabung Sejak</span>

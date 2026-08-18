@@ -15,17 +15,17 @@ class KamarRepository extends BaseRepository implements KamarRepositoryInterface
 
     public function getByKos(int $kosId): Collection
     {
-        return $this->model->where('kos_id', $kosId)->latest()->get();
+        return $this->model->where('kos_id', $kosId)->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
     }
 
     public function getKosong(): Collection
     {
-        return $this->model->where('status', 'kosong')->latest()->get();
+        return $this->model->where('status', 'kosong')->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
     }
 
     public function getTerisi(): Collection
     {
-        return $this->model->where('status', 'terisi')->latest()->get();
+        return $this->model->where('status', 'terisi')->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
     }
 
     public function updateStatus(int $id, string $status): Kamar

@@ -15,25 +15,34 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
 
     public function getByPenghuniKamar(int $penghuniKamarId): Collection
     {
-        return $this->model->where('penghuni_kamar_id', $penghuniKamarId)->latest()->get();
+        return $this->model->where('penghuni_kamar_id', $penghuniKamarId)
+            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
+            ->latest()
+            ->get();
     }
 
     public function getPending(): Collection
     {
         return $this->model->where('status', 'pending')
-            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar'])
+            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
             ->latest()
             ->get();
     }
 
     public function getTerverifikasi(): Collection
     {
-        return $this->model->where('status', 'terverifikasi')->latest()->get();
+        return $this->model->where('status', 'terverifikasi')
+            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
+            ->latest()
+            ->get();
     }
 
     public function getDitolak(): Collection
     {
-        return $this->model->where('status', 'ditolak')->latest()->get();
+        return $this->model->where('status', 'ditolak')
+            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
+            ->latest()
+            ->get();
     }
 
     public function verify(int $id, array $data): Pembayaran
@@ -47,7 +56,10 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
     {
         return $this->model->whereHas('penghuniKamar.kamar', function ($q) use ($kosId) {
             $q->where('kos_id', $kosId);
-        })->latest()->get();
+        })
+        ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
+        ->latest()
+        ->get();
     }
 
     public function getLaporanByDateRange(string $start, string $end): Collection

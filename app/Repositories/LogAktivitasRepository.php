@@ -15,7 +15,7 @@ class LogAktivitasRepository extends BaseRepository implements LogAktivitasRepos
 
     public function getByUser(int $userId): Collection
     {
-        return $this->model->where('user_id', $userId)->latest()->get();
+        return $this->model->where('user_id', $userId)->with('user')->latest()->get();
     }
 
     public function getLatest(int $limit = 50): Collection

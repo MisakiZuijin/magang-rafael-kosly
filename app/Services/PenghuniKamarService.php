@@ -62,6 +62,35 @@ class PenghuniKamarService
             $this->kamarRepository->updateStatus($data['kamar_id'], 'terisi');
         }
 
+        // --- BUAT TAGIHAN PEMBAYARAN AWAL AUTOMATIS ---
+        $jumlahBiaya = $penghuniKamar->durasi === 'harian'
+            ? ($kamar->harga_per_hari ?? 0)
+            : $kamar->harga_per_bulan;
+
+        $tanggalKeluar = $penghuniKamar->tanggal_keluar
+            ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)
+            : \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->addMonth();
+
+        \App\Models\Pembayaran::create([
+            'penghuni_kamar_id' => $penghuniKamar->id,
+            'jumlah' => $jumlahBiaya,
+            'periode_mulai' => $penghuniKamar->tanggal_masuk,
+            'periode_selesai' => $tanggalKeluar,
+            'status' => 'pending',
+            'bukti_transfer_url' => null,
+            'tanggal_bayar' => null,
+        ]);
+
+        // Kirim notifikasi selamat datang & tagihan awal ke penghuni
+        $kosNama = $kamar->kos->nama ?? 'Kos';
+        \App\Models\Notifikasi::create([
+            'user_id' => $penghuniKamar->penghuni_id,
+            'judul' => 'Tagihan Pembayaran Awal Sewa Kos',
+            'pesan' => "Selamat! Anda telah didaftarkan ke Kamar {$kamar->kode_kamar} ({$kosNama}). Silakan selesaikan pembayaran awal sewa sebesar Rp " . number_format($jumlahBiaya, 0, ',', '.'),
+            'channel' => 'web',
+            'status' => 'terkirim',
+        ]);
+
         return $penghuniKamar;
     }
 

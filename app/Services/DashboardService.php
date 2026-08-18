@@ -67,12 +67,13 @@ class DashboardService
             'total_kamar' => $kamars->count(),
             'kamar_kosong' => $kamars->where('status', 'kosong')->count(),
             'kamar_terisi' => $kamars->where('status', 'terisi')->count(),
-            'kos_list' => $kosList->load('kamar'),
+            'kos_list' => $kosList->load('kamar.penghuniKamar.penghuni'),
         ];
     }
 
     public function getAdminData(): array
     {
+        $totalKos = $this->kosRepository->getAll()->count();
         $totalKamar = $this->kamarRepository->getAll()->count();
         $kamarTerisi = $this->kamarRepository->getTerisi()->count();
         $kamarKosong = $this->kamarRepository->getKosong()->count();
@@ -81,6 +82,7 @@ class DashboardService
         $pendingPayments = $this->pembayaranRepository->getPending();
 
         return [
+            'total_kos' => $totalKos,
             'total_kamar' => $totalKamar,
             'kamar_terisi' => $kamarTerisi,
             'kamar_kosong' => $kamarKosong,
