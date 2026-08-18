@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kantor;
 use App\Services\KosService;
 
 class AdminMapController extends Controller
@@ -14,6 +15,9 @@ class AdminMapController extends Controller
     public function index()
     {
         $locations = $this->kosService->getAllLocations();
-        return view('admin.map.index', compact('locations'));
+        $kantors = Kantor::where('is_active', true)->get();
+
+        $view = request()->is('superadmin*') ? 'superadmin.map.index' : 'admin.map.index';
+        return view($view, compact('locations', 'kantors'));
     }
 }
