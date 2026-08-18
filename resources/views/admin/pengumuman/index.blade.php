@@ -12,8 +12,11 @@
         </div>
     </div>
 
-    <x-btn href="{{ route('admin.pengumuman.create') }}" size="sm" class="!min-h-[36px] !py-1 text-xs">
-        + Kirim Pengumuman
+    <x-btn href="{{ route('admin.pengumuman.create') }}" size="sm" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>Kirim Pengumuman</span>
     </x-btn>
 
     {{-- Log Pengumuman --}}
