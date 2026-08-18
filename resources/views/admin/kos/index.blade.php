@@ -70,21 +70,21 @@
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            <span class="text-xs font-bold leading-tight">+ Kos Baru</span>
+            <span class="text-xs font-bold leading-tight">Kos Baru</span>
         </button>
 
         <button @click="modalKamar = true" class="flex flex-col items-center justify-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-sm active:scale-95 transition-all text-center">
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <span class="text-xs font-bold leading-tight">+ Kamar Baru</span>
+            <span class="text-xs font-bold leading-tight">Kamar Baru</span>
         </button>
 
         <button @click="modalPenghuni = true" class="flex flex-col items-center justify-center p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl shadow-sm active:scale-95 transition-all text-center">
             <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
             </svg>
-            <span class="text-xs font-bold leading-tight">+ Penghuni</span>
+            <span class="text-xs font-bold leading-tight">Penghuni</span>
         </button>
     </div>
 
@@ -95,8 +95,8 @@
             <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Filter Tampilan Kos &amp; Kamar:
             </label>
-            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono" 
-                  x-text="(filterKosId === 'all' ? 'Semua Kos' : 'Kos Terpilih') + ' · ' + (filterTipeKamar === 'all' ? 'Semua Tipe' : (filterTipeKamar === 'standar' ? 'Standar' : 'Berbagi'))"></span>
+            <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono"
+                x-text="(filterKosId === 'all' ? 'Semua Kos' : 'Kos Terpilih') + ' · ' + (filterTipeKamar === 'all' ? 'Semua Tipe' : (filterTipeKamar === 'standar' ? 'Standar' : 'Berbagi'))"></span>
         </div>
 
         <div class="grid grid-cols-2 gap-2">
@@ -106,7 +106,7 @@
                 <select x-model="filterKosId" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-emerald-500">
                     <option value="all">-- Semua Kos ({{ $kosList->count() }}) --</option>
                     @foreach($kosList as $kItem)
-                        <option value="{{ $kItem->id }}">{{ $kItem->nama }} ({{ $kItem->kamar->count() }} Kamar)</option>
+                    <option value="{{ $kItem->id }}">{{ $kItem->nama }} ({{ $kItem->kamar->count() }} Kamar)</option>
                     @endforeach
                 </select>
             </div>
@@ -130,9 +130,9 @@
     @else
     <div class="space-y-4">
         @foreach($kosList as $kos)
-        <div x-show="(filterKosId === 'all' || filterKosId == '{{ $kos->id }}') &amp;&amp; (filterTipeKamar === 'all' || {{ json_encode($kos->kamar->pluck('tipe')->toArray()) }}.includes(filterTipeKamar))" 
-             x-transition 
-             class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+        <div x-show="(filterKosId === 'all' || filterKosId == '{{ $kos->id }}') &amp;&amp; (filterTipeKamar === 'all' || {{ json_encode($kos->kamar->pluck('tipe')->toArray()) }}.includes(filterTipeKamar))"
+            x-transition
+            class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
             <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                 <div class="flex justify-between items-start mb-1">
                     <div>
@@ -142,14 +142,14 @@
                         <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug">{{ $kos->nama }}</h3>
                         <p class="text-xs text-gray-500 mt-0.5">{{ $kos->alamat ?? 'Alamat tidak diisi' }}</p>
                     </div>
-                    
+
                     <div class="flex items-center gap-1.5">
                         <span class="px-2 py-1 text-[10px] font-bold rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             {{ $kos->kamar->count() }} Kamar
                         </span>
-                        <button type="button" 
-                                @click="openEditKosModal(@js($kos))"
-                                class="px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 rounded-lg transition-all flex items-center gap-0.5">
+                        <button type="button"
+                            @click="openEditKosModal(@js($kos))"
+                            class="px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 rounded-lg transition-all flex items-center gap-0.5">
                             <span>✏️ Edit Kos</span>
                         </button>
                     </div>
@@ -179,9 +179,9 @@
                     $isTerisi = $kamar->status === 'terisi' || $activePenghunis->isNotEmpty();
                     @endphp
 
-                    <div x-show="filterTipeKamar === 'all' || filterTipeKamar === '{{ $kamar->tipe }}'" 
-                         x-transition 
-                         class="p-3 rounded-xl border {{ $isTerisi ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-200 dark:border-gray-800' }} space-y-2">
+                    <div x-show="filterTipeKamar === 'all' || filterTipeKamar === '{{ $kamar->tipe }}'"
+                        x-transition
+                        class="p-3 rounded-xl border {{ $isTerisi ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-200 dark:border-gray-800' }} space-y-2">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-xs font-mono text-gray-900 dark:text-white">
@@ -190,9 +190,9 @@
                                 <span class="px-1.5 py-0.5 text-[10px] uppercase font-bold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' }}">
                                     {{ ucfirst($kamar->tipe) }}
                                 </span>
-                                <button type="button" 
-                                        @click="openEditKamarModal(@js($kamar))"
-                                        class="px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 rounded-md transition-all">
+                                <button type="button"
+                                    @click="openEditKamarModal(@js($kamar))"
+                                    class="px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 rounded-md transition-all">
                                     ✏️ Edit
                                 </button>
                             </div>
@@ -244,8 +244,8 @@
                                         selectedKamarIdForPenghuni = '{{ $kamar->id }}'; 
                                         selectedKamarTipe = '{{ $kamar->tipe }}'; 
                                         modalPenghuni = true;
-                                    " 
-                                    class="px-2 py-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold rounded-lg transition-all">
+                                    "
+                                class="px-2 py-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold rounded-lg transition-all">
                                 + Daftarkan Penghuni
                             </button>
                         </div>
@@ -270,7 +270,7 @@
                 <select name="mitra_id" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                     <option value="">-- Pilih Mitra --</option>
                     @foreach($mitras as $mitra)
-                        <option value="{{ $mitra->id }}">{{ $mitra->nama }} ({{ $mitra->email }})</option>
+                    <option value="{{ $mitra->id }}">{{ $mitra->nama }} ({{ $mitra->email }})</option>
                     @endforeach
                 </select>
             </div>
@@ -330,7 +330,7 @@
                 <select name="mitra_id" x-model="editKosData.mitra_id" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                     <option value="">-- Pilih Mitra --</option>
                     @foreach($mitras as $mitra)
-                        <option value="{{ $mitra->id }}">{{ $mitra->nama }} ({{ $mitra->email }})</option>
+                    <option value="{{ $mitra->id }}">{{ $mitra->nama }} ({{ $mitra->email }})</option>
                     @endforeach
                 </select>
             </div>
@@ -389,7 +389,7 @@
                 <select name="kos_id" x-model="selectedKosIdForKamar" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                     <option value="">-- Pilih Kos --</option>
                     @foreach($kosList as $k)
-                        <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                    <option value="{{ $k->id }}">{{ $k->nama }}</option>
                     @endforeach
                 </select>
             </div>
@@ -442,7 +442,7 @@
                 <select name="kos_id" x-model="editKamarData.kos_id" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                     <option value="">-- Pilih Kos --</option>
                     @foreach($kosList as $k)
-                        <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                    <option value="{{ $k->id }}">{{ $k->nama }}</option>
                     @endforeach
                 </select>
             </div>
@@ -487,11 +487,11 @@
     {{-- Modal Pendaftaran Penghuni ke Kamar --}}
     @php
     $penghuniUsers = \App\Models\User::where('role', 'penghuni')
-        ->where('is_active', true)
-        ->with(['penghuniKamar' => function($q) {
-            $q->where('status', 'aktif')->with('kamar');
-        }])
-        ->get();
+    ->where('is_active', true)
+    ->with(['penghuniKamar' => function($q) {
+    $q->where('status', 'aktif')->with('kamar');
+    }])
+    ->get();
     $allKamars = \App\Models\Kamar::with('kos')->get();
     @endphp
     <x-modal show="modalPenghuni" title="Daftarkan Penghuni ke Kamar">
@@ -540,11 +540,11 @@
                     <option value="">-- Pilih Anak Kos Ke-1 --</option>
                     @foreach($penghuniUsers as $pu)
                     @php
-                        $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
-                        $alreadyOccupying = $activePk !== null;
+                    $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
+                    $alreadyOccupying = $activePk !== null;
                     @endphp
-                    <option value="{{ $pu->id }}" 
-                        {{ $alreadyOccupying ? 'disabled' : '' }} 
+                    <option value="{{ $pu->id }}"
+                        {{ $alreadyOccupying ? 'disabled' : '' }}
                         class="{{ $alreadyOccupying ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
                         {{ $pu->nama }} ({{ $pu->email }}) {{ $alreadyOccupying ? '[SUDAH MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[TERSEDIA]' }}
                     </option>
@@ -561,11 +561,11 @@
                     <option value="">-- Pilih Anak Kos Ke-2 --</option>
                     @foreach($penghuniUsers as $pu)
                     @php
-                        $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
-                        $alreadyOccupying = $activePk !== null;
+                    $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
+                    $alreadyOccupying = $activePk !== null;
                     @endphp
-                    <option value="{{ $pu->id }}" 
-                        {{ $alreadyOccupying ? 'disabled' : '' }} 
+                    <option value="{{ $pu->id }}"
+                        {{ $alreadyOccupying ? 'disabled' : '' }}
                         class="{{ $alreadyOccupying ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
                         {{ $pu->nama }} ({{ $pu->email }}) {{ $alreadyOccupying ? '[SUDAH MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[TERSEDIA]' }}
                     </option>
