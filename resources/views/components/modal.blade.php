@@ -10,10 +10,10 @@ $showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true'
 <div x-data="{ open: {{ $showExpr }} }" 
      x-show="open" 
      x-cloak 
-     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" 
+     class="absolute -top-20 -left-4 -right-4 -bottom-16 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" 
      x-transition.opacity.duration.200ms>
     <div @click.away="open = false" 
-         class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] overflow-y-auto my-auto relative transform transition-all" 
+         class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] overflow-y-auto no-scrollbar my-auto relative transform transition-all" 
          x-transition:enter="transition ease-out duration-300" 
          x-transition:enter-start="opacity-0 scale-95" 
          x-transition:enter-end="opacity-100 scale-100">
@@ -44,10 +44,10 @@ $showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true'
      }" 
      x-show="open" 
      x-cloak 
-     class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" 
+     class="absolute -top-20 -left-4 -right-4 -bottom-16 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" 
      x-transition.opacity.duration.200ms>
     <div @click.away="open = false" 
-         class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] overflow-y-auto my-auto relative transform transition-all" 
+         class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[85vh] overflow-y-auto no-scrollbar my-auto relative transform transition-all" 
          x-transition:enter="transition ease-out duration-300" 
          x-transition:enter-start="opacity-0 scale-95" 
          x-transition:enter-end="opacity-100 scale-100">

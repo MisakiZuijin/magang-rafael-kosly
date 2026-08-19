@@ -45,7 +45,7 @@
 
     <div id="app-container"
         x-data="{ sidebarOpen: false }"
-        class="relative w-full max-w-[430px] mx-auto min-h-screen bg-gray-50 dark:bg-gray-950 shadow-2xl overflow-hidden isolate">
+        class="relative w-full max-w-[430px] mx-auto h-screen flex flex-col bg-gray-50 dark:bg-gray-950 shadow-2xl overflow-hidden isolate">
 
         @include('components.navbar')
 
@@ -57,7 +57,7 @@
 
         @include('components.sidebar')
 
-        <main class="absolute top-16 left-0 right-0 bottom-12 overflow-y-auto no-scrollbar">
+        <main class="flex-1 mt-16 mb-12 overflow-y-auto no-scrollbar">
             <div class="p-4 pb-6">
                 @if(session('success'))
                 @include('components.toast', ['type' => 'success', 'message' => session('success')])

@@ -19,6 +19,8 @@ class Kamar extends Model
         'harga_per_bulan',
         'kapasitas',
         'status',
+        'wa_group_id',
+        'link_grup_wa',
     ];
 
     protected function casts(): array

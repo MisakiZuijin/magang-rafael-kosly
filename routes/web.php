@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\AdminPengumumanController;
 use App\Http\Controllers\Admin\AdminPembayaranController;
 use App\Http\Controllers\Admin\AdminMapController;
 use App\Http\Controllers\Admin\AdminLaporanController;
+use App\Http\Controllers\Admin\AdminWhatsAppController;
 use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -120,6 +121,11 @@ Route::middleware(['auth'])->group(function () {
         // Laporan
         Route::get('/laporan', [AdminLaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/filter', [AdminLaporanController::class, 'filter'])->name('laporan.filter');
+
+        // WA Gateway (Fonnte)
+        Route::get('/whatsapp', [AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
+        Route::post('/whatsapp', [AdminWhatsAppController::class, 'store'])->name('whatsapp.store');
+        Route::post('/whatsapp/test', [AdminWhatsAppController::class, 'testSend'])->name('whatsapp.test');
     });
 
     /*
@@ -177,5 +183,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/map', [AdminMapController::class, 'index'])->name('map.index');
         Route::get('/laporan', [AdminLaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/filter', [AdminLaporanController::class, 'filter'])->name('laporan.filter');
-    });
+
+        // WA Gateway (Fonnte)
+        Route::get('/whatsapp', [AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
+        Route::post('/whatsapp', [AdminWhatsAppController::class, 'store'])->name('whatsapp.store');
+        Route::post('/whatsapp/test', [AdminWhatsAppController::class, 'testSend'])->name('whatsapp.test');
+        });
 });

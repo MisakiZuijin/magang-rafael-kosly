@@ -24,6 +24,8 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
     public function getPending(): Collection
     {
         return $this->model->where('status', 'pending')
+            ->whereNotNull('bukti_transfer_url')
+            ->where('bukti_transfer_url', '!=', '')
             ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
             ->latest()
             ->get();
@@ -64,9 +66,16 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
 
     public function getLaporanByDateRange(string $start, string $end): Collection
     {
-        return $this->model->whereBetween('created_at', [$start, $end])
-            ->where('status', 'terverifikasi')
-            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos'])
+        $startDate = \Carbon\Carbon::parse($start)->startOfDay();
+        $endDate = \Carbon\Carbon::parse($end)->endOfDay();
+
+        return $this->model->where('status', 'terverifikasi')
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereBetween('created_at', [$startDate, $endDate])
+                  ->orWhereBetween('tanggal_bayar', [$startDate->toDateString(), $endDate->toDateString()])
+                  ->orWhereBetween('tanggal_verifikasi', [$startDate, $endDate]);
+            })
+            ->with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos', 'verifier'])
             ->latest()
             ->get();
     }
