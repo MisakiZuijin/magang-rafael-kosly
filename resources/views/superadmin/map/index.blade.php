@@ -28,7 +28,7 @@
 
     {{-- Panel Kontrol Lokasi Kantor & Kos Tujuan --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-1 gap-3">
             {{-- 1. Lokasi Kantor Awal (Data dari Database) --}}
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">

@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between">
         <div>
             <p class="text-xs text-gray-500 dark:text-gray-400 font-medium">Pusat Kendali Utama System</p>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Dashboard Super Admin</h1>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Dashboard</h1>
         </div>
         <div class="bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 text-xs font-bold px-3 py-1 rounded-xl flex items-center gap-1.5 border border-purple-200 dark:border-purple-800">
             <svg class="w-4 h-4 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,19 +139,19 @@
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
         <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pintas Cepat Tindakan Super Admin</h2>
         <div class="grid grid-cols-2 sm:grid-cols-1 gap-2">
-            <x-btn href="{{ route('superadmin.admin.index') }}" variant="secondary" size="sm" class="!justify-start text-xs">
+            <x-btn href="{{ route('superadmin.admin.index') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
                 👤 Kelola Admin
             </x-btn>
-            <x-btn href="{{ route('superadmin.kantor.index') }}" variant="secondary" size="sm" class="!justify-start text-xs">
+            <x-btn href="{{ route('superadmin.kantor.index') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
                 🏢 Lokasi Kantor
             </x-btn>
-            <x-btn href="{{ route('superadmin.pengguna.create') }}" variant="secondary" size="sm" class="!justify-start text-xs">
+            <x-btn href="{{ route('superadmin.pengguna.create') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
                 ➕ Tambah User
             </x-btn>
-            <x-btn href="{{ route('superadmin.pengumuman.create') }}" variant="secondary" size="sm" class="!justify-start text-xs">
+            <x-btn href="{{ route('superadmin.pengumuman.create') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
                 📢 Broadcast WA
             </x-btn>
-            <x-btn href="{{ route('superadmin.aturan.index') }}" variant="secondary" size="sm" class="!justify-start text-xs">
+            <x-btn href="{{ route('superadmin.aturan.index') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
                 📜 Aturan Kos
             </x-btn>
         </div>
@@ -160,7 +160,7 @@
     {{-- Status Sewa & Pembayaran --}}
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {{-- Sisa Waktu Masa Sewa --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden p-3.5 space-y-3">
+        <div class="col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden p-3.5 space-y-3">
             <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
                 <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Masa Sewa Penghuni</h2>
                 <a href="{{ route('superadmin.kos.index') }}" class="text-[11px] text-emerald-600 font-bold hover:underline">Kelola &rarr;</a>
@@ -189,7 +189,7 @@
         </div>
 
         {{-- Pending Payments --}}
-        <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden p-3.5 space-y-3">
+        <div class="col-span-2 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden p-3.5 space-y-3">
             <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
                 <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pembayaran Pending</h2>
                 <a href="{{ route('superadmin.pembayaran.index') }}" class="text-[11px] text-emerald-600 font-bold hover:underline">Verifikasi &rarr;</a>

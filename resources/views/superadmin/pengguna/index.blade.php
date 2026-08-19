@@ -15,7 +15,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Pengguna System</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola akun Mitra Kos dan Anak Kos (Super Admin)</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola akun Mitra Kos dan Anak Kos</p>
         </div>
     </div>
 
@@ -74,7 +74,7 @@
             </div>
 
             <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                <x-btn href="{{ route('superadmin.pengguna.edit', $m->id) }}" size="sm" variant="secondary" class="flex-1 !min-h-[36px] !py-1 text-xs">
+                <x-btn href="{{ route('superadmin.pengguna.edit', $m->id) }}" size="sm" variant="secondary" class="flex-1 !min-h-[36px] !py-1 text-xs dark:hover:bg-gray-700">
                     Edit
                 </x-btn>
                 <form action="{{ route('superadmin.pengguna.toggle', $m->id) }}" method="POST" class="flex-1">
@@ -114,7 +114,7 @@
             </div>
 
             <div class="flex gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                <x-btn href="{{ route('superadmin.pengguna.edit', $p->id) }}" size="sm" variant="secondary" class="flex-1 !min-h-[36px] !py-1 text-xs">
+                <x-btn href="{{ route('superadmin.pengguna.edit', $p->id) }}" size="sm" variant="secondary" class="flex-1 !min-h-[36px] !py-1 text-xs dark:hover:bg-gray-700">
                     Edit
                 </x-btn>
                 <form action="{{ route('superadmin.pengguna.toggle', $p->id) }}" method="POST" class="flex-1">

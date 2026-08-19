@@ -95,8 +95,8 @@
     </div>
 
     {{-- Modal Tambah Kantor --}}
-    <div x-show="modalTambah" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" x-cloak>
-        <div class="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-[390px] max-h-[90vh] overflow-y-auto no-scrollbar p-4 border border-gray-200 dark:border-gray-800 shadow-xl space-y-4" @click.away="modalTambah = false">
+    <div x-show="modalTambah" x-transition class="absolute -top-20 -left-4 -right-4 -bottom-16 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" x-cloak>
+        <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] max-h-[85vh] overflow-y-auto no-scrollbar p-5 border border-gray-200 dark:border-gray-800 shadow-2xl space-y-4 my-auto relative transform transition-all" @click.away="modalTambah = false">
             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3">
                 <h3 class="text-sm font-bold text-gray-900 dark:text-white">Tambah Lokasi Kantor Baru</h3>
                 <button @click="modalTambah = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
@@ -140,8 +140,8 @@
     </div>
 
     {{-- Modal Edit Kantor --}}
-    <div x-show="modalEdit" x-transition class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm" x-cloak>
-        <div class="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-[390px] max-h-[90vh] overflow-y-auto no-scrollbar p-4 border border-gray-200 dark:border-gray-800 shadow-xl space-y-4" @click.away="modalEdit = false">
+    <div x-show="modalEdit" x-transition class="absolute -top-20 -left-4 -right-4 -bottom-16 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md overflow-y-auto" x-cloak>
+        <div class="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-[390px] max-h-[85vh] overflow-y-auto no-scrollbar p-5 border border-gray-200 dark:border-gray-800 shadow-2xl space-y-4 my-auto relative transform transition-all" @click.away="modalEdit = false">
             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-3">
                 <h3 class="text-sm font-bold text-gray-900 dark:text-white">Edit Lokasi Kantor</h3>
                 <button @click="modalEdit = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
