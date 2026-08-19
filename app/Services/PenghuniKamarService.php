@@ -63,19 +63,31 @@ class PenghuniKamarService
         }
 
         // --- BUAT TAGIHAN PEMBAYARAN AWAL AUTOMATIS ---
-        $jumlahBiaya = $penghuniKamar->durasi === 'harian'
-            ? ($kamar->harga_per_hari ?? 0)
-            : $kamar->harga_per_bulan;
+        $tanggalMasukObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay();
+        $tanggalKeluarObj = $penghuniKamar->tanggal_keluar
+            ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay()
+            : $tanggalMasukObj->copy()->addDays(30);
 
-        $tanggalKeluar = $penghuniKamar->tanggal_keluar
-            ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)
-            : \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->addMonth();
+        $selisihHari = max(1, (int) $tanggalMasukObj->diffInDays($tanggalKeluarObj));
+
+        if ($penghuniKamar->durasi === 'harian') {
+            $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0
+                ? $kamar->harga_per_hari
+                : round(($kamar->harga_per_bulan ?? 0) / 30);
+            $jumlahBiaya = $selisihHari * $hargaHarian;
+            $jumlahHari = $selisihHari;
+        } else {
+            $jumlahBiaya = $kamar->harga_per_bulan;
+            $jumlahHari = $selisihHari > 0 ? $selisihHari : 30;
+        }
 
         \App\Models\Pembayaran::create([
             'penghuni_kamar_id' => $penghuniKamar->id,
             'jumlah' => $jumlahBiaya,
+            'tipe_perpanjangan' => $penghuniKamar->durasi === 'harian' ? 'harian' : 'bulanan',
+            'jumlah_hari' => $jumlahHari,
             'periode_mulai' => $penghuniKamar->tanggal_masuk,
-            'periode_selesai' => $tanggalKeluar,
+            'periode_selesai' => $tanggalKeluarObj->toDateString(),
             'status' => 'pending',
             'bukti_transfer_url' => null,
             'tanggal_bayar' => null,

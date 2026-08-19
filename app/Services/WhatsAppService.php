@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -9,17 +10,128 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     /**
-     * Kirim pesan WhatsApp ke daftar user ID.
+     * Dapatkan API Key Fonnte dari DB settings atau env.
+     */
+    public function getApiKey(): ?string
+    {
+        return Setting::getByKey('fonnte_api_key', config('services.whatsapp.api_key'));
+    }
+
+    /**
+     * Dapatkan Endpoint Fonnte dari DB settings atau default.
+     */
+    public function getEndpoint(): string
+    {
+        return Setting::getByKey('fonnte_endpoint', config('services.whatsapp.endpoint', 'https://api.fonnte.com/send'));
+    }
+
+    /**
+     * Cek status device Fonnte secara langsung via API Fonnte.
+     */
+    public function checkDeviceStatus(): array
+    {
+        $apiKey = $this->getApiKey();
+        if (!$apiKey) {
+            return [
+                'connected' => false,
+                'status_text' => 'API Token Belum Dikonfigurasi',
+                'message' => 'Silakan masukkan API Token Fonnte terlebih dahulu.',
+                'raw' => null,
+            ];
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => $apiKey,
+            ])->timeout(8)->post('https://api.fonnte.com/device');
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $isConnect = strtolower($data['device_status'] ?? '') === 'connect' || ($data['status'] ?? false) === true;
+                
+                return [
+                    'connected' => $isConnect,
+                    'status_text' => $isConnect ? 'Connected (Terhubung)' : 'Disconnected (Belum Scan / Putus)',
+                    'device' => $data['device'] ?? '-',
+                    'name' => $data['name'] ?? '-',
+                    'package' => $data['package'] ?? '-',
+                    'quota' => $data['quota'] ?? 0,
+                    'expired' => $data['expired'] ?? '-',
+                    'raw' => $data,
+                ];
+            } else {
+                return [
+                    'connected' => false,
+                    'status_text' => 'Gagal Konek ke Fonnte (HTTP ' . $response->status() . ')',
+                    'message' => $response->body(),
+                    'raw' => null,
+                ];
+            }
+        } catch (\Throwable $e) {
+            return [
+                'connected' => false,
+                'status_text' => 'Error Server Fonnte: ' . $e->getMessage(),
+                'message' => $e->getMessage(),
+                'raw' => null,
+            ];
+        }
+    }
+
+    /**
+     * Kirim pesan langsung ke 1 target (nomor HP atau ID Grup WA Fonnte).
+     */
+    public function sendDirect(string $target, string $judul, string $pesan): array
+    {
+        $apiKey = $this->getApiKey();
+        $endpoint = $this->getEndpoint();
+        $formattedMessage = "*[{$judul}]*\n\n{$pesan}\n\n_Pesan otomatis dari Kostly App_";
+
+        if ($apiKey && !empty($target) && $target !== '-') {
+            try {
+                $response = Http::withHeaders([
+                    'Authorization' => $apiKey,
+                ])->post($endpoint, [
+                    'target' => $target,
+                    'message' => $formattedMessage,
+                ]);
+
+                if ($response->successful()) {
+                    return [
+                        'success' => true,
+                        'message' => 'Pesan WhatsApp berhasil dikirim ke ' . $target,
+                        'data' => $response->json(),
+                    ];
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Fonnte mengembalikan status HTTP ' . $response->status() . ': ' . $response->body(),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                Log::error("Gagal mengirim WhatsApp ke {$target}: " . $e->getMessage());
+                return [
+                    'success' => false,
+                    'message' => 'Gagal mengirim pesan: ' . $e->getMessage(),
+                ];
+            }
+        } else {
+            Log::info("SIMULASI WHATSAPP [Target: {$target}]: {$formattedMessage}");
+            return [
+                'success' => true,
+                'message' => 'Pesan tersimulasi (API Token Fonnte belum diisi). Check storage/logs/laravel.log.',
+            ];
+        }
+    }
+
+    /**
+     * Kirim pesan WhatsApp ke daftar user ID (PM).
      */
     public function sendBulk(array $userIds, string $judul, string $pesan): void
     {
         $users = User::whereIn('id', $userIds)->get();
-        $apiKey = config('services.whatsapp.api_key');
-        $endpoint = config('services.whatsapp.endpoint', 'https://api.fonnte.com/send');
 
         foreach ($users as $user) {
             $noHp = $user->no_hp ?? '-';
-            $formattedMessage = "*[{$judul}]*\n\nHallo {$user->nama},\n\n{$pesan}\n\n_Pesan otomatis dari Kostly App_";
 
             // Simpan log notifikasi WA di database
             \App\Models\Notifikasi::create([
@@ -30,20 +142,8 @@ class WhatsAppService
                 'status' => 'terkirim',
             ]);
 
-            // Jika API Key gateway (contoh: Fonnte / Wablas) diisi di .env
-            if ($apiKey && !empty($noHp) && $noHp !== '-') {
-                try {
-                    Http::withHeaders([
-                        'Authorization' => $apiKey,
-                    ])->post($endpoint, [
-                        'target' => $noHp,
-                        'message' => $formattedMessage,
-                    ]);
-                } catch (\Throwable $e) {
-                    Log::error("Gagal mengirim WhatsApp Gateway ke {$noHp}: " . $e->getMessage());
-                }
-            } else {
-                Log::info("SIMULASI WHATSAPP [Target: {$noHp} ({$user->nama})]: {$formattedMessage}");
+            if (!empty($noHp) && $noHp !== '-') {
+                $this->sendDirect($noHp, $judul, $pesan);
             }
         }
     }

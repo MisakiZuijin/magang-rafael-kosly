@@ -14,6 +14,8 @@ class Pembayaran extends Model
     protected $fillable = [
         'penghuni_kamar_id',
         'jumlah',
+        'tipe_perpanjangan',
+        'jumlah_hari',
         'periode_mulai',
         'periode_selesai',
         'status',
@@ -28,6 +30,7 @@ class Pembayaran extends Model
     {
         return [
             'jumlah' => 'decimal:2',
+            'jumlah_hari' => 'integer',
             'periode_mulai' => 'date',
             'periode_selesai' => 'date',
             'tanggal_bayar' => 'date',

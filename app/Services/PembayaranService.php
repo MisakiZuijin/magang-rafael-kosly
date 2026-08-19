@@ -47,19 +47,94 @@ class PembayaranService
         return $this->repository->create($data);
     }
 
-    public function uploadBukti(int $id, string $buktiUrl): Pembayaran
+    public function uploadBukti(int $id, string $buktiUrl, string $tipePerpanjangan = 'bulanan', int $jumlahHari = 30): Pembayaran
     {
-        return $this->repository->update($id, [
+        $pembayaran = Pembayaran::with('penghuniKamar.kamar')->findOrFail($id);
+        $kamar = $pembayaran->penghuniKamar->kamar ?? null;
+
+        // Cek apakah pembayaran ini adalah perpanjangan sewa (sudah ada pembayaran terverifikasi sebelumnya)
+        $hasPreviousVerified = Pembayaran::where('penghuni_kamar_id', $pembayaran->penghuni_kamar_id)
+            ->where('status', 'terverifikasi')
+            ->where('id', '!=', $pembayaran->id)
+            ->exists();
+
+        $updateData = [
             'bukti_transfer_url' => $buktiUrl,
             'tanggal_bayar' => now(),
             'status' => 'pending',
-        ]);
+        ];
+
+        // Hanya perbarui skema biaya & periode jika ini adalah pembayaran perpanjangan sewa
+        if ($hasPreviousVerified) {
+            $jumlahBiaya = $pembayaran->jumlah;
+            if ($kamar) {
+                if ($tipePerpanjangan === 'harian') {
+                    $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0
+                        ? $kamar->harga_per_hari
+                        : round(($kamar->harga_per_bulan ?? 0) / 30);
+                    $jumlahBiaya = $jumlahHari * $hargaHarian;
+                } else {
+                    $jumlahBiaya = $kamar->harga_per_bulan;
+                    $jumlahHari = 30;
+                }
+            }
+
+            $pk = $pembayaran->penghuniKamar;
+            $baseDate = ($pk && $pk->tanggal_keluar)
+                ? \Carbon\Carbon::parse($pk->tanggal_keluar)
+                : \Carbon\Carbon::now();
+
+            $updateData['tipe_perpanjangan'] = $tipePerpanjangan;
+            $updateData['jumlah_hari'] = $jumlahHari;
+            $updateData['jumlah'] = $jumlahBiaya;
+            $updateData['periode_mulai'] = $baseDate->toDateString();
+            $updateData['periode_selesai'] = $baseDate->copy()->addDays($jumlahHari)->toDateString();
+        }
+
+        $pembayaran->update($updateData);
+
+        return $pembayaran->fresh();
     }
 
     public function verify(int $id, array $data): Pembayaran
     {
+        $pembayaran = Pembayaran::with('penghuniKamar')->findOrFail($id);
         $data['tanggal_verifikasi'] = now();
-        return $this->repository->verify($id, $data);
+
+        $pk = $pembayaran->penghuniKamar;
+        if ($pk) {
+            // Cek apakah pembayaran ini adalah pembayaran perpanjangan (bukan pembayaran awal pendaftaran)
+            $hasPreviousVerified = Pembayaran::where('penghuni_kamar_id', $pembayaran->penghuni_kamar_id)
+                ->where('status', 'terverifikasi')
+                ->where('id', '!=', $pembayaran->id)
+                ->exists();
+
+            if (!$hasPreviousVerified) {
+                // PEMBAYARAN AWAL PENDAFTARAN: JANGAN UBAH tanggal_keluar ATAU periode_mulai / periode_selesai!
+                // Tanggal keluar di PenghuniKamar sudah diset secara akurat saat pendaftaran awal (misal: 19-25 Aug).
+            } else {
+                // PEMBAYARAN PERPANJANGAN SEWA: Tambahkan durasi baru ke tanggal_keluar penghuni
+                $baseDate = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->isFuture()
+                    ? \Carbon\Carbon::parse($pk->tanggal_keluar)
+                    : \Carbon\Carbon::now();
+
+                $daysToAdd = $pembayaran->jumlah_hari ?: ($pembayaran->tipe_perpanjangan === 'harian' ? 1 : 30);
+                $newTanggalKeluar = $baseDate->copy()->addDays($daysToAdd);
+
+                $pk->update([
+                    'tanggal_keluar' => $newTanggalKeluar->toDateString(),
+                    'durasi' => $pembayaran->tipe_perpanjangan ?? $pk->durasi,
+                ]);
+
+                $data['periode_mulai'] = $baseDate->toDateString();
+                $data['periode_selesai'] = $newTanggalKeluar->toDateString();
+            }
+        }
+
+        $data['status'] = 'terverifikasi';
+
+        $pembayaran->update($data);
+        return $pembayaran->fresh();
     }
 
     public function reject(int $id, string $catatan, int $adminId): Pembayaran
@@ -115,30 +190,36 @@ class PembayaranService
 
         // Jika sisa hari <= 7 hari
         if ($sisaHari <= 7) {
-            // Cek apakah sudah ada pembayaran pending atau terverifikasi untuk siklus ini
-            $existingBilling = Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
-                ->whereIn('status', ['pending', 'terverifikasi'])
+            // Cek apakah sudah ada pembayaran status pending yang belum diselesaikan
+            $pendingBilling = Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
+                ->where('status', 'pending')
                 ->first();
 
-            if (!$existingBilling) {
+            if (!$pendingBilling) {
                 $kamar = $penghuniKamar->kamar;
+                $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0
+                    ? $kamar->harga_per_hari
+                    : round(($kamar->harga_per_bulan ?? 0) / 30);
+
                 $jumlahBiaya = $penghuniKamar->durasi === 'harian'
-                    ? ($kamar->harga_per_hari ?? 0)
+                    ? $hargaHarian
                     : $kamar->harga_per_bulan;
 
                 $newBilling = Pembayaran::create([
                     'penghuni_kamar_id' => $penghuniKamar->id,
                     'jumlah' => $jumlahBiaya,
-                    'periode_mulai' => $penghuniKamar->tanggal_masuk,
-                    'periode_selesai' => $tanggalKeluar,
+                    'tipe_perpanjangan' => $penghuniKamar->durasi === 'harian' ? 'harian' : 'bulanan',
+                    'jumlah_hari' => $penghuniKamar->durasi === 'harian' ? 1 : 30,
+                    'periode_mulai' => $tanggalKeluar->toDateString(),
+                    'periode_selesai' => $penghuniKamar->durasi === 'harian' ? $tanggalKeluar->copy()->addDay()->toDateString() : $tanggalKeluar->copy()->addDays(30)->toDateString(),
                     'status' => 'pending',
                 ]);
 
                 // Kirim notifikasi otomatis ke penghuni
                 \App\Models\Notifikasi::create([
                     'user_id' => $penghuniKamar->penghuni_id,
-                    'judul' => 'Tagihan Pembayaran Sewa Kos',
-                    'pesan' => "Masa tinggal Anda di Kamar " . ($kamar->kode_kamar ?? '-') . " tersisa {$sisaHari} hari. Tagihan sewa telah diterbitkan, silakan lakukan pembayaran.",
+                    'judul' => 'Tagihan Perpanjangan Sewa Kos',
+                    'pesan' => "Masa tinggal Anda di Kamar " . ($kamar->kode_kamar ?? '-') . " tersisa {$sisaHari} hari. Tagihan perpanjangan sewa telah diterbitkan, silakan lakukan pembayaran.",
                     'channel' => 'web',
                     'status' => 'terkirim',
                 ]);
