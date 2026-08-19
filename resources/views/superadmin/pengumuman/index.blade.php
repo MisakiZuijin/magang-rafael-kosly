@@ -8,7 +8,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Broadcast Pengumuman</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Log pengumuman &amp; pengiriman pesan ke anak kos (Super Admin)</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Log pengumuman &amp; pengiriman pesan ke anak kos</p>
         </div>
     </div>
 

@@ -15,7 +15,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Form Pengumuman</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kirim pengumuman jatuh tempo atau aturan baru (Super Admin)</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kirim pengumuman jatuh tempo atau aturan baru</p>
         </div>
         <x-btn href="{{ route('superadmin.pengumuman.index') }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
             &larr; Kembali
@@ -67,16 +67,16 @@
             {{-- Judul --}}
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Judul Pengumuman</label>
-                <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Contoh: Pengingat Pembayaran Sewa Bulan Ini" 
-                       class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 focus:outline-none">
+                <input type="text" name="judul" value="{{ old('judul') }}" required placeholder="Contoh: Pengingat Pembayaran Sewa Bulan Ini"
+                    class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 focus:outline-none">
                 @error('judul') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
 
             {{-- Isi --}}
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Isi Pengumuman / Pesan</label>
-                <textarea name="isi" rows="4" required placeholder="Tuliskan pesan lengkap pengumuman di sini..." 
-                          class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 focus:outline-none">{{ old('isi') }}</textarea>
+                <textarea name="isi" rows="4" required placeholder="Tuliskan pesan lengkap pengumuman di sini..."
+                    class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 focus:outline-none">{{ old('isi') }}</textarea>
                 @error('isi') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
 
@@ -109,26 +109,26 @@
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pilih Properti Kos Target</label>
                 <div class="max-h-44 overflow-y-auto space-y-1.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                     @foreach($kosList as $k)
-                        <label class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
-                            <input type="checkbox" name="target_ids[]" value="{{ $k->id }}" class="rounded text-emerald-600 focus:ring-emerald-500">
-                            <span>{{ $k->nama }} (Mitra: {{ $k->mitra->nama ?? '-' }})</span>
-                        </label>
+                    <label class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
+                        <input type="checkbox" name="target_ids[]" value="{{ $k->id }}" class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span>{{ $k->nama }} (Mitra: {{ $k->mitra->nama ?? '-' }})</span>
+                    </label>
                     @endforeach
                 </div>
             </div>
 
             {{-- Target List Kamar --}}
             @php
-                $allKamars = \App\Models\Kamar::with('kos')->get();
+            $allKamars = \App\Models\Kamar::with('kos')->get();
             @endphp
             <div x-show="targetTipe === 'kamar' && kategoriTipe !== 'aturan'" x-transition class="space-y-2">
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pilih Kode Kamar Target</label>
                 <div class="max-h-44 overflow-y-auto space-y-1.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                     @foreach($allKamars as $km)
-                        <label class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
-                            <input type="checkbox" name="target_ids[]" value="{{ $km->id }}" class="rounded text-emerald-600 focus:ring-emerald-500">
-                            <span>Kamar {{ $km->kode_kamar }} · {{ $km->kos->nama ?? '-' }}</span>
-                        </label>
+                    <label class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
+                        <input type="checkbox" name="target_ids[]" value="{{ $km->id }}" class="rounded text-emerald-600 focus:ring-emerald-500">
+                        <span>Kamar {{ $km->kode_kamar }} · {{ $km->kos->nama ?? '-' }}</span>
+                    </label>
                     @endforeach
                 </div>
             </div>
