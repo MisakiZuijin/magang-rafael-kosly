@@ -49,6 +49,7 @@ class AdminLaporanController extends Controller
             $request->input('end')
         );
 
-        return view('admin.laporan.filter', compact('pembayarans'));
+        $view = $request->is('superadmin*') ? 'superadmin.laporan.filter' : 'admin.laporan.filter';
+        return view($view, compact('pembayarans'));
     }
 }

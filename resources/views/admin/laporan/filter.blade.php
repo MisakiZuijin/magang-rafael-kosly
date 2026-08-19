@@ -37,7 +37,7 @@
                 </span>
             </div>
 
-            <div class="space-y-2.5">
+            <div class="space-y-2.5 max-h-[320px] overflow-y-auto no-scrollbar pr-0.5">
                 @foreach($pembayarans as $pb)
                     <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between text-xs">
                         <div>
