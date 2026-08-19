@@ -55,6 +55,8 @@ class AdminKosController extends Controller
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric',
             'kapasitas' => 'required|integer|min:1',
+            'wa_group_id' => 'nullable|string|max:100',
+            'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
         $validated['status'] = 'kosong';
@@ -105,6 +107,12 @@ class AdminKosController extends Controller
                 'penghuni_id_2.different' => 'Penghuni ke-2 harus orang yang berbeda dari Penghuni ke-1.',
             ]);
 
+            if (empty($validated['tanggal_keluar'])) {
+                $validated['tanggal_keluar'] = $validated['durasi'] === 'bulanan'
+                    ? \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString()
+                    : \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+            }
+
             // Register Penghuni 1
             $this->penghuniKamarService->create([
                 'kamar_id' => $validated['kamar_id'],
@@ -134,6 +142,12 @@ class AdminKosController extends Controller
                 'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
                 'durasi' => 'required|in:harian,bulanan',
             ]);
+
+            if (empty($validated['tanggal_keluar'])) {
+                $validated['tanggal_keluar'] = $validated['durasi'] === 'bulanan'
+                    ? \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString()
+                    : \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+            }
 
             $validated['status'] = 'aktif';
             $this->penghuniKamarService->create($validated);
@@ -191,6 +205,8 @@ class AdminKosController extends Controller
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric',
             'kapasitas' => 'required|integer|min:1',
+            'wa_group_id' => 'nullable|string|max:100',
+            'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
         $this->kamarService->update($id, $validated);

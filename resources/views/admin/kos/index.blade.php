@@ -11,9 +11,10 @@
     modalEditKamar: false,
     filterKosId: 'all',
     filterTipeKamar: 'all',
+    filterMasaAktif: 'all',
     editKosData: { id: '', mitra_id: '', nama: '', alamat: '', latitude: '', longitude: '', bank: '', no_rekening: '', nama_pemilik_rekening: '' },
     editKosUrl: '',
-    editKamarData: { id: '', kos_id: '', kode_kamar: '', tipe: 'standar', harga_per_bulan: '', harga_per_hari: '', kapasitas: 1 },
+    editKamarData: { id: '', kos_id: '', kode_kamar: '', tipe: 'standar', harga_per_bulan: '', harga_per_hari: '', kapasitas: 1, wa_group_id: '', link_grup_wa: '' },
     editKamarUrl: '',
     openEditKosModal(kos) {
         this.editKosData = {
@@ -27,8 +28,7 @@
             no_rekening: kos.no_rekening || '',
             nama_pemilik_rekening: kos.nama_pemilik_rekening || ''
         };
-        const prefix = '{{ request()->is('superadmin*') ? 'superadmin' : 'admin' }}';
-        this.editKosUrl = '/' + prefix + '/kos/' + kos.id;
+        this.editKosUrl = '{{ url('/admin/kos') }}/' + kos.id;
         this.modalEditKos = true;
     },
     openEditKamarModal(kamar) {
@@ -39,10 +39,11 @@
             tipe: kamar.tipe || 'standar',
             harga_per_bulan: kamar.harga_per_bulan || '',
             harga_per_hari: kamar.harga_per_hari || '',
-            kapasitas: kamar.kapasitas || 1
+            kapasitas: kamar.kapasitas || 1,
+            wa_group_id: kamar.wa_group_id || '',
+            link_grup_wa: kamar.link_grup_wa || ''
         };
-        const prefix = '{{ request()->is('superadmin*') ? 'superadmin' : 'admin' }}';
-        this.editKamarUrl = '/' + prefix + '/kamar/' + kamar.id;
+        this.editKamarUrl = '{{ url('/admin/kamar') }}/' + kamar.id;
         this.modalEditKamar = true;
     },
     selectedKosIdForKamar: '',
@@ -88,18 +89,18 @@
         </button>
     </div>
 
-    {{-- Filter Kos & Tipe Kamar Selector Bar --}}
+    {{-- Filter Kos & Tipe Kamar & Status Masa Aktif Selector Bar --}}
     @if(!$kosList->isEmpty())
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2">
-        <div class="flex items-center justify-between">
+        <div class="grid grid-cols-1 gap-2">
             <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                 Filter Tampilan Kos &amp; Kamar:
             </label>
             <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono"
-                x-text="(filterKosId === 'all' ? 'Semua Kos' : 'Kos Terpilih') + ' · ' + (filterTipeKamar === 'all' ? 'Semua Tipe' : (filterTipeKamar === 'standar' ? 'Standar' : 'Berbagi'))"></span>
+                x-text="(filterKosId === 'all' ? 'Semua Kos' : 'Kos Terpilih') + ' · ' + (filterTipeKamar === 'all' ? 'Semua Tipe' : (filterTipeKamar === 'standar' ? 'Standar' : 'Berbagi')) + ' · ' + (filterMasaAktif === 'all' ? 'Semua Masa Aktif' : (filterMasaAktif === 'expired' ? 'Jatuh Tempo' : (filterMasaAktif === 'aktif' ? 'Masih Aktif' : 'Kamar Kosong')))"></span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {{-- Filter Kos --}}
             <div>
                 <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Pilih Kos:</label>
@@ -120,6 +121,17 @@
                     <option value="berbagi">Berbagi (2 Orang)</option>
                 </select>
             </div>
+
+            {{-- Filter Status Masa Aktif / Jatuh Tempo --}}
+            <div>
+                <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Status Masa Aktif Sewa:</label>
+                <select x-model="filterMasaAktif" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-amber-500">
+                    <option value="all">-- Semua Status Sewa --</option>
+                    <option value="expired">⚠️ Jatuh Tempo / Masa Aktif Habis</option>
+                    <option value="aktif">✅ Masih Aktif (Belum Jatuh Tempo)</option>
+                    <option value="kosong">🏠 Kamar Kosong</option>
+                </select>
+            </div>
         </div>
     </div>
     @endif
@@ -130,33 +142,33 @@
     @else
     <div class="space-y-4">
         @foreach($kosList as $kos)
-        <div x-show="(filterKosId === 'all' || filterKosId == '{{ $kos->id }}') &amp;&amp; (filterTipeKamar === 'all' || {{ json_encode($kos->kamar->pluck('tipe')->toArray()) }}.includes(filterTipeKamar))"
+        <div x-show="(filterKosId === 'all' || filterKosId == '{{ $kos->id }}')"
             x-transition
             class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
             <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
-                <div class="flex justify-between items-start mb-1">
-                    <div>
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                <div class="flex justify-between items-start gap-2 mb-1">
+                    <div class="min-w-0 flex-1">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block truncate">
                             Mitra: {{ $kos->mitra->nama ?? '-' }}
                         </span>
-                        <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug">{{ $kos->nama }}</h3>
-                        <p class="text-xs text-gray-500 mt-0.5">{{ $kos->alamat ?? 'Alamat tidak diisi' }}</p>
+                        <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
+                        <p class="text-xs text-gray-500 mt-0.5 truncate">{{ $kos->alamat ?? 'Alamat tidak diisi' }}</p>
                     </div>
 
-                    <div class="flex items-center gap-1.5">
-                        <span class="px-2 py-1 text-[10px] font-bold rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                        <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
                             {{ $kos->kamar->count() }} Kamar
                         </span>
                         <button type="button"
                             @click="openEditKosModal(@js($kos))"
-                            class="px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 rounded-lg transition-all flex items-center gap-0.5">
-                            <span>✏️ Edit Kos</span>
+                            class="px-2 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 rounded-lg transition-all flex items-center gap-0.5 active:scale-95">
+                            <span>✏️ Edit</span>
                         </button>
                     </div>
                 </div>
 
                 @if($kos->bank && $kos->no_rekening)
-                <p class="text-[11px] font-mono text-gray-400 mt-2">
+                <p class="text-[11px] font-mono text-gray-400 mt-2 truncate">
                     Rekening: {{ $kos->bank }} - {{ $kos->no_rekening }} (a.n {{ $kos->nama_pemilik_rekening ?? '-' }})
                 </p>
                 @endif
@@ -177,11 +189,18 @@
                     @php
                     $activePenghunis = $kamar->penghuniKamar ? $kamar->penghuniKamar->where('status', 'aktif') : collect();
                     $isTerisi = $kamar->status === 'terisi' || $activePenghunis->isNotEmpty();
+                    $todayDate = \Carbon\Carbon::now()->startOfDay();
+
+                    $hasExpiredPenghuni = $activePenghunis->contains(function($pk) use ($todayDate) {
+                    return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+                    });
+
+                    $kamarMasaAktifStatus = $activePenghunis->isEmpty() ? 'kosong' : ($hasExpiredPenghuni ? 'expired' : 'aktif');
                     @endphp
 
-                    <div x-show="filterTipeKamar === 'all' || filterTipeKamar === '{{ $kamar->tipe }}'"
+                    <div x-show="(filterTipeKamar === 'all' || filterTipeKamar === '{{ $kamar->tipe }}') && (filterMasaAktif === 'all' || filterMasaAktif === '{{ $kamarMasaAktifStatus }}')"
                         x-transition
-                        class="p-3 rounded-xl border {{ $isTerisi ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-200 dark:border-gray-800' }} space-y-2">
+                        class="p-3 rounded-xl border {{ $hasExpiredPenghuni ? 'bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/50' : ($isTerisi ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/50' : 'bg-gray-50/60 dark:bg-gray-800/40 border-gray-200 dark:border-gray-800') }} space-y-2">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center gap-1.5">
                                 <span class="font-bold text-xs font-mono text-gray-900 dark:text-white">
@@ -197,14 +216,25 @@
                                 </button>
                             </div>
 
-                            <x-badge type="{{ $isTerisi ? 'success' : 'warning' }}">
-                                {{ $isTerisi ? 'Terisi' : 'Kosong' }}
+                            <x-badge type="{{ $hasExpiredPenghuni ? 'danger' : ($isTerisi ? 'success' : 'warning') }}">
+                                {{ $hasExpiredPenghuni ? 'Jatuh Tempo' : ($isTerisi ? 'Terisi' : 'Kosong') }}
                             </x-badge>
                         </div>
 
-                        <p class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                            Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }} / bln
-                        </p>
+                        <div class="flex justify-between items-center text-[11px] font-semibold">
+                            <span class="text-emerald-600 dark:text-emerald-400">
+                                Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }} / bln
+                            </span>
+                            @if($kamar->link_grup_wa)
+                            <a href="{{ $kamar->link_grup_wa }}" target="_blank" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-md hover:underline flex items-center gap-1">
+                                💬 Grup WA Kamar
+                            </a>
+                            @elseif($kamar->wa_group_id)
+                            <span class="text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md" title="ID Grup Fonnte: {{ $kamar->wa_group_id }}">
+                                💬 WA Group Registered
+                            </span>
+                            @endif
+                        </div>
 
                         {{-- Penghuni --}}
                         @if($activePenghunis->isNotEmpty())
@@ -214,13 +244,28 @@
                             </p>
 
                             @foreach($activePenghunis as $pk)
-                            <div class="flex items-center justify-between text-xs bg-white/60 dark:bg-gray-900/60 p-1.5 rounded-lg border border-emerald-100 dark:border-emerald-900/30">
-                                <span class="font-bold text-gray-900 dark:text-white truncate">
-                                    {{ $pk->penghuni->nama ?? '-' }}
-                                </span>
-                                <span class="text-[10px] text-gray-500 font-mono">
-                                    {{ $pk->durasi }}
-                                </span>
+                            @php
+                            $isPkExpired = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+                            $tglKeluarStr = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
+                            @endphp
+                            <div class="flex items-center justify-between text-xs p-2 rounded-xl border {{ $isPkExpired ? 'bg-red-100/70 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white/60 dark:bg-gray-900/60 border-emerald-100 dark:border-emerald-900/30' }}">
+                                <div class="truncate">
+                                    <span class="font-bold text-gray-900 dark:text-white block truncate">
+                                        {{ $pk->penghuni->nama ?? '-' }}
+                                    </span>
+                                    <span class="text-[9px] font-mono text-gray-500">
+                                        Masuk: {{ $pk->tanggal_masuk ? \Carbon\Carbon::parse($pk->tanggal_masuk)->format('d M Y') : '-' }}
+                                    </span>
+                                </div>
+
+                                <div class="text-right flex flex-col items-end">
+                                    <span class="px-2 py-0.5 text-[9px] font-bold rounded-lg {{ $isPkExpired ? 'bg-red-200 text-red-800 dark:bg-red-900/80 dark:text-red-200' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' }}">
+                                        {{ $isPkExpired ? '⚠️ Jatuh Tempo (' . $tglKeluarStr . ')' : 'Sewa s/d ' . $tglKeluarStr }}
+                                    </span>
+                                    <span class="text-[9px] text-gray-400 font-mono mt-0.5">
+                                        {{ ucfirst($pk->durasi) }}
+                                    </span>
+                                </div>
                             </div>
                             @endforeach
 
@@ -424,6 +469,17 @@
                 <input type="number" name="kapasitas" value="1" min="1" max="5" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
             </div>
 
+            <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte)</label>
+                    <input type="text" name="wa_group_id" placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar</label>
+                    <input type="url" name="link_grup_wa" placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
+                </div>
+            </div>
+
             <div class="pt-2 flex justify-end gap-2">
                 <x-btn type="button" variant="secondary" size="sm" @click="modalKamar = false">Batal</x-btn>
                 <x-btn type="submit" variant="primary" size="sm">Simpan Kamar</x-btn>
@@ -477,6 +533,17 @@
                 <input type="number" name="kapasitas" x-model="editKamarData.kapasitas" min="1" max="5" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
             </div>
 
+            <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte)</label>
+                    <input type="text" name="wa_group_id" x-model="editKamarData.wa_group_id" placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar</label>
+                    <input type="url" name="link_grup_wa" x-model="editKamarData.link_grup_wa" placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
+                </div>
+            </div>
+
             <div class="pt-2 flex justify-end gap-2">
                 <x-btn type="button" variant="secondary" size="sm" @click="modalEditKamar = false">Batal</x-btn>
                 <x-btn type="submit" variant="primary" size="sm">Update Kamar</x-btn>
@@ -495,7 +562,7 @@
     $allKamars = \App\Models\Kamar::with('kos')->get();
     @endphp
     <x-modal show="modalPenghuni" title="Daftarkan Penghuni ke Kamar">
-        <form action="{{ route('admin.penghuni.daftar') }}" method="POST" class="space-y-3">
+        <form action="{{ route('admin.penghuni.daftar') }}" method="POST" class="space-y-3" x-data="{ durasiSewa: 'bulanan' }">
             @csrf
 
             {{-- Pilih Kamar (Kamar Terisi Ditandai Disabled) --}}
@@ -577,9 +644,9 @@
             <div class="grid grid-cols-2 gap-2">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Durasi Sewa</label>
-                    <select name="durasi" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
-                        <option value="bulanan">Bulanan</option>
-                        <option value="harian">Harian</option>
+                    <select name="durasi" x-model="durasiSewa" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                        <option value="bulanan">Bulanan (Auto 30 Hari)</option>
+                        <option value="harian">Harian (Tentukan Selesai)</option>
                     </select>
                 </div>
                 <div>
@@ -588,9 +655,10 @@
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Tanggal Selesai / Jatuh Tempo</label>
-                <input type="date" name="tanggal_keluar" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+            <div x-show="durasiSewa === 'harian'" x-transition class="space-y-1">
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Tanggal Selesai / Jatuh Tempo <span class="text-red-500">*</span></label>
+                <input type="date" name="tanggal_keluar" :required="durasiSewa === 'harian'" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic">* Tentukan tanggal selesai untuk sewa harian.</p>
             </div>
 
             <div class="pt-2 flex justify-end gap-2">

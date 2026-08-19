@@ -141,9 +141,26 @@ class AdminPengumumanController extends Controller
             $this->notifikasiService->sendBulk($userIds, $judul, $pesan, 'web');
         }
 
-        // 2. WhatsApp Notification
+        // 2. WhatsApp Notification (Personal PM & WA Group Kamar)
         if (in_array($channel, ['whatsapp', 'keduanya'])) {
             $this->whatsAppService->sendBulk($userIds, $judul, $pesan);
+
+            // Kirim langsung ke Grup WhatsApp Kamar jika wa_group_id diisi
+            $targetedKamars = collect();
+            if ($validated['target_tipe'] === 'semua') {
+                $targetedKamars = \App\Models\Kamar::with('kos')->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
+            } elseif ($validated['target_tipe'] === 'kos') {
+                $targetedKamars = \App\Models\Kamar::with('kos')->whereIn('kos_id', $validated['target_ids'] ?? [])
+                    ->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
+            } elseif ($validated['target_tipe'] === 'kamar') {
+                $targetedKamars = \App\Models\Kamar::with('kos')->whereIn('id', $validated['target_ids'] ?? [])
+                    ->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
+            }
+
+            foreach ($targetedKamars as $kamarItem) {
+                $kosNama = $kamarItem->kos->nama ?? 'Kos';
+                $this->whatsAppService->sendDirect($kamarItem->wa_group_id, "PENGUMUMAN KAMAR {$kamarItem->kode_kamar} ({$kosNama}) - " . $judul, $pesan);
+            }
         }
     }
 }
