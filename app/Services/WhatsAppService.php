@@ -84,7 +84,7 @@ class WhatsAppService
     {
         $apiKey = $this->getApiKey();
         $endpoint = $this->getEndpoint();
-        $formattedMessage = "*[{$judul}]*\n\n{$pesan}\n\n_Pesan otomatis dari Kostly App_";
+        $formattedMessage = "*[{$judul}]*\n\n{$pesan}\n\n_Pesan otomatis dari Kosly App_";
 
         if ($apiKey && !empty($target) && $target !== '-') {
             try {

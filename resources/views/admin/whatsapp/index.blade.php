@@ -147,7 +147,7 @@ $testRoute = $isSuperAdmin ? route('superadmin.whatsapp.test') : route('admin.wh
             <div>
                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Isi Pesan WhatsApp</label>
                 <textarea name="pesan" rows="3" required placeholder="Tuliskan pesan tes pengiriman WhatsApp..."
-                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-blue-500">Halo! Ini adalah pesan uji coba dari aplikasi Kostly menggunakan WhatsApp Gateway Fonnte.</textarea>
+                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-blue-500">Halo! Ini adalah pesan uji coba dari aplikasi Kosly menggunakan WhatsApp Gateway Fonnte.</textarea>
             </div>
 
             <div class="pt-1 flex justify-end">
