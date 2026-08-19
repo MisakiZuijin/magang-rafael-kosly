@@ -81,8 +81,13 @@ class PenghuniDashboardController extends Controller
     {
         $request->validate([
             'pembayaran_id' => 'required|exists:pembayaran,id',
+            'tipe_perpanjangan' => 'required|in:bulanan,harian',
+            'jumlah_hari' => 'nullable|integer|min:1|max:365',
             'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
+
+        $tipePerpanjangan = $request->input('tipe_perpanjangan', 'bulanan');
+        $jumlahHari = $tipePerpanjangan === 'harian' ? (int) $request->input('jumlah_hari', 1) : 30;
 
         $file = $request->file('bukti_transfer');
 
@@ -91,7 +96,9 @@ class PenghuniDashboardController extends Controller
 
         $this->pembayaranService->uploadBukti(
             $request->input('pembayaran_id'),
-            $path
+            $path,
+            $tipePerpanjangan,
+            $jumlahHari
         );
 
         return redirect()->back()->with('success', 'Bukti pembayaran berhasil diupload.');
