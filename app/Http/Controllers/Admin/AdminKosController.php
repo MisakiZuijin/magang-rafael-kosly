@@ -3,8 +3,12 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Kamar;
+use App\Models\PenghuniKamar;
+use App\Models\User;
 use App\Services\KamarService;
 use App\Services\KosService;
+use App\Services\LogAktivitasService;
 use App\Services\PenghuniKamarService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
@@ -15,7 +19,8 @@ class AdminKosController extends Controller
         protected KosService $kosService,
         protected KamarService $kamarService,
         protected UserService $userService,
-        protected PenghuniKamarService $penghuniKamarService
+        protected PenghuniKamarService $penghuniKamarService,
+        protected LogAktivitasService $logAktivitasService
     ) {}
 
     public function index()
@@ -41,7 +46,8 @@ class AdminKosController extends Controller
             'nama_pemilik_rekening' => 'nullable|string|max:100',
         ]);
 
-        $this->kosService->create($validated);
+        $kos = $this->kosService->create($validated);
+        $this->logAktivitasService->log('tambah_kos', "Mendaftarkan properti kos baru: {$kos->nama}");
 
         return redirect()->back()->with('success', 'Kos berhasil didaftarkan.');
     }
@@ -60,7 +66,9 @@ class AdminKosController extends Controller
         ]);
 
         $validated['status'] = 'kosong';
-        $this->kamarService->create($validated);
+        $kamar = $this->kamarService->create($validated);
+        $kosNama = $kamar->kos->nama ?? 'Kos';
+        $this->logAktivitasService->log('tambah_kamar', "Menambahkan Kamar {$kamar->kode_kamar} di {$kosNama}");
 
         return redirect()->back()->with('success', 'Kamar berhasil didaftarkan.');
     }
@@ -77,7 +85,7 @@ class AdminKosController extends Controller
         }
 
         // Check if Penghuni 1 is already assigned to an active room
-        $penghuni1Active = \App\Models\PenghuniKamar::where('penghuni_id', $request->input('penghuni_id'))
+        $penghuni1Active = PenghuniKamar::where('penghuni_id', $request->input('penghuni_id'))
             ->where('status', 'aktif')
             ->exists();
         if ($penghuni1Active) {
@@ -86,7 +94,7 @@ class AdminKosController extends Controller
 
         // Check if Penghuni 2 is already assigned to an active room
         if ($request->filled('penghuni_id_2')) {
-            $penghuni2Active = \App\Models\PenghuniKamar::where('penghuni_id', $request->input('penghuni_id_2'))
+            $penghuni2Active = PenghuniKamar::where('penghuni_id', $request->input('penghuni_id_2'))
                 ->where('status', 'aktif')
                 ->exists();
             if ($penghuni2Active) {
@@ -133,6 +141,10 @@ class AdminKosController extends Controller
                 'status' => 'aktif',
             ]);
 
+            $u1 = User::find($validated['penghuni_id']);
+            $u2 = User::find($validated['penghuni_id_2']);
+            $this->logAktivitasService->log('daftar_penghuni', "Mendaftarkan penghuni {$u1->nama} & {$u2->nama} ke Kamar {$kamar->kode_kamar}");
+
             return redirect()->back()->with('success', 'Berhasil mendaftarkan 2 penghuni ke kamar tipe berbagi.');
         } else {
             $validated = $request->validate([
@@ -152,19 +164,31 @@ class AdminKosController extends Controller
             $validated['status'] = 'aktif';
             $this->penghuniKamarService->create($validated);
 
+            $u = User::find($validated['penghuni_id']);
+            $this->logAktivitasService->log('daftar_penghuni', "Mendaftarkan penghuni {$u->nama} ke Kamar {$kamar->kode_kamar}");
+
             return redirect()->back()->with('success', 'Penghuni berhasil didaftarkan ke kamar.');
         }
     }
 
     public function checkoutPenghuni(int $id)
     {
+        $pk = PenghuniKamar::with('penghuni', 'kamar')->find($id);
+        $penghuniNama = $pk->penghuni->nama ?? 'Penghuni';
+        $kodeKamar = $pk->kamar->kode_kamar ?? '-';
+
         $this->penghuniKamarService->checkout($id);
+        $this->logAktivitasService->log('checkout_penghuni', "Melakukan checkout untuk penghuni {$penghuniNama} dari Kamar {$kodeKamar}");
+
         return redirect()->back()->with('success', 'Penghuni berhasil di-checkout.');
     }
 
     public function kosongkanKamar(int $kamarId)
     {
-        $penghuniKamarList = \App\Models\PenghuniKamar::where('kamar_id', $kamarId)
+        $kamar = Kamar::find($kamarId);
+        $kodeKamar = $kamar->kode_kamar ?? '-';
+
+        $penghuniKamarList = PenghuniKamar::where('kamar_id', $kamarId)
             ->where('status', 'aktif')
             ->get();
 
@@ -173,6 +197,7 @@ class AdminKosController extends Controller
         }
 
         $this->kamarService->updateStatus($kamarId, 'kosong');
+        $this->logAktivitasService->log('kosongkan_kamar', "Mengosongkan seluruh penghuni pada Kamar {$kodeKamar}");
 
         return redirect()->back()->with('success', 'Kamar berhasil dikosongkan.');
     }
@@ -192,6 +217,7 @@ class AdminKosController extends Controller
         ]);
 
         $this->kosService->update($id, $validated);
+        $this->logAktivitasService->log('update_kos', "Memperbarui data kos: {$validated['nama']}");
 
         return redirect()->back()->with('success', 'Data kos berhasil diperbarui.');
     }
@@ -210,6 +236,7 @@ class AdminKosController extends Controller
         ]);
 
         $this->kamarService->update($id, $validated);
+        $this->logAktivitasService->log('update_kamar', "Memperbarui data Kamar {$validated['kode_kamar']}");
 
         return redirect()->back()->with('success', 'Data kamar berhasil diperbarui.');
     }

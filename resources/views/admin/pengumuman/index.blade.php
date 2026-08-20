@@ -1,3 +1,8 @@
+@php
+$isSuperAdmin = request()->is('superadmin*');
+$createRoute = $isSuperAdmin ? route('superadmin.pengumuman.create') : route('admin.pengumuman.create');
+@endphp
+
 @extends('layouts.app')
 
 @section('title', 'Broadcast & Pengumuman')
@@ -5,14 +10,9 @@
 @section('content')
 <div class="space-y-4">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Broadcast Pengumuman</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Log pengumuman &amp; pengiriman pesan ke anak kos</p>
-        </div>
-    </div>
+    <x-page-header title="Broadcast Pengumuman" subtitle="Log pengumuman dan pengiriman pesan ke anak kos" />
 
-    <x-btn href="{{ route('admin.pengumuman.create') }}" size="sm" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
+    <x-btn href="{{ $createRoute }}" size="sm" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>

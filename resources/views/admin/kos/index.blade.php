@@ -1,5 +1,10 @@
 @extends('layouts.app')
 
+@php
+$isSuperAdmin = request()->is('superadmin*');
+$p = $isSuperAdmin ? 'superadmin.' : 'admin.';
+@endphp
+
 @section('title', 'Pendaftaran Kos & Kamar')
 
 @section('content')
@@ -28,7 +33,8 @@
             no_rekening: kos.no_rekening || '',
             nama_pemilik_rekening: kos.nama_pemilik_rekening || ''
         };
-        this.editKosUrl = '{{ url('/admin/kos') }}/' + kos.id;
+        const prefix = '{{ $isSuperAdmin ? 'superadmin' : 'admin' }}';
+        this.editKosUrl = '/' + prefix + '/kos/' + kos.id;
         this.modalEditKos = true;
     },
     openEditKamarModal(kamar) {
@@ -43,7 +49,8 @@
             wa_group_id: kamar.wa_group_id || '',
             link_grup_wa: kamar.link_grup_wa || ''
         };
-        this.editKamarUrl = '{{ url('/admin/kamar') }}/' + kamar.id;
+        const prefix = '{{ $isSuperAdmin ? 'superadmin' : 'admin' }}';
+        this.editKamarUrl = '/' + prefix + '/kamar/' + kamar.id;
         this.modalEditKamar = true;
     },
     selectedKosIdForKamar: '',
@@ -271,7 +278,7 @@
 
                             {{-- Tombol Kosongkan Kamar --}}
                             <div class="pt-1 flex justify-end">
-                                <form action="{{ route('admin.kamar.kosongkan', $kamar->id) }}" method="POST" onsubmit="return confirm('Kosongkan Kamar {{ $kamar->kode_kamar }} dan selesaikan sewa penghuni?')">
+                                <form action="{{ route($p . 'kamar.kosongkan', $kamar->id) }}" method="POST" onsubmit="return confirm('Kosongkan Kamar {{ $kamar->kode_kamar }} dan selesaikan sewa penghuni?')">
                                     @csrf
                                     <button type="submit" class="px-2.5 py-1 text-[11px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-900/50 flex items-center gap-1 active:scale-95 transition-all">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,7 +314,7 @@
 
     {{-- Modal Pendaftaran Kos Baru --}}
     <x-modal show="modalKos" title="Daftarkan Kos Baru">
-        <form action="{{ route('admin.kos.store') }}" method="POST" class="space-y-3">
+        <form action="{{ route($p . 'kos.store') }}" method="POST" class="space-y-3">
             @csrf
 
             <div>
@@ -426,7 +433,7 @@
 
     {{-- Modal Pendaftaran Kamar Baru --}}
     <x-modal show="modalKamar" title="Daftarkan Kamar Baru">
-        <form action="{{ route('admin.kamar.store') }}" method="POST" class="space-y-3">
+        <form action="{{ route($p . 'kamar.store') }}" method="POST" class="space-y-3">
             @csrf
 
             <div>
@@ -562,7 +569,7 @@
     $allKamars = \App\Models\Kamar::with('kos')->get();
     @endphp
     <x-modal show="modalPenghuni" title="Daftarkan Penghuni ke Kamar">
-        <form action="{{ route('admin.penghuni.daftar') }}" method="POST" class="space-y-3" x-data="{ durasiSewa: 'bulanan' }">
+        <form action="{{ route($p . 'penghuni.daftar') }}" method="POST" class="space-y-3" x-data="{ durasiSewa: 'bulanan' }">
             @csrf
 
             {{-- Pilih Kamar (Kamar Terisi Ditandai Disabled) --}}
@@ -609,11 +616,15 @@
                     @php
                     $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
                     $alreadyOccupying = $activePk !== null;
+                    $isDisabled = $alreadyOccupying || !$pu->is_active;
+                    $statusText = !$pu->is_active 
+                        ? '[NONAKTIF]' 
+                        : ($alreadyOccupying ? '[AKTIF - MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[AKTIF]');
                     @endphp
                     <option value="{{ $pu->id }}"
-                        {{ $alreadyOccupying ? 'disabled' : '' }}
-                        class="{{ $alreadyOccupying ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
-                        {{ $pu->nama }} ({{ $pu->email }}) {{ $alreadyOccupying ? '[SUDAH MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[TERSEDIA]' }}
+                        {{ $isDisabled ? 'disabled' : '' }}
+                        class="{{ $isDisabled ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
+                        {{ $pu->nama }} ({{ $pu->email }}) {{ $statusText }}
                     </option>
                     @endforeach
                 </select>
@@ -630,11 +641,15 @@
                     @php
                     $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
                     $alreadyOccupying = $activePk !== null;
+                    $isDisabled = $alreadyOccupying || !$pu->is_active;
+                    $statusText = !$pu->is_active 
+                        ? '[NONAKTIF]' 
+                        : ($alreadyOccupying ? '[AKTIF - MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[AKTIF]');
                     @endphp
                     <option value="{{ $pu->id }}"
-                        {{ $alreadyOccupying ? 'disabled' : '' }}
-                        class="{{ $alreadyOccupying ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
-                        {{ $pu->nama }} ({{ $pu->email }}) {{ $alreadyOccupying ? '[SUDAH MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[TERSEDIA]' }}
+                        {{ $isDisabled ? 'disabled' : '' }}
+                        class="{{ $isDisabled ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
+                        {{ $pu->nama }} ({{ $pu->email }}) {{ $statusText }}
                     </option>
                     @endforeach
                 </select>

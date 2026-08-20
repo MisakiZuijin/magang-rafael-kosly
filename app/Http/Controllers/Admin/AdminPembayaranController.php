@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Services\LogAktivitasService;
 use App\Services\PembayaranService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,7 +11,8 @@ use Illuminate\Support\Facades\Auth;
 class AdminPembayaranController extends Controller
 {
     public function __construct(
-        protected PembayaranService $pembayaranService
+        protected PembayaranService $pembayaranService,
+        protected LogAktivitasService $logAktivitasService
     ) {}
 
     public function index()
@@ -25,10 +27,19 @@ class AdminPembayaranController extends Controller
 
     public function verify(Request $request, int $id)
     {
-        $this->pembayaranService->verify($id, [
+        $pembayaran = $this->pembayaranService->verify($id, [
             'status' => 'terverifikasi',
             'diverifikasi_oleh' => Auth::id(),
         ]);
+
+        $penghuniNama = $pembayaran->penghuniKamar->penghuni->nama ?? 'Penghuni';
+        $kodeKamar = $pembayaran->penghuniKamar->kamar->kode_kamar ?? '-';
+        $nominal = number_format($pembayaran->jumlah, 0, ',', '.');
+
+        $this->logAktivitasService->log(
+            'verifikasi_pembayaran',
+            "Mengonfirmasi pembayaran Rp {$nominal} untuk {$penghuniNama} (Kamar {$kodeKamar})"
+        );
 
         return redirect()->back()->with('success', 'Pembayaran berhasil diverifikasi.');
     }
@@ -37,7 +48,16 @@ class AdminPembayaranController extends Controller
     {
         $request->validate(['catatan' => 'required|string']);
 
-        $this->pembayaranService->reject($id, $request->input('catatan'), Auth::id());
+        $catatan = $request->input('catatan');
+        $pembayaran = $this->pembayaranService->reject($id, $catatan, Auth::id());
+
+        $penghuniNama = $pembayaran->penghuniKamar->penghuni->nama ?? 'Penghuni';
+        $nominal = number_format($pembayaran->jumlah, 0, ',', '.');
+
+        $this->logAktivitasService->log(
+            'penolakan_pembayaran',
+            "Menolak pembayaran Rp {$nominal} untuk {$penghuniNama}. Catatan: {$catatan}"
+        );
 
         return redirect()->back()->with('success', 'Pembayaran ditolak.');
     }

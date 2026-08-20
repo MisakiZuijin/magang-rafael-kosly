@@ -1,21 +1,33 @@
 @extends('layouts.app')
 
+@php
+$isSuperAdmin = request()->is('superadmin*');
+$filterRoute = $isSuperAdmin ? route('superadmin.laporan.filter') : route('admin.laporan.filter');
+$exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin.laporan.export');
+@endphp
+
 @section('title', 'Laporan & Aktivitas')
 
 @section('content')
 <div class="space-y-4" x-data="{ tab: 'grafik' }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
+    <div class="grid grid-cols-1 gap-2">
         <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Laporan & Aktivitas</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Grafik kamar, aktivitas bayar, dan log per kos</p>
+            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Laporan &amp; Aktivitas</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Grafik kamar, aktivitas bayar, log per kos, &amp; log aktivitas sistem</p>
         </div>
+        <x-btn href="{{ $exportRoute }}" variant="secondary" size="sm" class="!min-h-[36px] w-[125px] !py-1 text-xs flex items-center gap-1.5 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Export CSV
+        </x-btn>
     </div>
 
     {{-- Filter Date Form --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2.5">
         <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Filter Periode Laporan</h2>
-        <form action="{{ route('admin.laporan.filter') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <form action="{{ $filterRoute }}" method="GET" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
                 <label class="block text-[10px] font-semibold text-gray-400 uppercase mb-1">Dari Tanggal</label>
                 <input type="date" name="start" value="{{ date('Y-m-01') }}" required class="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
@@ -33,21 +45,26 @@
     </div>
 
     {{-- Sub Tabs --}}
-    <div class="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
+    <div class="grid grid-cols-2 sm:grid-cols-2 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl">
         <button @click="tab = 'grafik'"
-            :class="tab === 'grafik' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium'"
+            :class="tab === 'grafik' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-200/60 dark:hover:bg-gray-700/60 dark:hover:text-gray-200'"
             class="py-2 text-xs rounded-lg transition-all text-center">
             Grafik Kamar
         </button>
         <button @click="tab = 'pembayaran'"
-            :class="tab === 'pembayaran' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium'"
+            :class="tab === 'pembayaran' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-200/60 dark:hover:bg-gray-700/60 dark:hover:text-gray-200'"
             class="py-2 text-xs rounded-lg transition-all text-center">
             Aktivitas Bayar
         </button>
         <button @click="tab = 'perkos'"
-            :class="tab === 'perkos' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium'"
+            :class="tab === 'perkos' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-200/60 dark:hover:bg-gray-700/60 dark:hover:text-gray-200'"
             class="py-2 text-xs rounded-lg transition-all text-center">
             Log Per Kos
+        </button>
+        <button @click="tab = 'log_aktivitas'"
+            :class="tab === 'log_aktivitas' ? 'bg-white dark:bg-gray-900 text-gray-900 dark:text-white shadow-sm font-bold' : 'text-gray-500 dark:text-gray-400 font-medium hover:bg-gray-200/60 dark:hover:bg-gray-700/60 dark:hover:text-gray-200'"
+            class="py-2 text-xs rounded-lg transition-all text-center">
+            Log Aktivitas Sistem
         </button>
     </div>
 
@@ -59,7 +76,7 @@
         $pctKosong = round(($kamarKosong / $total) * 100);
         @endphp
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-            <h3 class="font-bold text-sm text-gray-900 dark:text-white">Persentase & Okupansi Kamar</h3>
+            <h3 class="font-bold text-sm text-gray-900 dark:text-white">Persentase &amp; Okupansi Kamar</h3>
 
             <div class="space-y-2">
                 <div class="flex justify-between text-xs font-semibold">
@@ -144,6 +161,22 @@
         </div>
         @endforeach
         @endif
+    </div>
+
+    {{-- Tab 4: Log Aktivitas Sistem --}}
+    <div x-show="tab === 'log_aktivitas'" class="space-y-3" x-transition x-cloak>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
+            <div class="grid grid-cols-1 gap-3 pb-2 border-b border-gray-100 dark:border-gray-800">
+                <div>
+                    <h3 class="font-bold text-sm text-gray-900 dark:text-white">Log Aktivitas Pengguna &amp; Sistem</h3>
+                    <p class="text-[10px] text-gray-400">Catatan riwayat semua tindakan pengguna, konfirmasi pembayaran, pendaftaran, login, dll.</p>
+                </div>
+                <span class="px-2.5 py-1 text-[10px] text-center w-[100px] font-bold font-mono rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    {{ count($logs ?? []) }} Log Terbaru
+                </span>
+            </div>
+            <x-log-activity-list :logs="$logs" />
+        </div>
     </div>
 </div>
 @endsection

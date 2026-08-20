@@ -1,5 +1,11 @@
 @extends('layouts.app')
 
+@php
+$isSuperAdmin = request()->is('superadmin*');
+$indexRoute = $isSuperAdmin ? route('superadmin.pengguna.index') : route('admin.pengguna.index');
+$updateRoute = $isSuperAdmin ? route('superadmin.pengguna.update', $user->id) : route('admin.pengguna.update', $user->id);
+@endphp
+
 @section('title', 'Edit Pengguna')
 
 @section('content')
@@ -9,13 +15,13 @@
             <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Edit Pengguna</h1>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Perbarui informasi akun {{ $user->nama }}</p>
         </div>
-        <x-btn href="{{ route('admin.pengguna.index') }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
+        <x-btn href="{{ $indexRoute }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
             &larr; Kembali
         </x-btn>
     </div>
 
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <form action="{{ route('admin.pengguna.update', $user->id) }}" method="POST" class="space-y-3.5">
+        <form action="{{ $updateRoute }}" method="POST" class="space-y-3.5">
             @csrf
             @method('PUT')
 

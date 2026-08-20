@@ -3,19 +3,23 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
+use App\Services\LogAktivitasService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AdminPenggunaController extends Controller
 {
     public function __construct(
-        protected UserService $userService
+        protected UserService $userService,
+        protected LogAktivitasService $logAktivitasService
     ) {}
 
     public function index()
     {
-        $mitras = $this->userService->getActiveByRole('mitra');
-        $penghunis = $this->userService->getActiveByRole('penghuni');
+        $mitras = $this->userService->getByRole('mitra');
+        $penghunis = $this->userService->getByRole('penghuni');
 
         $view = request()->is('superadmin*') ? 'superadmin.pengguna.index' : 'admin.pengguna.index';
         return view($view, compact('mitras', 'penghunis'));
@@ -41,7 +45,8 @@ class AdminPenggunaController extends Controller
             'role' => 'required|' . $allowedRoles,
         ]);
 
-        $this->userService->createUser($validated);
+        $user = $this->userService->createUser($validated);
+        $this->logAktivitasService->log('tambah_pengguna', "Menambahkan akun pengguna baru: {$user->nama} ({$user->role})");
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil dibuat.');
@@ -65,6 +70,7 @@ class AdminPenggunaController extends Controller
         ]);
 
         $this->userService->updateUser($id, $validated);
+        $this->logAktivitasService->log('update_pengguna', "Memperbarui data akun pengguna: {$validated['nama']}");
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil diupdate.');
@@ -72,7 +78,10 @@ class AdminPenggunaController extends Controller
 
     public function toggleActive(int $id)
     {
+        $user = User::find($id);
         $this->userService->toggleActive($id);
+        $this->logAktivitasService->log('toggle_pengguna', "Mengubah status aktif pengguna: {$user->nama}");
+
         return redirect()->back()->with('success', 'Status pengguna berhasil diubah.');
     }
 }
