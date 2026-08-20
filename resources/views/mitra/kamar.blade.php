@@ -14,15 +14,13 @@
     }
 }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Kos & Kamar Kos</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola dan lihat status kamar kos Anda</p>
-        </div>
-        <x-btn href="{{ route('mitra.dashboard') }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
-            &larr; Dashboard
-        </x-btn>
-    </div>
+    <x-page-header title="Kos & Kamar Kos" subtitle="Kelola dan lihat status kamar kos Anda">
+        <x-slot name="action">
+            <x-btn href="{{ route('mitra.dashboard') }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
+                &larr; Dashboard
+            </x-btn>
+        </x-slot>
+    </x-page-header>
 
     {{-- Filter & Search Section --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
