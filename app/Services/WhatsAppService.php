@@ -47,7 +47,8 @@ class WhatsAppService
 
             if ($response->successful()) {
                 $data = $response->json();
-                $isConnect = strtolower($data['device_status'] ?? '') === 'connect' || ($data['status'] ?? false) === true;
+                $deviceStatus = strtolower((string)($data['device_status'] ?? ''));
+                $isConnect = in_array($deviceStatus, ['connect', 'connected'], true);
                 
                 return [
                     'connected' => $isConnect,
@@ -57,6 +58,7 @@ class WhatsAppService
                     'package' => $data['package'] ?? '-',
                     'quota' => $data['quota'] ?? 0,
                     'expired' => $data['expired'] ?? '-',
+                    'message' => $isConnect ? '' : 'Nomor WhatsApp terputus atau belum di-scan (disconnect). Silakan lakukan Scan QR Code nomor pengelola di fonnte.com.',
                     'raw' => $data,
                 ];
             } else {

@@ -121,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
         // Laporan
         Route::get('/laporan', [AdminLaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/filter', [AdminLaporanController::class, 'filter'])->name('laporan.filter');
+        Route::get('/laporan/export-csv', [AdminLaporanController::class, 'exportCsv'])->name('laporan.export');
 
         // WA Gateway (Fonnte)
         Route::get('/whatsapp', [AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
@@ -183,6 +184,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/map', [AdminMapController::class, 'index'])->name('map.index');
         Route::get('/laporan', [AdminLaporanController::class, 'index'])->name('laporan.index');
         Route::get('/laporan/filter', [AdminLaporanController::class, 'filter'])->name('laporan.filter');
+        Route::get('/laporan/export-csv', [AdminLaporanController::class, 'exportCsv'])->name('laporan.export');
 
         // WA Gateway (Fonnte)
         Route::get('/whatsapp', [AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
