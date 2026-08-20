@@ -6,11 +6,11 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\AturanKosService;
 use App\Services\DashboardService;
+use App\Services\LogAktivitasService;
 use App\Services\PembayaranService;
+use App\Services\PenghuniKamarService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-
-use App\Services\PenghuniKamarService;
 
 class PenghuniDashboardController extends Controller
 {
@@ -18,7 +18,8 @@ class PenghuniDashboardController extends Controller
         protected DashboardService $dashboardService,
         protected PembayaranService $pembayaranService,
         protected AturanKosService $aturanKosService,
-        protected PenghuniKamarService $penghuniKamarService
+        protected PenghuniKamarService $penghuniKamarService,
+        protected LogAktivitasService $logAktivitasService
     ) {}
 
     public function index()
@@ -94,12 +95,15 @@ class PenghuniDashboardController extends Controller
         // Simpan ke storage/app/public/images/bukti-transfer/
         $path = $file->store('images/bukti-transfer', 'public');
 
-        $this->pembayaranService->uploadBukti(
+        $pb = $this->pembayaranService->uploadBukti(
             $request->input('pembayaran_id'),
             $path,
             $tipePerpanjangan,
             $jumlahHari
         );
+
+        $nominal = number_format($pb->jumlah, 0, ',', '.');
+        $this->logAktivitasService->log('upload_bukti_pembayaran', "Penghuni " . Auth::user()->nama . " mengunggah bukti pembayaran Rp {$nominal}");
 
         return redirect()->back()->with('success', 'Bukti pembayaran berhasil diupload.');
     }
@@ -126,6 +130,8 @@ class PenghuniDashboardController extends Controller
             'channel' => 'web',
             'status' => 'terkirim',
         ]);
+
+        $this->logAktivitasService->log('checkout_penghuni', "Penghuni {$user->nama} melakukan checkout mandiri dari Kamar {$kodeKamar} ({$kosNama})");
 
         return redirect()->route('penghuni.dashboard')->with('success', 'Berhasil checkout sewa kamar kos.');
     }
