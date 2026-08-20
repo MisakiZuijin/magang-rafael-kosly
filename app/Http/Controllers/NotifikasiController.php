@@ -52,19 +52,18 @@ class NotifikasiController extends Controller
 
         foreach ($pengumumans as $p) {
             $alreadyExists = $notifikasis->contains(function($n) use ($p) {
-                return str_contains($n->judul, $p->judul) && abs(($n->created_at?->timestamp ?? 0) - ($p->created_at?->timestamp ?? 0)) < 300;
+                return str_contains($n->judul, $p->judul);
             });
 
             if (!$alreadyExists) {
-                $notifItem = new \App\Models\Notifikasi([
+                $notifItem = \App\Models\Notifikasi::create([
                     'user_id' => $user->id,
                     'judul' => '[Pengumuman] ' . $p->judul,
                     'pesan' => $p->isi,
                     'channel' => 'web',
                     'status' => 'terkirim',
+                    'created_at' => $p->created_at,
                 ]);
-                $notifItem->id = 0;
-                $notifItem->created_at = $p->created_at;
                 $notifikasis->push($notifItem);
             }
         }

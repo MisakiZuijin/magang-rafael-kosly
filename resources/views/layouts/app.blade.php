@@ -70,6 +70,7 @@
             </div>
         </main>
 
+        @include('components.floating-wa-group')
         @include('components.footer')
 
     </div>

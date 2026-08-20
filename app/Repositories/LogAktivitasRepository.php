@@ -26,7 +26,7 @@ class LogAktivitasRepository extends BaseRepository implements LogAktivitasRepos
     public function log(string $aksi, ?string $detail = null, ?int $userId = null): LogAktivitas
     {
         return $this->model->create([
-            'user_id' => $userId,
+            'user_id' => $userId ?? \Illuminate\Support\Facades\Auth::id(),
             'aksi' => $aksi,
             'detail' => $detail,
         ]);

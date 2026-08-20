@@ -24,6 +24,14 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
+        $user = \App\Models\User::where('email', $credentials['email'])->first();
+
+        if ($user && !$user->is_active) {
+            return back()->withErrors([
+                'email' => 'Akun Anda telah dinonaktifkan oleh administrator. Silakan hubungi pengelola untuk mengaktifkan kembali.',
+            ])->onlyInput('email');
+        }
+
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
