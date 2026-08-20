@@ -1,5 +1,11 @@
 @extends('layouts.app')
 
+@php
+$isSuperAdmin = request()->is('superadmin*');
+$indexRoute = $isSuperAdmin ? route('superadmin.pengumuman.index') : route('admin.pengumuman.index');
+$storeRoute = $isSuperAdmin ? route('superadmin.pengumuman.store') : route('admin.pengumuman.store');
+@endphp
+
 @section('title', 'Buat Pengumuman Baru')
 
 @section('content')
@@ -17,13 +23,13 @@
             <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Form Pengumuman</h1>
             <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kirim pengumuman jatuh tempo atau aturan baru</p>
         </div>
-        <x-btn href="{{ route('admin.pengumuman.index') }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
+        <x-btn href="{{ $indexRoute }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
             &larr; Kembali
         </x-btn>
     </div>
 
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <form action="{{ route('admin.pengumuman.store') }}" method="POST" class="space-y-3.5">
+        <form action="{{ $storeRoute }}" method="POST" class="space-y-3.5">
             @csrf
 
             {{-- Jenis Pengumuman --}}

@@ -9,6 +9,11 @@
     showRejectReason: false,
     showImageFullscreen: false,
     zoomLevel: 1,
+    panX: 0,
+    panY: 0,
+    isDragging: false,
+    startX: 0,
+    startY: 0,
     selectedPenghuni: '',
     selectedKosKamar: '',
     selectedJumlah: '',
@@ -20,11 +25,37 @@
         if (this.zoomLevel < 3.5) this.zoomLevel = +(this.zoomLevel + 0.5).toFixed(1);
     },
     zoomOut() {
-        if (this.zoomLevel > 0.8) this.zoomLevel = +(this.zoomLevel - 0.5).toFixed(1);
+        if (this.zoomLevel > 0.8) {
+            this.zoomLevel = +(this.zoomLevel - 0.5).toFixed(1);
+            if (this.zoomLevel <= 1) this.resetPan();
+        }
+    },
+    resetPan() {
+        this.panX = 0;
+        this.panY = 0;
     },
     openFullscreen() {
         this.zoomLevel = 1;
+        this.resetPan();
         this.showImageFullscreen = true;
+    },
+    startDrag(e) {
+        if (this.zoomLevel <= 1) return;
+        this.isDragging = true;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        this.startX = clientX - this.panX;
+        this.startY = clientY - this.panY;
+    },
+    onDrag(e) {
+        if (!this.isDragging || this.zoomLevel <= 1) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        this.panX = clientX - this.startX;
+        this.panY = clientY - this.startY;
+    },
+    endDrag() {
+        this.isDragging = false;
     }
 }">
     {{-- Header --}}
@@ -63,8 +94,9 @@
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
         $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : '-';
         $buktiUrl = $p->bukti_transfer_url ? asset('storage/' . $p->bukti_transfer_url) : '';
-        $vUrl = route('admin.pembayaran.verify', $p->id);
-        $rUrl = route('admin.pembayaran.reject', $p->id);
+        $isSuperAdmin = request()->is('superadmin*');
+        $vUrl = $isSuperAdmin ? route('superadmin.pembayaran.verify', $p->id) : route('admin.pembayaran.verify', $p->id);
+        $rUrl = $isSuperAdmin ? route('superadmin.pembayaran.reject', $p->id) : route('admin.pembayaran.reject', $p->id);
         @endphp
 
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-amber-200 dark:border-amber-900/50 shadow-sm space-y-3">
@@ -257,12 +289,12 @@
         </div>
     </x-modal>
 
-    {{-- Modal Preview Gambar Fullscreen dengan Zooming --}}
+    {{-- Modal Preview Gambar Fullscreen dengan Zooming & Pan/Geser --}}
     <div x-show="showImageFullscreen"
          x-cloak
          x-transition.opacity.duration.200ms
-         @keydown.window.escape="showImageFullscreen = false; zoomLevel = 1;"
-         @click="showImageFullscreen = false; zoomLevel = 1;"
+         @keydown.window.escape="showImageFullscreen = false; zoomLevel = 1; resetPan();"
+         @click="showImageFullscreen = false; zoomLevel = 1; resetPan();"
          class="fixed inset-0 z-[150] bg-black/95 backdrop-blur-lg flex flex-col items-center justify-between p-3 select-none">
 
         {{-- Top Bar: Info & Zoom Controls --}}
@@ -286,10 +318,10 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
                     </svg>
                 </button>
-                <button type="button" @click.stop="zoomLevel = 1" class="px-2.5 py-1 text-[10px] font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Reset Zoom">
+                <button type="button" @click.stop="zoomLevel = 1; resetPan();" class="px-2.5 py-1 text-[10px] font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Reset Zoom & Geser">
                     Reset
                 </button>
-                <button type="button" @click="showImageFullscreen = false; zoomLevel = 1;" class="p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95 ml-1" title="Tutup">
+                <button type="button" @click="showImageFullscreen = false; zoomLevel = 1; resetPan();" class="p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95 ml-1" title="Tutup">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -297,20 +329,26 @@
             </div>
         </div>
 
-        {{-- Image Display Area with Wheel Zoom & Click Zoom --}}
-        <div class="flex-1 w-full flex items-center justify-center p-2 my-auto overflow-auto no-scrollbar"
+        {{-- Image Display Area with Wheel Zoom & Pan/Geser Dragging --}}
+        <div class="flex-1 w-full flex items-center justify-center p-2 my-auto overflow-hidden no-scrollbar"
              @wheel.prevent="if ($event.deltaY < 0) { zoomIn(); } else { zoomOut(); }">
             <img :src="selectedBuktiUrl" 
-                 :style="`transform: scale(${zoomLevel}); transition: transform 0.15s ease-out;`"
-                 class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl origin-center cursor-pointer"
+                 :style="`transform: translate(${panX}px, ${panY}px) scale(${zoomLevel}); transition: ${isDragging ? 'none' : 'transform 0.15s ease-out'}; cursor: ${zoomLevel > 1 ? (isDragging ? 'grabbing' : 'grab') : 'pointer'};`"
+                 class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl origin-center touch-none select-none"
                  alt="Bukti Transfer Fullscreen"
-                 @click.stop="zoomLevel = (zoomLevel === 1 ? 2 : 1)">
+                 @mousedown.stop="startDrag($event)"
+                 @mousemove.window="onDrag($event)"
+                 @mouseup.window="endDrag()"
+                 @touchstart.stop="startDrag($event)"
+                 @touchmove.window="onDrag($event)"
+                 @touchend.window="endDrag()"
+                 @click.stop="if (!isDragging) { if (zoomLevel === 1) { zoomLevel = 2; } else { zoomLevel = 1; resetPan(); } }">
         </div>
 
         {{-- Bottom Hint Bar --}}
         <div class="text-center pb-2 z-20">
             <p class="text-[11px] text-white/80 font-medium bg-black/60 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10">
-                🔍 Klik gambar / Gunakan scroll / Tombol (+/-) untuk Zoom | Klik area hitam untuk menutup
+                🖐️ Drag/Geser gambar saat Zoom | Scroll / (+/-) untuk Zoom | Klik area hitam untuk menutup
             </p>
         </div>
     </div>

@@ -31,13 +31,13 @@ $testRoute = $isSuperAdmin ? route('superadmin.whatsapp.test') : route('admin.wh
                 <div class="w-3 h-3 rounded-full {{ $deviceInfo['connected'] ? 'bg-emerald-500 animate-pulse' : 'bg-red-500' }}"></div>
                 <h2 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Status Koneksi Device WhatsApp</h2>
             </div>
-            <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg {{ $deviceInfo['connected'] ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }}">
+            <span class="px-2.5 text-center w-[150px] py-1 text-[10px] font-bold rounded-lg {{ $deviceInfo['connected'] ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }}">
                 {{ $deviceInfo['status_text'] }}
             </span>
         </div>
 
         @if($deviceInfo['connected'])
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-gray-100 dark:border-gray-800 text-xs">
+        <div class="grid grid-cols-2 sm:grid-cols-2 gap-2 pt-2 border-t border-gray-100 dark:border-gray-800 text-xs">
             <div class="p-2.5 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800">
                 <span class="text-[10px] text-gray-400 font-semibold uppercase block">Nomor Device</span>
                 <span class="font-bold font-mono text-gray-900 dark:text-white block mt-0.5">{{ $deviceInfo['device'] }}</span>

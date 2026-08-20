@@ -10,6 +10,7 @@ use App\Services\PengumumanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+use App\Services\LogAktivitasService;
 use App\Services\WhatsAppService;
 
 class AdminPengumumanController extends Controller
@@ -19,7 +20,8 @@ class AdminPengumumanController extends Controller
         protected NotifikasiService $notifikasiService,
         protected WhatsAppService $whatsAppService,
         protected KosService $kosService,
-        protected KamarService $kamarService
+        protected KamarService $kamarService,
+        protected LogAktivitasService $logAktivitasService
     ) {}
 
     public function index()
@@ -63,6 +65,11 @@ class AdminPengumumanController extends Controller
 
         // Kirim notifikasi ke target sesuai channel terpilih
         $this->sendNotifications($validated, $pengumuman->judul, $pengumuman->isi);
+
+        $this->logAktivitasService->log(
+            'kirim_pengumuman',
+            "Mengirim pengumuman \"{$pengumuman->judul}\" via channel {$validated['channel']}"
+        );
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         return redirect()->route($prefix . 'pengumuman.index')->with('success', 'Pengumuman berhasil dikirim.');

@@ -19,7 +19,7 @@
     <div class="flex items-center justify-between">
         <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Peta & Rute Terdekat</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Penentuan titik kantor (database) ke rute kos terdekat</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Penentuan titik kantor ke rute kos terdekat</p>
         </div>
         <span class="px-2.5 py-1 text-[10px] uppercase font-bold rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
             Admin Navigasi
@@ -28,7 +28,7 @@
 
     {{-- Panel Kontrol Lokasi Kantor & Kos Tujuan --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-1 gap-3">
             {{-- 1. Lokasi Kantor Awal (Data dari Database) --}}
             <div>
                 <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">

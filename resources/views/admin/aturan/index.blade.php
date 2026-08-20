@@ -21,12 +21,7 @@
     }
 }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Kelola Aturan Kos</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Tambah, edit, dan hapus tata tertib untuk setiap kos</p>
-        </div>
-    </div>
+    <x-page-header title="Kelola Aturan Kos" subtitle="Tambah, edit, dan hapus tata tertib untuk setiap kos" />
 
     {{-- Action Button --}}
     <button @click="modalTambah = true" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">

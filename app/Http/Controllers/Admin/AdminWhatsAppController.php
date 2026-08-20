@@ -4,13 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Services\LogAktivitasService;
 use App\Services\WhatsAppService;
 use Illuminate\Http\Request;
 
 class AdminWhatsAppController extends Controller
 {
     public function __construct(
-        protected WhatsAppService $whatsAppService
+        protected WhatsAppService $whatsAppService,
+        protected LogAktivitasService $logAktivitasService
     ) {}
 
     public function index()
@@ -33,6 +35,8 @@ class AdminWhatsAppController extends Controller
         Setting::setKey('fonnte_api_key', trim($validated['fonnte_api_key'] ?? ''));
         Setting::setKey('fonnte_endpoint', trim($validated['fonnte_endpoint'] ?? 'https://api.fonnte.com/send'));
 
+        $this->logAktivitasService->log('konfigurasi_wa', "Memperbarui API Token & Endpoint Fonnte WhatsApp Gateway");
+
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         return redirect()->route($prefix . 'whatsapp.index')->with('success', 'Pengaturan Fonnte WhatsApp Gateway berhasil diperbarui.');
     }
@@ -46,6 +50,8 @@ class AdminWhatsAppController extends Controller
         ]);
 
         $result = $this->whatsAppService->sendDirect($validated['target'], $validated['judul'], $validated['pesan']);
+
+        $this->logAktivitasService->log('tes_kirim_wa', "Melakukan tes pengiriman WhatsApp ke target: {$validated['target']}");
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         if ($result['success']) {
