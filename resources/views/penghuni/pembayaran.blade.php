@@ -203,11 +203,11 @@ $menunggu = $pembayarans->where('status', 'pending');
                 <input type="hidden" name="jumlah_hari" value="{{ $p->jumlah_hari ?? 30 }}">
 
                 <div class="p-3 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-1">
-                    <div class="flex items-center justify-between">
+                    <div class="grid grid-cols-1 gap-2">
                         <p class="text-[10px] uppercase font-bold text-blue-700 dark:text-blue-300">
                             Pembayaran Awal Sewa Kos ({{ $p->jumlah_hari ?? 30 }} Hari Pertama)
                         </p>
-                        <span class="px-2 py-0.5 rounded-md text-[9px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+                        <span class="px-2 py-0.5 text-center w-[150px] rounded-md text-[9px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
                             {{ $p->periode_mulai ? $p->periode_mulai->format('d M Y') : '-' }} s/d {{ $p->periode_selesai ? $p->periode_selesai->format('d M Y') : '-' }}
                         </span>
                     </div>
