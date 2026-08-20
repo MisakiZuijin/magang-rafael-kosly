@@ -5,70 +5,50 @@
 @section('content')
 <div class="space-y-4" x-data="{ filterStatus: 'semua', selectedKosId: 'semua' }">
     {{-- Header / Welcome --}}
-    <div class="flex items-center justify-between gap-2">
-        <div class="min-w-0 flex-1">
-            <p class="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">Selamat datang, Pemilik Kos</p>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight truncate">
-                {{ Auth::user()->nama }}
-            </h1>
-        </div>
-        <div class="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 border border-amber-200 dark:border-amber-800 flex-shrink-0">
-            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            <span>Mitra Kos</span>
-        </div>
-    </div>
+    <x-page-header title="{{ Auth::user()->nama }}" subtitle="Selamat datang, Pemilik Kos">
+        <x-slot name="action">
+            <div class="bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 border border-amber-200 dark:border-amber-800 flex-shrink-0">
+                <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span>Mitra Kos</span>
+            </div>
+        </x-slot>
+    </x-page-header>
 
     {{-- Stats Cards Grid --}}
     <div class="grid grid-cols-2 gap-2.5">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-2.5 min-w-0">
-            <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+        <x-stat-card label="Total Kos" value="{{ $data['total_kos'] }}" unit="Unit" color="emerald">
+            <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate">Total Kos</p>
-                <p class="text-base font-bold text-gray-900 dark:text-white truncate">{{ $data['total_kos'] }} <span class="text-[10px] font-normal text-gray-500">Unit</span></p>
-            </div>
-        </div>
+            </x-slot>
+        </x-stat-card>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-2.5 min-w-0">
-            <div class="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
+        <x-stat-card label="Total Kamar" value="{{ $data['total_kamar'] }}" unit="Kamar" color="blue">
+            <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate">Total Kamar</p>
-                <p class="text-base font-bold text-gray-900 dark:text-white truncate">{{ $data['total_kamar'] }} <span class="text-[10px] font-normal text-gray-500">Kamar</span></p>
-            </div>
-        </div>
+            </x-slot>
+        </x-stat-card>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-2.5 min-w-0">
-            <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
+        <x-stat-card label="Kamar Terisi" value="{{ $data['kamar_terisi'] }}" color="emerald">
+            <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate">Kamar Terisi</p>
-                <p class="text-base font-bold text-emerald-600 dark:text-emerald-400 truncate">{{ $data['kamar_terisi'] }}</p>
-            </div>
-        </div>
+            </x-slot>
+        </x-stat-card>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-2.5 min-w-0">
-            <div class="w-9 h-9 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
+        <x-stat-card label="Kamar Kosong" value="{{ $data['kamar_kosong'] }}" color="amber">
+            <x-slot name="icon">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider truncate">Kamar Kosong</p>
-                <p class="text-base font-bold text-amber-600 dark:text-amber-400 truncate">{{ $data['kamar_kosong'] }}</p>
-            </div>
-        </div>
+            </x-slot>
+        </x-stat-card>
     </div>
 
     {{-- Occupancy Progress Bar --}}
