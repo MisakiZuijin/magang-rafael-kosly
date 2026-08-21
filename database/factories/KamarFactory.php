@@ -22,7 +22,9 @@ class KamarFactory extends Factory
             'harga_per_hari' => $tipe === 'standar' ? fake()->randomElement([75000, 100000, 125000]) : null,
             'harga_per_bulan' => fake()->randomElement([800000, 1000000, 1200000, 1500000]),
             'kapasitas' => $kapasitas,
-            'status' => fake()->randomElement(['kosong', 'terisi']),
+            'status' => 'kosong',
+            'wa_group_id' => null,
+            'link_grup_wa' => null,
         ];
     }
 }

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->decimal('harga_per_bulan', 12, 2);
             $table->integer('kapasitas')->default(1);
             $table->enum('status', ['kosong', 'terisi'])->default('kosong');
+            $table->string('wa_group_id')->nullable();
+            $table->string('link_grup_wa')->nullable();
             $table->timestamps();
         });
     }
