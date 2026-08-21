@@ -54,6 +54,13 @@ class AdminKosController extends Controller
 
     public function storeKamar(Request $request)
     {
+        if ($request->has('harga_per_bulan')) {
+            $request->merge(['harga_per_bulan' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_bulan'))]);
+        }
+        if ($request->has('harga_per_hari') && $request->filled('harga_per_hari')) {
+            $request->merge(['harga_per_hari' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_hari'))]);
+        }
+
         $validated = $request->validate([
             'kos_id' => 'required|exists:kos,id',
             'kode_kamar' => 'required|string|max:20',
@@ -66,6 +73,7 @@ class AdminKosController extends Controller
         ]);
 
         $validated['status'] = 'kosong';
+        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 2 : 1;
         $kamar = $this->kamarService->create($validated);
         $kosNama = $kamar->kos->nama ?? 'Kos';
         $this->logAktivitasService->log('tambah_kamar', "Menambahkan Kamar {$kamar->kode_kamar} di {$kosNama}");
@@ -224,6 +232,13 @@ class AdminKosController extends Controller
 
     public function updateKamar(Request $request, int $id)
     {
+        if ($request->has('harga_per_bulan')) {
+            $request->merge(['harga_per_bulan' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_bulan'))]);
+        }
+        if ($request->has('harga_per_hari') && $request->filled('harga_per_hari')) {
+            $request->merge(['harga_per_hari' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_hari'))]);
+        }
+
         $validated = $request->validate([
             'kos_id' => 'required|exists:kos,id',
             'kode_kamar' => 'required|string|max:20',
@@ -235,6 +250,7 @@ class AdminKosController extends Controller
             'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
+        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 2 : 1;
         $this->kamarService->update($id, $validated);
         $this->logAktivitasService->log('update_kamar', "Memperbarui data Kamar {$validated['kode_kamar']}");
 

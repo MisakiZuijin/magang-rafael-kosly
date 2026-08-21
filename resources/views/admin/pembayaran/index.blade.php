@@ -106,9 +106,16 @@
                     <h3 class="font-bold text-sm text-gray-900 dark:text-white mt-0.5">{{ $penghuniNama }}</h3>
                     <p class="text-xs text-gray-500 font-mono mt-0.5">{{ $kosKamar }}</p>
                 </div>
-                <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm">
-                    {{ $jumlahFormatted }}
-                </span>
+                <div class="text-right">
+                    <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm block">
+                        {{ $jumlahFormatted }}
+                    </span>
+                    @if($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
+                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
+                        {{ $p->porsi_bayar == 50 ? 'Patungan 50%' : 'Full 100%' }}
+                    </span>
+                    @endif
+                </div>
             </div>
 
             <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800 text-xs">
@@ -142,7 +149,9 @@
         $penghuniNama = $p->penghuniKamar->penghuni->nama ?? 'Anak Kos';
         $kosKamar = ($p->penghuniKamar->kamar->kode_kamar ?? '-') . ' · ' . ($p->penghuniKamar->kamar->kos->nama ?? '-');
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
-        $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : '-';
+        $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar Full oleh');
+        $uploaderName = $isCoveredByRoommate ? trim(str_replace('Lunas (Dibayar Full oleh ', '', $p->catatan_verifikasi), ')') : null;
+        $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : ($p->tanggal_verifikasi ? $p->tanggal_verifikasi->format('d M Y') : '-');
         $buktiUrl = $p->bukti_transfer_url ? asset('storage/' . $p->bukti_transfer_url) : '';
         @endphp
 
@@ -153,13 +162,29 @@
                     <h3 class="font-bold text-sm text-gray-900 dark:text-white mt-0.5">{{ $penghuniNama }}</h3>
                     <p class="text-xs text-gray-500 font-mono mt-0.5">{{ $kosKamar }}</p>
                 </div>
-                <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm">
-                    {{ $jumlahFormatted }}
-                </span>
+                <div class="text-right">
+                    <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400 text-sm block">
+                        {{ $jumlahFormatted }}
+                    </span>
+                    @if($isCoveredByRoommate)
+                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                        Wakil: {{ $uploaderName }}
+                    </span>
+                    @elseif($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
+                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
+                        {{ $p->porsi_bayar == 50 ? 'Patungan 50%' : 'Full 100%' }}
+                    </span>
+                    @endif
+                </div>
             </div>
 
             <div class="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-800 text-xs">
-                <span class="text-gray-400 font-mono text-[11px]">Tgl: {{ $tanggalFormatted }}</span>
+                @if($isCoveredByRoommate)
+                <span class="text-blue-600 dark:text-blue-400 font-mono text-[11px] font-medium">👤 Dibayar oleh: {{ $uploaderName }} ({{ $tanggalFormatted }})</span>
+                @else
+                <span class="text-gray-400 font-mono text-[11px]">📅 Tgl: {{ $tanggalFormatted }}</span>
+                @endif
+
                 @if($buktiUrl)
                 <button type="button" @click="selectedPenghuni = '{{ addslashes($penghuniNama) }}'; selectedBuktiUrl = '{{ $buktiUrl }}'; openFullscreen();" class="text-xs text-emerald-600 font-bold hover:underline">
                     🔍 Lihat Bukti (Zoom/Full)
