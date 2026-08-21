@@ -67,15 +67,48 @@ class PenghuniDashboardController extends Controller
         $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
 
         if (!$penghuniKamar) {
-            return view('penghuni.pembayaran', ['pembayarans' => collect(), 'rekening' => null]);
+            return view('penghuni.pembayaran', [
+                'pembayarans' => collect(),
+                'rekening' => null,
+                'isKamarBerbagi' => false,
+                'roommateFullPaid' => false,
+                'roommateName' => '',
+            ]);
         }
 
         $this->pembayaranService->checkAndGenerateAutoBilling($penghuniKamar);
 
         $pembayarans = $this->pembayaranService->getByPenghuniKamar($penghuniKamar->id);
         $rekening = $penghuniKamar->kamar->kos;
+        $kamar = $penghuniKamar->kamar;
+        $isKamarBerbagi = ($kamar && $kamar->tipe === 'berbagi');
 
-        return view('penghuni.pembayaran', compact('pembayarans', 'rekening'));
+        $roommateFullPaid = false;
+        $roommateName = '';
+
+        if ($isKamarBerbagi) {
+            // Cek apakah penghuni saat ini memiliki tagihan yang sedang pending
+            $hasPendingPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
+                ->where('status', 'pending')
+                ->exists();
+
+            // Banner 'Pembayaran Kamar Lunas - Dilunasi Full oleh Teman' HANYA tampil jika TIDAK ada tagihan pending yang sedang berjalan
+            if (!$hasPendingPayment) {
+                $coveredPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
+                    ->where('status', 'terverifikasi')
+                    ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar Full oleh%')
+                    ->latest()
+                    ->first();
+
+                if ($coveredPayment) {
+                    $roommateFullPaid = true;
+                    $catatan = $coveredPayment->catatan_verifikasi;
+                    $roommateName = trim(str_replace('Lunas (Dibayar Full oleh ', '', $catatan), ')');
+                }
+            }
+        }
+
+        return view('penghuni.pembayaran', compact('pembayarans', 'rekening', 'isKamarBerbagi', 'roommateFullPaid', 'roommateName'));
     }
 
     public function uploadBukti(Request $request)
@@ -83,23 +116,24 @@ class PenghuniDashboardController extends Controller
         $request->validate([
             'pembayaran_id' => 'required|exists:pembayaran,id',
             'tipe_perpanjangan' => 'required|in:bulanan,harian',
+            'porsi_bayar' => 'nullable|in:100,50',
             'jumlah_hari' => 'nullable|integer|min:1|max:365',
             'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $tipePerpanjangan = $request->input('tipe_perpanjangan', 'bulanan');
+        $porsiBayar = (int) $request->input('porsi_bayar', 100);
         $jumlahHari = $tipePerpanjangan === 'harian' ? (int) $request->input('jumlah_hari', 1) : 30;
 
         $file = $request->file('bukti_transfer');
-
-        // Simpan ke storage/app/public/images/bukti-transfer/
         $path = $file->store('images/bukti-transfer', 'public');
 
         $pb = $this->pembayaranService->uploadBukti(
             $request->input('pembayaran_id'),
             $path,
             $tipePerpanjangan,
-            $jumlahHari
+            $jumlahHari,
+            $porsiBayar
         );
 
         $nominal = number_format($pb->jumlah, 0, ',', '.');
