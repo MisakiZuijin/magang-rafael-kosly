@@ -17,9 +17,19 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
     filterKosId: 'all',
     filterTipeKamar: 'all',
     filterMasaAktif: 'all',
+    formatRupiah(val) {
+        if (!val && val !== 0) return '';
+        const digits = val.toString().replace(/[^0-9]/g, '');
+        if (!digits) return '';
+        return 'Rp ' + new Intl.NumberFormat('id-ID').format(digits);
+    },
+    parseDigits(val) {
+        if (!val) return '';
+        return val.toString().replace(/[^0-9]/g, '');
+    },
     editKosData: { id: '', mitra_id: '', nama: '', alamat: '', latitude: '', longitude: '', bank: '', no_rekening: '', nama_pemilik_rekening: '' },
     editKosUrl: '',
-    editKamarData: { id: '', kos_id: '', kode_kamar: '', tipe: 'standar', harga_per_bulan: '', harga_per_hari: '', kapasitas: 1, wa_group_id: '', link_grup_wa: '' },
+    editKamarData: { id: '', kos_id: '', kode_kamar: '', tipe: 'standar', harga_per_bulan: '', display_harga_per_bulan: '', harga_per_hari: '', display_harga_per_hari: '', kapasitas: 1, wa_group_id: '', link_grup_wa: '' },
     editKamarUrl: '',
     openEditKosModal(kos) {
         this.editKosData = {
@@ -38,14 +48,18 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
         this.modalEditKos = true;
     },
     openEditKamarModal(kamar) {
+        const hBulan = kamar.harga_per_bulan || '';
+        const hHari = kamar.harga_per_hari || '';
         this.editKamarData = {
             id: kamar.id,
             kos_id: kamar.kos_id,
             kode_kamar: kamar.kode_kamar || '',
             tipe: kamar.tipe || 'standar',
-            harga_per_bulan: kamar.harga_per_bulan || '',
-            harga_per_hari: kamar.harga_per_hari || '',
-            kapasitas: kamar.kapasitas || 1,
+            harga_per_bulan: hBulan,
+            harga_per_hari: hHari,
+            display_harga_per_bulan: hBulan ? this.formatRupiah(hBulan) : '',
+            display_harga_per_hari: hHari ? this.formatRupiah(hHari) : '',
+            kapasitas: kamar.kapasitas || (kamar.tipe === 'berbagi' ? 2 : 1),
             wa_group_id: kamar.wa_group_id || '',
             link_grup_wa: kamar.link_grup_wa || ''
         };
@@ -433,7 +447,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
     {{-- Modal Pendaftaran Kamar Baru --}}
     <x-modal show="modalKamar" title="Daftarkan Kamar Baru">
-        <form action="{{ route($p . 'kamar.store') }}" method="POST" class="space-y-3">
+        <form action="{{ route($p . 'kamar.store') }}" method="POST" class="space-y-3" x-data="{ kamarTipe: 'standar', kapasitas: 1, displayHargaBulan: '', rawHargaBulan: '', displayHargaHari: '', rawHargaHari: '' }">
             @csrf
 
             <div>
@@ -453,7 +467,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Jenis Kamar</label>
-                    <select name="tipe" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                    <select name="tipe" x-model="kamarTipe" @change="kapasitas = (kamarTipe === 'berbagi' ? 2 : 1)" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                         <option value="standar">Standar (1 Orang)</option>
                         <option value="berbagi">Berbagi (2 Orang)</option>
                     </select>
@@ -462,18 +476,30 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan (Rp)</label>
-                    <input type="number" name="harga_per_bulan" required placeholder="1000000" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan</label>
+                    <input type="text"
+                           x-model="displayHargaBulan"
+                           @input="displayHargaBulan = formatRupiah($event.target.value); rawHargaBulan = parseDigits($event.target.value)"
+                           placeholder="Rp 1.000.000"
+                           required
+                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_bulan" :value="rawHargaBulan">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Hari (Opsional)</label>
-                    <input type="number" name="harga_per_hari" placeholder="100000" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="text"
+                           x-model="displayHargaHari"
+                           @input="displayHargaHari = formatRupiah($event.target.value); rawHargaHari = parseDigits($event.target.value)"
+                           placeholder="Rp 100.000"
+                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_hari" :value="rawHargaHari">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Kapasitas Penghuni</label>
-                <input type="number" name="kapasitas" value="1" min="1" max="5" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Batas Kapasitas Penghuni</label>
+                <input type="number" name="kapasitas" x-model="kapasitas" readonly required class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-500 dark:text-gray-400 cursor-not-allowed select-none">
+                <p class="text-[10px] text-gray-400 mt-1 italic">* Otomatis terisi 1 orang untuk Standar & 2 orang untuk Berbagi (tidak dapat diubah manual)</p>
             </div>
 
             <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
@@ -517,7 +543,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Jenis Kamar</label>
-                    <select name="tipe" x-model="editKamarData.tipe" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                    <select name="tipe" x-model="editKamarData.tipe" @change="editKamarData.kapasitas = (editKamarData.tipe === 'berbagi' ? 2 : 1)" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                         <option value="standar">Standar (1 Orang)</option>
                         <option value="berbagi">Berbagi (2 Orang)</option>
                     </select>
@@ -526,18 +552,30 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
             <div class="grid grid-cols-2 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan (Rp)</label>
-                    <input type="number" name="harga_per_bulan" x-model="editKamarData.harga_per_bulan" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan</label>
+                    <input type="text"
+                           x-model="editKamarData.display_harga_per_bulan"
+                           @input="editKamarData.display_harga_per_bulan = formatRupiah($event.target.value); editKamarData.harga_per_bulan = parseDigits($event.target.value)"
+                           placeholder="Rp 1.000.000"
+                           required
+                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_bulan" :value="editKamarData.harga_per_bulan">
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Hari (Opsional)</label>
-                    <input type="number" name="harga_per_hari" x-model="editKamarData.harga_per_hari" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="text"
+                           x-model="editKamarData.display_harga_per_hari"
+                           @input="editKamarData.display_harga_per_hari = formatRupiah($event.target.value); editKamarData.harga_per_hari = parseDigits($event.target.value)"
+                           placeholder="Rp 100.000"
+                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_hari" :value="editKamarData.harga_per_hari">
                 </div>
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Kapasitas Penghuni</label>
-                <input type="number" name="kapasitas" x-model="editKamarData.kapasitas" min="1" max="5" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Batas Kapasitas Penghuni</label>
+                <input type="number" name="kapasitas" x-model="editKamarData.kapasitas" readonly required class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-500 dark:text-gray-400 cursor-not-allowed select-none">
+                <p class="text-[10px] text-gray-400 mt-1 italic">* Otomatis terisi 1 orang untuk Standar & 2 orang untuk Berbagi (tidak dapat diubah manual)</p>
             </div>
 
             <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
