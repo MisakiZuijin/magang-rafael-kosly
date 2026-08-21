@@ -44,13 +44,28 @@ class DashboardService
             ? ($kamar->harga_per_hari ?? 0)
             : $kamar->harga_per_bulan;
 
+        $hargaBulan = $kamar->harga_per_bulan ?? 0;
+        $hargaHari = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round($hargaBulan / 30);
+        $isBerbagi = ($kamar->tipe === 'berbagi');
+
+        $tglMasuk = $penghuniKamar->tanggal_masuk ? \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay() : null;
+        $tglKeluar = $penghuniKamar->tanggal_keluar ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay() : null;
+        $today = \Carbon\Carbon::now()->startOfDay();
+        $isFuture = $tglMasuk && $tglMasuk->gt($today);
+
         return [
             'kos' => $kos,
             'kamar' => $kamar,
             'durasi' => $penghuniKamar->durasi,
             'total_biaya' => $totalBiaya,
+            'harga_bulan' => $hargaBulan,
+            'harga_hari' => $hargaHari,
+            'is_berbagi' => $isBerbagi,
             'jumlah_penghuni' => $jumlahPenghuni,
-            'tanggal_keluar' => $penghuniKamar->tanggal_keluar,
+            'tanggal_masuk' => $tglMasuk,
+            'tanggal_keluar' => $tglKeluar,
+            'is_future' => $isFuture,
+            'sisa_hari_masuk' => ($isFuture && $tglMasuk) ? (int) $today->diffInDays($tglMasuk, false) : 0,
         ];
     }
 
