@@ -70,6 +70,9 @@ class NotifikasiController extends Controller
 
         $notifikasis = $notifikasis->sortByDesc('created_at')->values();
 
+        // Tandai semua notifikasi sebagai dibaca saat pengguna membuka halaman Notifikasi
+        $this->service->markAllAsRead($user->id);
+
         return view('notifikasi.index', compact('notifikasis'));
     }
 

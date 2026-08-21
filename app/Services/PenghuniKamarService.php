@@ -70,20 +70,38 @@ class PenghuniKamarService
 
         $selisihHari = max(1, (int) $tanggalMasukObj->diffInDays($tanggalKeluarObj));
 
+        $defaultPorsi = 100;
         if ($penghuniKamar->durasi === 'harian') {
             $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0
                 ? $kamar->harga_per_hari
                 : round(($kamar->harga_per_bulan ?? 0) / 30);
-            $jumlahBiaya = $selisihHari * $hargaHarian;
+            $totalDailyRoom = $selisihHari * $hargaHarian;
+
+            if ($kamar->tipe === 'berbagi') {
+                $jumlahBiaya = round($totalDailyRoom / 2);
+                $defaultPorsi = 50;
+            } else {
+                $jumlahBiaya = $totalDailyRoom;
+                $defaultPorsi = 100;
+            }
             $jumlahHari = $selisihHari;
+            $nominalNotif = $totalDailyRoom;
         } else {
-            $jumlahBiaya = $kamar->harga_per_bulan;
+            if ($kamar->tipe === 'berbagi') {
+                $jumlahBiaya = round($kamar->harga_per_bulan / 2);
+                $defaultPorsi = 50;
+            } else {
+                $jumlahBiaya = $kamar->harga_per_bulan;
+                $defaultPorsi = 100;
+            }
             $jumlahHari = $selisihHari > 0 ? $selisihHari : 30;
+            $nominalNotif = $kamar->harga_per_bulan ?? $jumlahBiaya;
         }
 
         \App\Models\Pembayaran::create([
             'penghuni_kamar_id' => $penghuniKamar->id,
             'jumlah' => $jumlahBiaya,
+            'porsi_bayar' => $defaultPorsi,
             'tipe_perpanjangan' => $penghuniKamar->durasi === 'harian' ? 'harian' : 'bulanan',
             'jumlah_hari' => $jumlahHari,
             'periode_mulai' => $penghuniKamar->tanggal_masuk,
@@ -98,7 +116,7 @@ class PenghuniKamarService
         \App\Models\Notifikasi::create([
             'user_id' => $penghuniKamar->penghuni_id,
             'judul' => 'Tagihan Pembayaran Awal Sewa Kos',
-            'pesan' => "Selamat! Anda telah didaftarkan ke Kamar {$kamar->kode_kamar} ({$kosNama}). Silakan selesaikan pembayaran awal sewa sebesar Rp " . number_format($jumlahBiaya, 0, ',', '.'),
+            'pesan' => "Selamat! Anda telah didaftarkan ke Kamar {$kamar->kode_kamar} ({$kosNama}). Silakan selesaikan pembayaran awal sewa sebesar Rp " . number_format($nominalNotif, 0, ',', '.'),
             'channel' => 'web',
             'status' => 'terkirim',
         ]);
