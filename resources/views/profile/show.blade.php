@@ -3,7 +3,9 @@
 @section('title', 'Profil Saya')
 
 @section('content')
-<h1 class="text-xl font-bold mb-5 dark:text-white">Profil Saya</h1>
+<div class="mb-5">
+    <x-page-header title="Profil Saya" subtitle="Pengaturan informasi akun Anda" backUrl="{{ route('dashboard') }}" />
+</div>
 
 <x-card class="mb-4">
     <form action="{{ route('profile.update') }}" method="POST" enctype="multipart/form-data" class="space-y-5">

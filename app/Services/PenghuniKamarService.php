@@ -64,9 +64,20 @@ class PenghuniKamarService
 
         // --- BUAT TAGIHAN PEMBAYARAN AWAL AUTOMATIS ---
         $tanggalMasukObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay();
-        $tanggalKeluarObj = $penghuniKamar->tanggal_keluar
-            ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay()
-            : $tanggalMasukObj->copy()->addDays(30);
+
+        if ($penghuniKamar->tanggal_keluar) {
+            $tanggalKeluarObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay();
+        } else {
+            if ($penghuniKamar->durasi === 'harian') {
+                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDay();
+            } elseif ($penghuniKamar->durasi === 'mingguan') {
+                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDays(7);
+            } else {
+                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDays(30);
+            }
+
+            $penghuniKamar->update(['tanggal_keluar' => $tanggalKeluarObj->toDateString()]);
+        }
 
         $selisihHari = max(1, (int) $tanggalMasukObj->diffInDays($tanggalKeluarObj));
 
@@ -86,23 +97,45 @@ class PenghuniKamarService
             }
             $jumlahHari = $selisihHari;
             $nominalNotif = $totalDailyRoom;
-        } else {
+            $tipePerpanjangan = 'harian';
+        } elseif ($penghuniKamar->durasi === 'mingguan') {
+            $jumlahMinggu = max(1, (int) round($selisihHari / 7));
+            if ($selisihHari <= 7) {
+                $jumlahMinggu = 1;
+            }
+            $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0
+                ? $kamar->harga_per_minggu
+                : round(($kamar->harga_per_bulan ?? 0) / 4);
+            $totalWeeklyRoom = $jumlahMinggu * $hargaMingguan;
+
             if ($kamar->tipe === 'berbagi') {
-                $jumlahBiaya = round($kamar->harga_per_bulan / 2);
+                $jumlahBiaya = round($totalWeeklyRoom / 2);
                 $defaultPorsi = 50;
             } else {
-                $jumlahBiaya = $kamar->harga_per_bulan;
+                $jumlahBiaya = $totalWeeklyRoom;
+                $defaultPorsi = 100;
+            }
+            $jumlahHari = $selisihHari > 0 ? $selisihHari : 7;
+            $nominalNotif = $totalWeeklyRoom;
+            $tipePerpanjangan = 'mingguan';
+        } else {
+            if ($kamar->tipe === 'berbagi') {
+                $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / 2);
+                $defaultPorsi = 50;
+            } else {
+                $jumlahBiaya = $kamar->harga_per_bulan ?? 0;
                 $defaultPorsi = 100;
             }
             $jumlahHari = $selisihHari > 0 ? $selisihHari : 30;
             $nominalNotif = $kamar->harga_per_bulan ?? $jumlahBiaya;
+            $tipePerpanjangan = 'bulanan';
         }
 
         \App\Models\Pembayaran::create([
             'penghuni_kamar_id' => $penghuniKamar->id,
             'jumlah' => $jumlahBiaya,
             'porsi_bayar' => $defaultPorsi,
-            'tipe_perpanjangan' => $penghuniKamar->durasi === 'harian' ? 'harian' : 'bulanan',
+            'tipe_perpanjangan' => $tipePerpanjangan,
             'jumlah_hari' => $jumlahHari,
             'periode_mulai' => $penghuniKamar->tanggal_masuk,
             'periode_selesai' => $tanggalKeluarObj->toDateString(),

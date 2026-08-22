@@ -14,7 +14,7 @@ return new class extends Migration
             $table->foreignId('penghuni_id')->constrained('users')->onDelete('cascade');
             $table->date('tanggal_masuk');
             $table->date('tanggal_keluar')->nullable();
-            $table->enum('durasi', ['harian', 'bulanan']);
+            $table->enum('durasi', ['harian', 'mingguan', 'bulanan']);
             $table->enum('status', ['aktif', 'selesai'])->default('aktif');
             $table->timestamps();
         });

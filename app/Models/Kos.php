@@ -14,6 +14,7 @@ class Kos extends Model
     protected $fillable = [
         'mitra_id',
         'nama',
+        'foto',
         'alamat',
         'latitude',
         'longitude',

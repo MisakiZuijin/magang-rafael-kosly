@@ -31,7 +31,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function toggleActive(int $id): User
     {
         $user = $this->model->findOrFail($id);
-        $user->update(['is_active' => !$user->is_active]);
+        $newStatus = !$user->is_active;
+        $user->update(['is_active' => $newStatus]);
+
+        // Saat Super Admin menonaktifkan user, hapus seluruh data log aktivitas user tersebut dari database
+        if (!$newStatus) {
+            \App\Models\LogAktivitas::where('user_id', $user->id)->delete();
+            \App\Models\LogPopupAturan::where('penghuni_id', $user->id)->delete();
+        }
+
         return $user->fresh();
     }
 

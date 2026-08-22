@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('kode_kamar', 20);
             $table->enum('tipe', ['standar', 'berbagi'])->default('standar');
             $table->decimal('harga_per_hari', 12, 2)->nullable();
+            $table->decimal('harga_per_minggu', 12, 2)->nullable();
             $table->decimal('harga_per_bulan', 12, 2);
             $table->integer('kapasitas')->default(1);
             $table->enum('status', ['kosong', 'terisi'])->default('kosong');
