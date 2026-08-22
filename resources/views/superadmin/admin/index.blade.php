@@ -26,7 +26,7 @@
     }
 }">
     {{-- Header --}}
-    <x-page-header title="Kelola Akun Admin" subtitle="Tambah, update, dan atur hak akses akun pengelola / Admin" />
+    <x-page-header title="Kelola Akun Admin" subtitle="Tambah, update, dan atur hak akses akun pengelola / Admin" backUrl="{{ route('dashboard') }}" />
 
     <x-btn @click="modalTambah = true" size="sm" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -129,8 +129,8 @@
                 <p>
                     Apakah Anda yakin ingin <span class="font-bold" x-text="(toggleUser && toggleUser.is_active) ? 'menonaktifkan' : 'mengaktifkan'"></span> akun admin <strong x-text="toggleUser ? toggleUser.nama : ''"></strong> (<span x-text="toggleUser ? toggleUser.email : ''"></span>)?
                 </p>
-                <p class="text-[11px] leading-relaxed opacity-90" x-show="toggleUser && toggleUser.is_active">
-                    Saat dinonaktifkan, akun admin ini tidak akan dapat login atau mengakses sistem. Anda dapat mengaktifkannya kembali kapan saja melalui filter 'Nonaktif'.
+                <p class="text-[11px] leading-relaxed font-semibold mt-1 p-2 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-lg" x-show="toggleUser && toggleUser.is_active">
+                    ℹ️ <strong>Informasi Penonaktifan:</strong> Akun admin <u>tetap ada di database</u> (status nonaktif), namun <strong>seluruh data log aktivitas</strong> yang pernah dilakukan admin ini <strong>akan langsung dihapus permanen dari database</strong>.
                 </p>
             </div>
 
@@ -140,7 +140,7 @@
                 <button type="submit"
                         :class="(toggleUser && toggleUser.is_active) ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-emerald-600 hover:bg-emerald-700 text-white'"
                         class="px-4 py-2 font-bold text-xs rounded-xl shadow-sm active:scale-95 transition-all">
-                    <span x-text="(toggleUser && toggleUser.is_active) ? 'Ya, Nonaktifkan' : 'Ya, Aktifkan'"></span>
+                    <span x-text="(toggleUser && toggleUser.is_active) ? 'Ya, Nonaktifkan & Hapus Log' : 'Ya, Aktifkan'"></span>
                 </button>
             </form>
         </div>
