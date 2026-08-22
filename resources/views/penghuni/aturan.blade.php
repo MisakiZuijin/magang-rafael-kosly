@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="space-y-4">
-    <x-page-header title="Aturan Kos" subtitle="Tata tertib dan aturan sewa kos yang berlaku" />
+    <x-page-header title="Aturan Kos" subtitle="Tata tertib dan aturan sewa kos yang berlaku" backUrl="{{ route('penghuni.dashboard') }}" />
 
     @if($aturans->isEmpty())
     <x-card>
