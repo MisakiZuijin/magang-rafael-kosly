@@ -96,14 +96,14 @@ class PenghuniDashboardController extends Controller
             if (!$hasPendingPayment) {
                 $coveredPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
                     ->where('status', 'terverifikasi')
-                    ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar Full oleh%')
+                    ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar%oleh%')
                     ->latest()
                     ->first();
 
                 if ($coveredPayment) {
                     $roommateFullPaid = true;
                     $catatan = $coveredPayment->catatan_verifikasi;
-                    $roommateName = trim(str_replace('Lunas (Dibayar Full oleh ', '', $catatan), ')');
+                    $roommateName = trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang) oleh (.+)\)$/', '$1', $catatan));
                 }
             }
         }
@@ -115,7 +115,7 @@ class PenghuniDashboardController extends Controller
     {
         $request->validate([
             'pembayaran_id' => 'required|exists:pembayaran,id',
-            'tipe_perpanjangan' => 'required|in:bulanan,harian',
+            'tipe_perpanjangan' => 'required|in:bulanan,mingguan,harian',
             'porsi_bayar' => 'nullable|in:100,50',
             'jumlah_hari' => 'nullable|integer|min:1|max:365',
             'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
@@ -123,7 +123,7 @@ class PenghuniDashboardController extends Controller
 
         $tipePerpanjangan = $request->input('tipe_perpanjangan', 'bulanan');
         $porsiBayar = (int) $request->input('porsi_bayar', 100);
-        $jumlahHari = $tipePerpanjangan === 'harian' ? (int) $request->input('jumlah_hari', 1) : 30;
+        $jumlahHari = $tipePerpanjangan === 'harian' ? (int) $request->input('jumlah_hari', 1) : ($tipePerpanjangan === 'mingguan' ? 7 : 30);
 
         $file = $request->file('bukti_transfer');
         $path = $file->store('images/bukti-transfer', 'public');

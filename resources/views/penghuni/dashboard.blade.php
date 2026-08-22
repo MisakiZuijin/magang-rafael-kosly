@@ -36,64 +36,10 @@
         </div>
 
         <x-stat-grid :items="[
+            ['label' => 'Biaya Sewa', 'value' => 'Rp ' . number_format($data['total_biaya'], 0, ',', '.')],
             ['label' => 'Masa Sewa', 'value' => ucfirst($data['durasi'])],
-            ['label' => 'Penghuni', 'value' => $data['jumlah_penghuni'] . ' org'],
-            ['label' => 'Kapasitas', 'value' => $data['kamar']->kapasitas . ' org'],
+            ['label' => 'Penghuni', 'value' => $data['jumlah_penghuni'] . ' / ' . $data['kamar']->kapasitas . ' org'],
         ]" />
-
-        {{-- Estimasi & Informasi Tarif Lengkap (Bulanan & Harian) --}}
-        <div class="p-3 bg-gray-50 dark:bg-gray-800/60 rounded-xl border border-gray-100 dark:border-gray-700/60 space-y-2">
-            <div class="grid grid-cols-1 gap-2">
-                <span class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                    💰 Informasi Tarif & Perkiraan Sewa Kamar
-                </span>
-                @if($data['is_berbagi'])
-                <span class="px-2 py-0.5 text-center text-[9px] w-[100px] font-bold rounded bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300">
-                    Kamar Berbagi
-                </span>
-                @else
-                <span class="px-2 py-0.5 text-center text-[9px] w-[100px] font-bold rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
-                    Kamar Standart
-                </span>
-                @endif
-            </div>
-
-            <div class="grid grid-cols-2 gap-2 text-xs">
-                {{-- Tarif Bulanan --}}
-                <div class="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200/70 dark:border-gray-700 space-y-0.5">
-                    <p class="text-[10px] text-gray-400 font-semibold uppercase">Tarif Bulanan</p>
-                    @if($data['is_berbagi'])
-                    <p class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        Rp {{ number_format(round($data['harga_bulan'] / 2), 0, ',', '.') }} <span class="text-[9px] font-normal text-gray-400">/ 50%</span>
-                    </p>
-                    <p class="text-[9px] text-gray-400 font-mono">
-                        Full: Rp {{ number_format($data['harga_bulan'], 0, ',', '.') }}
-                    </p>
-                    @else
-                    <p class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        Rp {{ number_format($data['harga_bulan'], 0, ',', '.') }} <span class="text-[9px] font-normal text-gray-400">/ bulan</span>
-                    </p>
-                    @endif
-                </div>
-
-                {{-- Tarif Harian --}}
-                <div class="p-2 bg-white dark:bg-gray-900 rounded-lg border border-gray-200/70 dark:border-gray-700 space-y-0.5">
-                    <p class="text-[10px] text-gray-400 font-semibold uppercase">Tarif Harian</p>
-                    @if($data['is_berbagi'])
-                    <p class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        Rp {{ number_format(round($data['harga_hari'] / 2), 0, ',', '.') }} <span class="text-[9px] font-normal text-gray-400">/ 50% hari</span>
-                    </p>
-                    <p class="text-[9px] text-gray-400 font-mono">
-                        Full: Rp {{ number_format($data['harga_hari'], 0, ',', '.') }}/hari
-                    </p>
-                    @else
-                    <p class="font-bold text-emerald-600 dark:text-emerald-400 font-mono">
-                        Rp {{ number_format($data['harga_hari'], 0, ',', '.') }} <span class="text-[9px] font-normal text-gray-400">/ hari</span>
-                    </p>
-                    @endif
-                </div>
-            </div>
-        </div>
 
         @if($data['is_future'])
         {{-- Tampilan khusus jika tanggal masuk belum tiba (Future Reservation) --}}
