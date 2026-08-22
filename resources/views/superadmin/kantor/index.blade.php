@@ -14,12 +14,7 @@
     }
 }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Kelola Lokasi Kantor</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Pengaturan titik koordinat & alamat kantor admin untuk peta navigasi</p>
-        </div>
-    </div>
+    <x-page-header title="Kelola Lokasi Kantor" subtitle="Pengaturan titik koordinat & alamat kantor admin untuk peta navigasi" backUrl="{{ route('dashboard') }}" />
 
     <x-btn @click="modalTambah = true" size="sm" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

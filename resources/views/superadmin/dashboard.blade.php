@@ -112,15 +112,15 @@
     $pctTerisi = round((($data['kamar_terisi'] ?? 0) / $total) * 100);
     $pctKosong = round((($data['kamar_kosong'] ?? 0) / $total) * 100);
     @endphp
-    <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3" x-data="{ pctTerisi: {{ $pctTerisi }}, pctKosong: {{ $pctKosong }} }">
         <div class="flex justify-between items-center">
             <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Grafik Okupansi Kamar Seluruh Kos</h2>
             <span class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $pctTerisi }}% Okupansi</span>
         </div>
 
         <div class="w-full h-3.5 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden flex">
-            <div class="bg-emerald-500 h-full transition-all duration-500" :style="{ width: '{{ $pctTerisi }}%' }" title="Terisi: {{ $pctTerisi }}%"></div>
-            <div class="bg-amber-400 h-full transition-all duration-500" :style="{ width: '{{ $pctKosong }}%' }" title="Kosong: {{ $pctKosong }}%"></div>
+            <div class="bg-emerald-500 h-full transition-all duration-500" :style="{ width: pctTerisi + '%' }" title="Terisi: {{ $pctTerisi }}%"></div>
+            <div class="bg-amber-400 h-full transition-all duration-500" :style="{ width: pctKosong + '%' }" title="Kosong: {{ $pctKosong }}%"></div>
         </div>
 
         <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-1">
