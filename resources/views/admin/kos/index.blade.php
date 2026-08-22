@@ -17,19 +17,31 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
     filterKosId: 'all',
     filterTipeKamar: 'all',
     filterMasaAktif: 'all',
+    showImageModal: false,
+    previewImageUrl: '',
+    previewImageTitle: '',
+    openImageModal(url, title) {
+        this.previewImageUrl = url;
+        this.previewImageTitle = title;
+        this.showImageModal = true;
+    },
+    parseDigits(val) {
+        if (!val && val !== 0) return '';
+        let str = val.toString().trim();
+        if (/^\d+\.\d+$/.test(str)) {
+            str = Math.floor(parseFloat(str)).toString();
+        }
+        return str.replace(/[^0-9]/g, '');
+    },
     formatRupiah(val) {
         if (!val && val !== 0) return '';
-        const digits = val.toString().replace(/[^0-9]/g, '');
+        const digits = this.parseDigits(val);
         if (!digits) return '';
         return 'Rp ' + new Intl.NumberFormat('id-ID').format(digits);
     },
-    parseDigits(val) {
-        if (!val) return '';
-        return val.toString().replace(/[^0-9]/g, '');
-    },
     editKosData: { id: '', mitra_id: '', nama: '', alamat: '', latitude: '', longitude: '', bank: '', no_rekening: '', nama_pemilik_rekening: '' },
     editKosUrl: '',
-    editKamarData: { id: '', kos_id: '', kode_kamar: '', tipe: 'standar', harga_per_bulan: '', display_harga_per_bulan: '', harga_per_hari: '', display_harga_per_hari: '', kapasitas: 1, wa_group_id: '', link_grup_wa: '' },
+    editKamarData: { id: '', kos_id: '', kode_kamar: '', tipe: 'standar', harga_per_bulan: '', display_harga_per_bulan: '', harga_per_minggu: '', display_harga_per_minggu: '', harga_per_hari: '', display_harga_per_hari: '', kapasitas: 1, wa_group_id: '', link_grup_wa: '' },
     editKamarUrl: '',
     openEditKosModal(kos) {
         this.editKosData = {
@@ -48,16 +60,19 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
         this.modalEditKos = true;
     },
     openEditKamarModal(kamar) {
-        const hBulan = kamar.harga_per_bulan || '';
-        const hHari = kamar.harga_per_hari || '';
+        const hBulan = kamar.harga_per_bulan ? this.parseDigits(kamar.harga_per_bulan) : '';
+        const hMinggu = kamar.harga_per_minggu ? this.parseDigits(kamar.harga_per_minggu) : '';
+        const hHari = kamar.harga_per_hari ? this.parseDigits(kamar.harga_per_hari) : '';
         this.editKamarData = {
             id: kamar.id,
             kos_id: kamar.kos_id,
             kode_kamar: kamar.kode_kamar || '',
             tipe: kamar.tipe || 'standar',
             harga_per_bulan: hBulan,
+            harga_per_minggu: hMinggu,
             harga_per_hari: hHari,
             display_harga_per_bulan: hBulan ? this.formatRupiah(hBulan) : '',
+            display_harga_per_minggu: hMinggu ? this.formatRupiah(hMinggu) : '',
             display_harga_per_hari: hHari ? this.formatRupiah(hHari) : '',
             kapasitas: kamar.kapasitas || (kamar.tipe === 'berbagi' ? 2 : 1),
             wa_group_id: kamar.wa_group_id || '',
@@ -79,12 +94,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
     }
 }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Pendaftaran Kos & Kamar</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola kos, kamar, dan penempatan anak kos</p>
-        </div>
-    </div>
+    <x-page-header title="Pendaftaran Kos & Kamar" subtitle="Kelola kos, kamar, dan penempatan anak kos" backUrl="{{ route('dashboard') }}" />
 
     {{-- Action Buttons Bar --}}
     <div class="grid grid-cols-3 gap-2">
@@ -166,12 +176,48 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
         <div x-show="(filterKosId === 'all' || filterKosId == '{{ $kos->id }}')"
             x-transition
             class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
+            
+            {{-- Foto Properti Kos (Cropped Half-Height) --}}
+            @if($kos->foto)
+            <div class="relative w-full h-36 sm:h-44 overflow-hidden bg-gray-900 group cursor-pointer border-b border-gray-100 dark:border-gray-800"
+                 @click="openImageModal('{{ str_starts_with($kos->foto, 'http') ? $kos->foto : asset('storage/' . $kos->foto) }}', '{{ addslashes($kos->nama) }}')">
+                <img src="{{ str_starts_with($kos->foto, 'http') ? $kos->foto : asset('storage/' . $kos->foto) }}"
+                     alt="{{ $kos->nama }}"
+                     class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+                <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold text-white flex items-center gap-1 shadow-sm group-hover:bg-emerald-600 transition-colors">
+                    <span>🔍 Klik untuk Perbesar Foto Kos</span>
+                </div>
+            </div>
+            @endif
+
             <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30">
                 <div class="flex justify-between items-start gap-2 mb-1">
                     <div class="min-w-0 flex-1">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block truncate">
-                            Mitra: {{ $kos->mitra->nama ?? '-' }}
-                        </span>
+                        <div class="flex items-center gap-1.5 flex-wrap mb-0.5">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                                Mitra: {{ $kos->mitra->nama ?? '-' }}
+                            </span>
+                            @if($kos->mitra && $kos->mitra->no_hp)
+                            @php
+                                $cleanHp = preg_replace('/[^0-9]/', '', $kos->mitra->no_hp);
+                                $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
+                            @endphp
+                            <div class="inline-flex items-center gap-1">
+                                <a href="https://wa.me/{{ $waHp }}"
+                                   target="_blank"
+                                   class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 rounded-md transition-all active:scale-95"
+                                   title="Kirim WhatsApp ke Mitra">
+                                    💬 WA: {{ $kos->mitra->no_hp }}
+                                </a>
+                                <a href="tel:{{ $kos->mitra->no_hp }}"
+                                   class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 border border-blue-200 dark:border-blue-800 text-[10px] font-bold text-blue-700 dark:text-blue-300 rounded-md transition-all active:scale-95"
+                                   title="Telepon Langsung Mitra">
+                                    📞 Telepon
+                                </a>
+                            </div>
+                            @endif
+                        </div>
                         <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
                         <p class="text-xs text-gray-500 mt-0.5 truncate">{{ $kos->alamat ?? 'Alamat tidak diisi' }}</p>
                     </div>
@@ -242,10 +288,22 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                             </x-badge>
                         </div>
 
-                        <div class="flex justify-between items-center text-[11px] font-semibold">
-                            <span class="text-emerald-600 dark:text-emerald-400">
-                                Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }} / bln
-                            </span>
+                        <div class="flex flex-wrap items-center justify-between gap-1.5 text-[11px] font-semibold font-mono">
+                            <div class="flex items-center gap-2 flex-wrap text-[11px]">
+                                <span class="text-emerald-700 dark:text-emerald-300 font-bold">
+                                    Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }}/bln
+                                </span>
+                                @if($kamar->harga_per_minggu)
+                                <span class="text-purple-600 dark:text-purple-400 font-bold">
+                                    • Rp {{ number_format($kamar->harga_per_minggu, 0, ',', '.') }}/minggu
+                                </span>
+                                @endif
+                                @if($kamar->harga_per_hari)
+                                <span class="text-blue-600 dark:text-blue-400 font-bold">
+                                    • Rp {{ number_format($kamar->harga_per_hari, 0, ',', '.') }}/hari
+                                </span>
+                                @endif
+                            </div>
                             @if($kamar->link_grup_wa)
                             <a href="{{ $kamar->link_grup_wa }}" target="_blank" class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 rounded-md hover:underline flex items-center gap-1">
                                 💬 Grup WA Kamar
@@ -328,7 +386,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
     {{-- Modal Pendaftaran Kos Baru --}}
     <x-modal show="modalKos" title="Daftarkan Kos Baru">
-        <form action="{{ route($p . 'kos.store') }}" method="POST" class="space-y-3">
+        <form action="{{ route($p . 'kos.store') }}" method="POST" enctype="multipart/form-data" class="space-y-3">
             @csrf
 
             <div>
@@ -344,6 +402,12 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Nama Kos</label>
                 <input type="text" name="nama" required placeholder="Contoh: Kos Mawar Asri" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Foto Properti Kos (Opsional)</label>
+                <input type="file" name="foto" accept="image/*" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
+                <p class="text-[10px] text-gray-400 mt-0.5 italic">* Format gambar: JPG, PNG, WEBP. Maks 3MB.</p>
             </div>
 
             <div>
@@ -387,7 +451,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
     {{-- Modal Edit Kos --}}
     <x-modal show="modalEditKos" title="Edit Data Kos">
-        <form :action="editKosUrl" method="POST" class="space-y-3">
+        <form :action="editKosUrl" method="POST" enctype="multipart/form-data" class="space-y-3">
             @csrf
             @method('PUT')
 
@@ -404,6 +468,12 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Nama Kos</label>
                 <input type="text" name="nama" x-model="editKosData.nama" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Ganti Foto Properti Kos (Opsional)</label>
+                <input type="file" name="foto" accept="image/*" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
+                <p class="text-[10px] text-gray-400 mt-0.5 italic">* Biarkan kosong jika tidak ingin mengubah foto kos saat ini.</p>
             </div>
 
             <div>
@@ -445,9 +515,22 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
         </form>
     </x-modal>
 
+    {{-- Modal Detail Foto Properti Kos --}}
+    <x-modal show="showImageModal" title="Detail Foto Properti Kos">
+        <div class="space-y-3 text-center">
+            <p class="text-xs font-bold text-gray-700 dark:text-gray-300" x-text="previewImageTitle"></p>
+            <div class="relative w-full max-h-[70vh] overflow-hidden rounded-2xl border border-gray-200 dark:border-gray-800 bg-black flex items-center justify-center">
+                <img :src="previewImageUrl" :alt="previewImageTitle" class="max-w-full max-h-[70vh] object-contain rounded-xl">
+            </div>
+            <div class="pt-2 flex justify-end">
+                <x-btn type="button" variant="secondary" size="sm" @click="showImageModal = false">Tutup</x-btn>
+            </div>
+        </div>
+    </x-modal>
+
     {{-- Modal Pendaftaran Kamar Baru --}}
     <x-modal show="modalKamar" title="Daftarkan Kamar Baru">
-        <form action="{{ route($p . 'kamar.store') }}" method="POST" class="space-y-3" x-data="{ kamarTipe: 'standar', kapasitas: 1, displayHargaBulan: '', rawHargaBulan: '', displayHargaHari: '', rawHargaHari: '' }">
+        <form action="{{ route($p . 'kamar.store') }}" method="POST" class="space-y-3" x-data="{ kamarTipe: 'standar', kapasitas: 1, displayHargaBulan: '', rawHargaBulan: '', displayHargaMinggu: '', rawHargaMinggu: '', displayHargaHari: '', rawHargaHari: '' }">
             @csrf
 
             <div>
@@ -474,24 +557,33 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan</label>
+                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan</label>
                     <input type="text"
                            x-model="displayHargaBulan"
                            @input="displayHargaBulan = formatRupiah($event.target.value); rawHargaBulan = parseDigits($event.target.value)"
                            placeholder="Rp 1.000.000"
                            required
-                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                           class="w-full px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                     <input type="hidden" name="harga_per_bulan" :value="rawHargaBulan">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Hari (Opsional)</label>
+                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Minggu</label>
+                    <input type="text"
+                           x-model="displayHargaMinggu"
+                           @input="displayHargaMinggu = formatRupiah($event.target.value); rawHargaMinggu = parseDigits($event.target.value)"
+                           placeholder="Rp 300.000"
+                           class="w-full px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_minggu" :value="rawHargaMinggu">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Hari</label>
                     <input type="text"
                            x-model="displayHargaHari"
                            @input="displayHargaHari = formatRupiah($event.target.value); rawHargaHari = parseDigits($event.target.value)"
                            placeholder="Rp 100.000"
-                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                           class="w-full px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                     <input type="hidden" name="harga_per_hari" :value="rawHargaHari">
                 </div>
             </div>
@@ -550,24 +642,33 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
+            <div class="grid grid-cols-3 gap-2">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan</label>
+                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Bulan</label>
                     <input type="text"
                            x-model="editKamarData.display_harga_per_bulan"
                            @input="editKamarData.display_harga_per_bulan = formatRupiah($event.target.value); editKamarData.harga_per_bulan = parseDigits($event.target.value)"
                            placeholder="Rp 1.000.000"
                            required
-                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                           class="w-full px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                     <input type="hidden" name="harga_per_bulan" :value="editKamarData.harga_per_bulan">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Hari (Opsional)</label>
+                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Minggu</label>
+                    <input type="text"
+                           x-model="editKamarData.display_harga_per_minggu"
+                           @input="editKamarData.display_harga_per_minggu = formatRupiah($event.target.value); editKamarData.harga_per_minggu = parseDigits($event.target.value)"
+                           placeholder="Rp 300.000"
+                           class="w-full px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_minggu" :value="editKamarData.harga_per_minggu">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Harga / Hari</label>
                     <input type="text"
                            x-model="editKamarData.display_harga_per_hari"
                            @input="editKamarData.display_harga_per_hari = formatRupiah($event.target.value); editKamarData.harga_per_hari = parseDigits($event.target.value)"
                            placeholder="Rp 100.000"
-                           class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                           class="w-full px-2.5 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                     <input type="hidden" name="harga_per_hari" :value="editKamarData.harga_per_hari">
                 </div>
             </div>
@@ -668,10 +769,10 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                 </select>
             </div>
 
-            {{-- Penghuni 2 (Wajib Jika Tipe Berbagi / 2 Orang) --}}
+            {{-- Penghuni 2 (Wajib Jika Tipe Berbagi) --}}
             <div x-show="selectedKamarTipe === 'berbagi'" x-transition class="space-y-1">
                 <label class="block text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
-                    Pilih Penghuni 2 <span class="text-red-500">* (Wajib Untuk Kamar Berbagi)</span>
+                    Pilih Penghuni 2 <span class="text-red-500">* (Wajib - Minimal 2 Orang)</span>
                 </label>
                 <select name="penghuni_id_2" :required="selectedKamarTipe === 'berbagi'" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                     <option value="">-- Pilih Anak Kos Ke-2 --</option>
@@ -691,7 +792,32 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                     </option>
                     @endforeach
                 </select>
-                <p class="text-[10px] text-purple-600 dark:text-purple-400 italic mt-0.5">Kamar tipe berbagi harus diisi oleh 2 orang berbeda.</p>
+            </div>
+
+            {{-- Penghuni 3 (Opsional - Maksimal 3 Orang) --}}
+            <div x-show="selectedKamarTipe === 'berbagi'" x-transition class="space-y-1">
+                <label class="block text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
+                    Pilih Penghuni 3 <span class="text-gray-500 dark:text-gray-400 font-normal">(Opsional - Maksimal 3 Orang)</span>
+                </label>
+                <select name="penghuni_id_3" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                    <option value="">-- Tanpa Penghuni Ke-3 (Kapasitas 2 Orang) --</option>
+                    @foreach($penghuniUsers as $pu)
+                    @php
+                    $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
+                    $alreadyOccupying = $activePk !== null;
+                    $isDisabled = $alreadyOccupying || !$pu->is_active;
+                    $statusText = !$pu->is_active 
+                        ? '[NONAKTIF]' 
+                        : ($alreadyOccupying ? '[AKTIF - MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[AKTIF]');
+                    @endphp
+                    <option value="{{ $pu->id }}"
+                        {{ $isDisabled ? 'disabled' : '' }}
+                        class="{{ $isDisabled ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
+                        {{ $pu->nama }} ({{ $pu->email }}) {{ $statusText }}
+                    </option>
+                    @endforeach
+                </select>
+                <p class="text-[10px] text-purple-600 dark:text-purple-400 italic mt-0.5">Kamar tipe berbagi wajib diisi minimal 2 orang dan maksimal 3 orang.</p>
             </div>
 
             <div class="grid grid-cols-2 gap-2">
@@ -699,6 +825,7 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Durasi Sewa</label>
                     <select name="durasi" x-model="durasiSewa" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                         <option value="bulanan">Bulanan (Auto 30 Hari)</option>
+                        <option value="mingguan">Mingguan (Auto 7 Hari)</option>
                         <option value="harian">Harian (Tentukan Selesai)</option>
                     </select>
                 </div>

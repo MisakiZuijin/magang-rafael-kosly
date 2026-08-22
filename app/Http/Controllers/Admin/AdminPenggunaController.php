@@ -78,10 +78,42 @@ class AdminPenggunaController extends Controller
 
     public function toggleActive(int $id)
     {
-        $user = User::find($id);
-        $this->userService->toggleActive($id);
-        $this->logAktivitasService->log('toggle_pengguna', "Mengubah status aktif pengguna: {$user->nama}");
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if ($currentUser->role !== 'super_admin') {
+            return redirect()->back()->with('error', 'Aksi penonaktifan pengguna hanya dapat dilakukan oleh Super Admin.');
+        }
 
-        return redirect()->back()->with('success', 'Status pengguna berhasil diubah.');
+        $user = User::findOrFail($id);
+        $wasActive = $user->is_active;
+
+        $this->userService->toggleActive($id);
+
+        if ($wasActive) {
+            $this->logAktivitasService->log('toggle_pengguna', "Super Admin menonaktifkan akun {$user->role}: {$user->nama} & menghapus seluruh data log aktivitasnya.");
+            return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil dinonaktifkan. Seluruh data log aktivitas pengguna ini di database telah dihapus.");
+        } else {
+            $this->logAktivitasService->log('toggle_pengguna', "Super Admin mengaktifkan kembali akun {$user->role}: {$user->nama}");
+            return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil diaktifkan kembali.");
+        }
+    }
+
+    public function destroy(int $id)
+    {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        if ($currentUser->role !== 'super_admin') {
+            return redirect()->back()->with('error', 'Aksi hapus pengguna hanya dapat dilakukan oleh Super Admin.');
+        }
+
+        $user = User::findOrFail($id);
+        $nama = $user->nama;
+        $role = $user->role;
+
+        $this->userService->deleteUser($id);
+        $this->logAktivitasService->log('hapus_pengguna', "Super Admin menghapus permanen akun {$role}: {$nama}");
+
+        $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
+        return redirect()->route($prefix . 'pengguna.index')->with('success', "Akun {$role} {$nama} berhasil dihapus permanen dari sistem.");
     }
 }

@@ -37,6 +37,7 @@ class AdminKosController extends Controller
         $validated = $request->validate([
             'mitra_id' => 'required|exists:users,id',
             'nama' => 'required|string|max:100',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'alamat' => 'nullable|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
@@ -45,6 +46,10 @@ class AdminKosController extends Controller
             'bank' => 'nullable|string|max:50',
             'nama_pemilik_rekening' => 'nullable|string|max:100',
         ]);
+
+        if ($request->hasFile('foto')) {
+            $validated['foto'] = $request->file('foto')->store('images/kos', 'public');
+        }
 
         $kos = $this->kosService->create($validated);
         $this->logAktivitasService->log('tambah_kos', "Mendaftarkan properti kos baru: {$kos->nama}");
@@ -57,6 +62,9 @@ class AdminKosController extends Controller
         if ($request->has('harga_per_bulan')) {
             $request->merge(['harga_per_bulan' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_bulan'))]);
         }
+        if ($request->has('harga_per_minggu') && $request->filled('harga_per_minggu')) {
+            $request->merge(['harga_per_minggu' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_minggu'))]);
+        }
         if ($request->has('harga_per_hari') && $request->filled('harga_per_hari')) {
             $request->merge(['harga_per_hari' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_hari'))]);
         }
@@ -66,6 +74,7 @@ class AdminKosController extends Controller
             'kode_kamar' => 'required|string|max:20',
             'tipe' => 'required|in:standar,berbagi',
             'harga_per_hari' => 'nullable|numeric',
+            'harga_per_minggu' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric',
             'kapasitas' => 'required|integer|min:1',
             'wa_group_id' => 'nullable|string|max:100',
@@ -73,7 +82,7 @@ class AdminKosController extends Controller
         ]);
 
         $validated['status'] = 'kosong';
-        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 2 : 1;
+        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 3 : 1;
         $kamar = $this->kamarService->create($validated);
         $kosNama = $kamar->kos->nama ?? 'Kos';
         $this->logAktivitasService->log('tambah_kamar', "Menambahkan Kamar {$kamar->kode_kamar} di {$kosNama}");
@@ -86,10 +95,6 @@ class AdminKosController extends Controller
         $kamar = $this->kamarService->getById($request->input('kamar_id'));
         if (!$kamar) {
             return redirect()->back()->with('error', 'Kamar tidak ditemukan.');
-        }
-
-        if ($kamar->status === 'terisi') {
-            return redirect()->back()->with('error', 'Kamar ini sudah terisi penuh.');
         }
 
         // Check if Penghuni 1 is already assigned to an active room
@@ -110,23 +115,39 @@ class AdminKosController extends Controller
             }
         }
 
-        if ($kamar->tipe === 'berbagi' || $kamar->kapasitas == 2) {
+        // Check if Penghuni 3 is already assigned to an active room
+        if ($request->filled('penghuni_id_3')) {
+            $penghuni3Active = PenghuniKamar::where('penghuni_id', $request->input('penghuni_id_3'))
+                ->where('status', 'aktif')
+                ->exists();
+            if ($penghuni3Active) {
+                return redirect()->back()->with('error', 'Penghuni ke-3 yang Anda pilih sudah terdaftar dan sedang menempati kamar lain.');
+            }
+        }
+
+        if ($kamar->tipe === 'berbagi' || $kamar->kapasitas >= 2) {
             $validated = $request->validate([
                 'kamar_id' => 'required|exists:kamar,id',
                 'penghuni_id' => 'required|exists:users,id',
                 'penghuni_id_2' => 'required|exists:users,id|different:penghuni_id',
+                'penghuni_id_3' => 'nullable|exists:users,id|different:penghuni_id|different:penghuni_id_2',
                 'tanggal_masuk' => 'required|date',
                 'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
-                'durasi' => 'required|in:harian,bulanan',
+                'durasi' => 'required|in:harian,mingguan,bulanan',
             ], [
-                'penghuni_id_2.required' => 'Kamar tipe berbagi (2 orang) wajib mendaftarkan 2 orang penghuni.',
+                'penghuni_id_2.required' => 'Kamar tipe berbagi wajib mendaftarkan minimal 2 orang penghuni.',
                 'penghuni_id_2.different' => 'Penghuni ke-2 harus orang yang berbeda dari Penghuni ke-1.',
+                'penghuni_id_3.different' => 'Penghuni ke-3 harus orang yang berbeda dari Penghuni ke-1 dan ke-2.',
             ]);
 
             if (empty($validated['tanggal_keluar'])) {
-                $validated['tanggal_keluar'] = $validated['durasi'] === 'bulanan'
-                    ? \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString()
-                    : \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+                if ($validated['durasi'] === 'bulanan') {
+                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString();
+                } elseif ($validated['durasi'] === 'mingguan') {
+                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(7)->toDateString();
+                } else {
+                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+                }
             }
 
             // Register Penghuni 1
@@ -149,24 +170,48 @@ class AdminKosController extends Controller
                 'status' => 'aktif',
             ]);
 
+            $names = [];
             $u1 = User::find($validated['penghuni_id']);
             $u2 = User::find($validated['penghuni_id_2']);
-            $this->logAktivitasService->log('daftar_penghuni', "Mendaftarkan penghuni {$u1->nama} & {$u2->nama} ke Kamar {$kamar->kode_kamar}");
+            $names[] = $u1->nama;
+            $names[] = $u2->nama;
 
-            return redirect()->back()->with('success', 'Berhasil mendaftarkan 2 penghuni ke kamar tipe berbagi.');
+            // Register Penghuni 3 jika diisi
+            if (!empty($validated['penghuni_id_3'])) {
+                $this->penghuniKamarService->create([
+                    'kamar_id' => $validated['kamar_id'],
+                    'penghuni_id' => $validated['penghuni_id_3'],
+                    'tanggal_masuk' => $validated['tanggal_masuk'],
+                    'tanggal_keluar' => $validated['tanggal_keluar'],
+                    'durasi' => $validated['durasi'],
+                    'status' => 'aktif',
+                ]);
+                $u3 = User::find($validated['penghuni_id_3']);
+                $names[] = $u3->nama;
+            }
+
+            $joinedNames = implode(', ', $names);
+            $countPenghuni = count($names);
+            $this->logAktivitasService->log('daftar_penghuni', "Mendaftarkan {$countPenghuni} penghuni ({$joinedNames}) ke Kamar {$kamar->kode_kamar}");
+
+            return redirect()->back()->with('success', "Berhasil mendaftarkan {$countPenghuni} penghuni ke kamar tipe berbagi.");
         } else {
             $validated = $request->validate([
                 'kamar_id' => 'required|exists:kamar,id',
                 'penghuni_id' => 'required|exists:users,id',
                 'tanggal_masuk' => 'required|date',
                 'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
-                'durasi' => 'required|in:harian,bulanan',
+                'durasi' => 'required|in:harian,mingguan,bulanan',
             ]);
 
             if (empty($validated['tanggal_keluar'])) {
-                $validated['tanggal_keluar'] = $validated['durasi'] === 'bulanan'
-                    ? \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString()
-                    : \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+                if ($validated['durasi'] === 'bulanan') {
+                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString();
+                } elseif ($validated['durasi'] === 'mingguan') {
+                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(7)->toDateString();
+                } else {
+                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+                }
             }
 
             $validated['status'] = 'aktif';
@@ -212,9 +257,12 @@ class AdminKosController extends Controller
 
     public function updateKos(Request $request, int $id)
     {
+        $kos = \App\Models\Kos::findOrFail($id);
+
         $validated = $request->validate([
             'mitra_id' => 'required|exists:users,id',
             'nama' => 'required|string|max:100',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'alamat' => 'nullable|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
@@ -223,6 +271,13 @@ class AdminKosController extends Controller
             'bank' => 'nullable|string|max:50',
             'nama_pemilik_rekening' => 'nullable|string|max:100',
         ]);
+
+        if ($request->hasFile('foto')) {
+            if ($kos->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($kos->foto)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($kos->foto);
+            }
+            $validated['foto'] = $request->file('foto')->store('images/kos', 'public');
+        }
 
         $this->kosService->update($id, $validated);
         $this->logAktivitasService->log('update_kos', "Memperbarui data kos: {$validated['nama']}");
@@ -235,6 +290,9 @@ class AdminKosController extends Controller
         if ($request->has('harga_per_bulan')) {
             $request->merge(['harga_per_bulan' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_bulan'))]);
         }
+        if ($request->has('harga_per_minggu') && $request->filled('harga_per_minggu')) {
+            $request->merge(['harga_per_minggu' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_minggu'))]);
+        }
         if ($request->has('harga_per_hari') && $request->filled('harga_per_hari')) {
             $request->merge(['harga_per_hari' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_hari'))]);
         }
@@ -244,13 +302,14 @@ class AdminKosController extends Controller
             'kode_kamar' => 'required|string|max:20',
             'tipe' => 'required|in:standar,berbagi',
             'harga_per_hari' => 'nullable|numeric',
+            'harga_per_minggu' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric',
             'kapasitas' => 'required|integer|min:1',
             'wa_group_id' => 'nullable|string|max:100',
             'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
-        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 2 : 1;
+        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 3 : 1;
         $this->kamarService->update($id, $validated);
         $this->logAktivitasService->log('update_kamar', "Memperbarui data Kamar {$validated['kode_kamar']}");
 

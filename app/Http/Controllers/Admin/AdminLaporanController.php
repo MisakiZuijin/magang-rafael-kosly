@@ -122,6 +122,7 @@ class AdminLaporanController extends Controller
                 'Mitra / Pemilik Kos',
                 'Kode Kamar',
                 'Nama Penghuni',
+                'No. HP Penghuni',
                 'Nominal (Rp)',
                 'Tanggal Bayar',
                 'Tanggal Verifikasi',
@@ -134,6 +135,7 @@ class AdminLaporanController extends Controller
                 $mitraNama = $pb->penghuniKamar->kamar->kos->mitra->nama ?? '-';
                 $kodeKamar = $pb->penghuniKamar->kamar->kode_kamar ?? '-';
                 $penghuniNama = $pb->penghuniKamar->penghuni->nama ?? '-';
+                $penghuniNoHp = $pb->penghuniKamar->penghuni->no_hp ?? '-';
                 $tanggalBayar = $pb->tanggal_bayar ? $pb->tanggal_bayar->format('d-m-Y H:i') : '-';
                 $tanggalVerif = $pb->tanggal_verifikasi ? $pb->tanggal_verifikasi->format('d-m-Y H:i') : '-';
 
@@ -143,6 +145,7 @@ class AdminLaporanController extends Controller
                     $mitraNama,
                     $kodeKamar,
                     $penghuniNama,
+                    $penghuniNoHp,
                     $pb->jumlah,
                     $tanggalBayar,
                     $tanggalVerif,

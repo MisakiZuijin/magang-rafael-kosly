@@ -11,18 +11,16 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
 @section('content')
 <div class="space-y-4" x-data="{ tab: 'grafik' }">
     {{-- Header --}}
-    <div class="grid grid-cols-1 gap-2">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Laporan &amp; Aktivitas</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Grafik kamar, aktivitas bayar, log per kos, &amp; log aktivitas sistem</p>
-        </div>
-        <x-btn href="{{ $exportRoute }}" variant="secondary" size="sm" class="!min-h-[36px] w-[125px] !py-1 text-xs flex items-center gap-1.5 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 transition-all">
+    <x-page-header title="Laporan & Aktivitas" subtitle="Grafik kamar, aktivitas bayar, log per kos, & log aktivitas sistem" backUrl="{{ route('dashboard') }}">
+        @slot('action')
+        <x-btn href="{{ $exportRoute }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs flex items-center gap-1.5 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 transition-all">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            Export CSV
+            <span>Export CSV</span>
         </x-btn>
-    </div>
+        @endslot
+    </x-page-header>
 
     {{-- Filter Date Form --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2.5">
@@ -75,7 +73,7 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
         $pctTerisi = round(($kamarTerisi / $total) * 100);
         $pctKosong = round(($kamarKosong / $total) * 100);
         @endphp
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4" x-data="{ pctTerisi: {{ $pctTerisi }}, pctKosong: {{ $pctKosong }} }">
             <h3 class="font-bold text-sm text-gray-900 dark:text-white">Persentase &amp; Okupansi Kamar</h3>
 
             <div class="space-y-2">
@@ -84,7 +82,7 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
                     <span class="text-gray-500 font-mono">{{ $pctTerisi }}%</span>
                 </div>
                 <div class="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div class="bg-emerald-500 h-full transition-all duration-500" :style="{ width: '{{ $pctTerisi }}%' }"></div>
+                    <div class="bg-emerald-500 h-full transition-all duration-500" :style="{ width: pctTerisi + '%' }"></div>
                 </div>
             </div>
 
@@ -94,7 +92,7 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
                     <span class="text-gray-500 font-mono">{{ $pctKosong }}%</span>
                 </div>
                 <div class="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
-                    <div class="bg-amber-400 h-full transition-all duration-500" :style="{ width: '{{ $pctKosong }}%' }"></div>
+                    <div class="bg-amber-400 h-full transition-all duration-500" :style="{ width: pctKosong + '%' }"></div>
                 </div>
             </div>
 

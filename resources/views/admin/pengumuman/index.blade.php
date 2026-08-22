@@ -10,7 +10,7 @@ $createRoute = $isSuperAdmin ? route('superadmin.pengumuman.create') : route('ad
 @section('content')
 <div class="space-y-4">
     {{-- Header --}}
-    <x-page-header title="Broadcast Pengumuman" subtitle="Log pengumuman dan pengiriman pesan ke anak kos" />
+    <x-page-header title="Broadcast Pengumuman" subtitle="Log pengumuman dan pengiriman pesan ke anak kos" backUrl="{{ route('dashboard') }}" />
 
     <x-btn href="{{ $createRoute }}" size="sm" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

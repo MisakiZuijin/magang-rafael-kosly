@@ -59,12 +59,7 @@
     }
 }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Verifikasi Pembayaran</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Kelola konfirmasi bukti pembayaran dari anak kos</p>
-        </div>
-    </div>
+    <x-page-header title="Verifikasi Pembayaran" subtitle="Kelola konfirmasi bukti pembayaran dari anak kos" backUrl="{{ route('dashboard') }}" />
 
     {{-- Tabs --}}
     <div class="grid grid-cols-3 gap-1.5 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl">
@@ -112,7 +107,7 @@
                     </span>
                     @if($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
                     <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
-                        {{ $p->porsi_bayar == 50 ? 'Patungan 50%' : 'Full 100%' }}
+                        {{ $p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang' }}
                     </span>
                     @endif
                 </div>
@@ -149,8 +144,8 @@
         $penghuniNama = $p->penghuniKamar->penghuni->nama ?? 'Anak Kos';
         $kosKamar = ($p->penghuniKamar->kamar->kode_kamar ?? '-') . ' · ' . ($p->penghuniKamar->kamar->kos->nama ?? '-');
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
-        $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar Full oleh');
-        $uploaderName = $isCoveredByRoommate ? trim(str_replace('Lunas (Dibayar Full oleh ', '', $p->catatan_verifikasi), ')') : null;
+        $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar');
+        $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
         $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : ($p->tanggal_verifikasi ? $p->tanggal_verifikasi->format('d M Y') : '-');
         $buktiUrl = $p->bukti_transfer_url ? asset('storage/' . $p->bukti_transfer_url) : '';
         @endphp
@@ -172,7 +167,7 @@
                     </span>
                     @elseif($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
                     <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
-                        {{ $p->porsi_bayar == 50 ? 'Patungan 50%' : 'Full 100%' }}
+                        {{ $p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang' }}
                     </span>
                     @endif
                 </div>
