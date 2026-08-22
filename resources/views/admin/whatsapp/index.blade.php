@@ -12,17 +12,15 @@ $testRoute = $isSuperAdmin ? route('superadmin.whatsapp.test') : route('admin.wh
 @section('content')
 <div class="space-y-4" x-data="{ showToken: false }">
     {{-- Header --}}
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">WhatsApp Gateway (Fonnte)</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Integrasi API Fonnte, status koneksi nomor WA, &amp; tes pengiriman ({{ $roleLabel }})</p>
-        </div>
+    <x-page-header title="WhatsApp Gateway (Fonnte)" subtitle="Integrasi API Fonnte, status koneksi nomor WA, & tes pengiriman ({{ $roleLabel }})" backUrl="{{ route('dashboard') }}">
+        @slot('action')
         <button onclick="window.location.reload()" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white bg-gray-100 dark:bg-gray-800 rounded-xl transition-all" title="Refresh Status">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
         </button>
-    </div>
+        @endslot
+    </x-page-header>
 
     {{-- Card Status Device WA Realtime --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">

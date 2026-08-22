@@ -21,7 +21,7 @@
     }
 }">
     {{-- Header --}}
-    <x-page-header title="Kelola Aturan Kos" subtitle="Tambah, edit, dan hapus tata tertib untuk setiap kos" />
+    <x-page-header title="Kelola Aturan Kos" subtitle="Tambah, edit, dan hapus tata tertib untuk setiap kos" backUrl="{{ route('dashboard') }}" />
 
     {{-- Action Button --}}
     <button @click="modalTambah = true" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-1.5">
