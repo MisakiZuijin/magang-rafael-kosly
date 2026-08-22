@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('mitra_id')->constrained('users')->onDelete('cascade');
             $table->string('nama', 100);
+            $table->string('foto', 255)->nullable();
             $table->text('alamat')->nullable();
             $table->decimal('latitude', 30, 8)->nullable();
             $table->decimal('longitude', 30, 8)->nullable();

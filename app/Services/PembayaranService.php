@@ -65,6 +65,7 @@ class PembayaranService
 
         $pk = $pembayaran->penghuniKamar;
         $isHarianPk = ($pembayaran->tipe_perpanjangan === 'harian') || ($pk && $pk->durasi === 'harian');
+        $isMingguanPk = ($pembayaran->tipe_perpanjangan === 'mingguan') || ($pk && $pk->durasi === 'mingguan');
 
         if (!$hasPreviousVerified) {
             // PEMBAYARAN AWAL PENDAFTARAN:
@@ -76,9 +77,19 @@ class PembayaranService
                 $tipePerpanjangan = 'harian';
                 $jumlahHari = $pembayaran->jumlah_hari ?: 1;
                 $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+            } elseif ($isMingguanPk) {
+                $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0
+                    ? $kamar->harga_per_minggu
+                    : round(($kamar->harga_per_bulan ?? 0) / 4);
+                $fullBiaya = $hargaMingguan;
+                $tipePerpanjangan = 'mingguan';
+                $jumlahHari = 7;
+                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
             } else {
                 $fullBiaya = $kamar ? $kamar->harga_per_bulan : $pembayaran->jumlah;
                 $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                $tipePerpanjangan = 'bulanan';
+                $jumlahHari = 30;
             }
         } else {
             // PERPANJANGAN SEWA:
@@ -88,6 +99,13 @@ class PembayaranService
                         ? $kamar->harga_per_hari
                         : round(($kamar->harga_per_bulan ?? 0) / 30);
                     $fullBiaya = $jumlahHari * $hargaHarian;
+                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                } elseif ($tipePerpanjangan === 'mingguan') {
+                    $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0
+                        ? $kamar->harga_per_minggu
+                        : round(($kamar->harga_per_bulan ?? 0) / 4);
+                    $jumlahHari = 7;
+                    $fullBiaya = $hargaMingguan;
                     $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
                 } else {
                     $fullBiaya = $kamar->harga_per_bulan;
@@ -160,7 +178,7 @@ class PembayaranService
                 ->where('id', '!=', $pembayaran->id)
                 ->exists();
 
-            $daysToAdd = $pembayaran->jumlah_hari ?: ($pembayaran->tipe_perpanjangan === 'harian' ? 1 : 30);
+            $daysToAdd = $pembayaran->jumlah_hari ?: ($pembayaran->tipe_perpanjangan === 'harian' ? 1 : ($pembayaran->tipe_perpanjangan === 'mingguan' ? 7 : 30));
 
             if (!$hasPreviousVerified) {
                 // PEMBAYARAN AWAL PENDAFTARAN: JANGAN UBAH tanggal_keluar ATAU periode_mulai / periode_selesai!
@@ -210,7 +228,7 @@ class PembayaranService
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar Full oleh {$uploaderName})",
+                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 2 Orang oleh {$uploaderName})",
                         ]);
                     } else {
                         Pembayaran::create([
@@ -225,7 +243,7 @@ class PembayaranService
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar Full oleh {$uploaderName})",
+                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 2 Orang oleh {$uploaderName})",
                         ]);
                     }
 
@@ -305,29 +323,39 @@ class PembayaranService
             if (!$pendingBilling) {
                 $kamar = $penghuniKamar->kamar;
                 $isBerbagi = ($kamar && $kamar->tipe === 'berbagi');
-                $defaultPorsi = 100;
+                $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0 ? $kamar->harga_per_minggu : round(($kamar->harga_per_bulan ?? 0) / 4);
+                $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round(($kamar->harga_per_bulan ?? 0) / 30);
 
-                if ($isBerbagi && $penghuniKamar->durasi !== 'harian') {
+                if ($isBerbagi && $penghuniKamar->durasi === 'bulanan') {
                     $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / 2);
                     $defaultPorsi = 50;
+                } elseif ($isBerbagi && $penghuniKamar->durasi === 'mingguan') {
+                    $jumlahBiaya = round($hargaMingguan / 2);
+                    $defaultPorsi = 50;
                 } elseif ($isBerbagi && $penghuniKamar->durasi === 'harian') {
-                    $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round(($kamar->harga_per_bulan ?? 0) / 30);
                     $jumlahBiaya = round($hargaHarian / 2);
                     $defaultPorsi = 50;
+                } elseif ($penghuniKamar->durasi === 'mingguan') {
+                    $jumlahBiaya = $hargaMingguan;
+                    $defaultPorsi = 100;
+                } elseif ($penghuniKamar->durasi === 'harian') {
+                    $jumlahBiaya = $hargaHarian;
+                    $defaultPorsi = 100;
                 } else {
-                    $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round(($kamar->harga_per_bulan ?? 0) / 30);
-                    $jumlahBiaya = $penghuniKamar->durasi === 'harian' ? $hargaHarian : ($kamar->harga_per_bulan ?? 0);
+                    $jumlahBiaya = $kamar->harga_per_bulan ?? 0;
                     $defaultPorsi = 100;
                 }
+
+                $daysForBilling = $penghuniKamar->durasi === 'harian' ? 1 : ($penghuniKamar->durasi === 'mingguan' ? 7 : 30);
 
                 $newBilling = Pembayaran::create([
                     'penghuni_kamar_id' => $penghuniKamar->id,
                     'jumlah' => $jumlahBiaya,
                     'porsi_bayar' => $defaultPorsi,
-                    'tipe_perpanjangan' => $penghuniKamar->durasi === 'harian' ? 'harian' : 'bulanan',
-                    'jumlah_hari' => $penghuniKamar->durasi === 'harian' ? 1 : 30,
+                    'tipe_perpanjangan' => $penghuniKamar->durasi ?? 'bulanan',
+                    'jumlah_hari' => $daysForBilling,
                     'periode_mulai' => $tanggalKeluar->toDateString(),
-                    'periode_selesai' => $penghuniKamar->durasi === 'harian' ? $tanggalKeluar->copy()->addDay()->toDateString() : $tanggalKeluar->copy()->addDays(30)->toDateString(),
+                    'periode_selesai' => $tanggalKeluar->copy()->addDays($daysForBilling)->toDateString(),
                     'status' => 'pending',
                 ]);
 

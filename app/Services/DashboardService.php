@@ -40,13 +40,16 @@ class DashboardService
             ->where('status', 'aktif')
             ->count();
 
-        $totalBiaya = $penghuniKamar->durasi === 'harian'
-            ? ($kamar->harga_per_hari ?? 0)
-            : $kamar->harga_per_bulan;
+        if ($penghuniKamar->durasi === 'harian') {
+            $baseCost = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round(($kamar->harga_per_bulan ?? 0) / 30);
+        } elseif ($penghuniKamar->durasi === 'mingguan') {
+            $baseCost = ($kamar->harga_per_minggu ?? 0) > 0 ? $kamar->harga_per_minggu : round(($kamar->harga_per_bulan ?? 0) / 4);
+        } else {
+            $baseCost = $kamar->harga_per_bulan ?? 0;
+        }
 
-        $hargaBulan = $kamar->harga_per_bulan ?? 0;
-        $hargaHari = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round($hargaBulan / 30);
         $isBerbagi = ($kamar->tipe === 'berbagi');
+        $totalBiaya = $isBerbagi ? round($baseCost / 2) : $baseCost;
 
         $tglMasuk = $penghuniKamar->tanggal_masuk ? \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay() : null;
         $tglKeluar = $penghuniKamar->tanggal_keluar ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay() : null;
@@ -58,8 +61,6 @@ class DashboardService
             'kamar' => $kamar,
             'durasi' => $penghuniKamar->durasi,
             'total_biaya' => $totalBiaya,
-            'harga_bulan' => $hargaBulan,
-            'harga_hari' => $hargaHari,
             'is_berbagi' => $isBerbagi,
             'jumlah_penghuni' => $jumlahPenghuni,
             'tanggal_masuk' => $tglMasuk,

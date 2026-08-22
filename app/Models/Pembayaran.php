@@ -30,7 +30,7 @@ class Pembayaran extends Model
     protected function casts(): array
     {
         return [
-            'jumlah' => 'decimal:2',
+            'jumlah' => 'integer',
             'porsi_bayar' => 'integer',
             'jumlah_hari' => 'integer',
             'periode_mulai' => 'date',

@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\AdminMapController;
 use App\Http\Controllers\Admin\AdminLaporanController;
 use App\Http\Controllers\Admin\AdminWhatsAppController;
 use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
+use App\Http\Controllers\SuperAdmin\SuperAdminPencairanController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -88,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengguna/{id}/edit', [AdminPenggunaController::class, 'edit'])->name('pengguna.edit');
         Route::put('/pengguna/{id}', [AdminPenggunaController::class, 'update'])->name('pengguna.update');
         Route::post('/pengguna/{id}/toggle', [AdminPenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
+        Route::delete('/pengguna/{id}', [AdminPenggunaController::class, 'destroy'])->name('pengguna.destroy');
 
         // Pendaftaran Kos & Kamar
         Route::get('/kos', [AdminKosController::class, 'index'])->name('kos.index');
@@ -151,6 +153,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kantor/{id}/toggle', [SuperAdminDashboardController::class, 'kantorToggle'])->name('kantor.toggle');
         Route::delete('/kantor/{id}', [SuperAdminDashboardController::class, 'kantorDestroy'])->name('kantor.destroy');
 
+        // Pencairan Biaya Pendapatan Per Kos
+        Route::get('/pencairan', [SuperAdminPencairanController::class, 'index'])->name('pencairan.index');
+        Route::post('/pencairan/proses', [SuperAdminPencairanController::class, 'proses'])->name('pencairan.proses');
+
         // Super Admin bisa akses semua route Admin
         Route::get('/pengguna', [AdminPenggunaController::class, 'index'])->name('pengguna.index');
         Route::get('/pengguna/create', [AdminPenggunaController::class, 'create'])->name('pengguna.create');
@@ -158,6 +164,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengguna/{id}/edit', [AdminPenggunaController::class, 'edit'])->name('pengguna.edit');
         Route::put('/pengguna/{id}', [AdminPenggunaController::class, 'update'])->name('pengguna.update');
         Route::post('/pengguna/{id}/toggle', [AdminPenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
+        Route::delete('/pengguna/{id}', [AdminPenggunaController::class, 'destroy'])->name('pengguna.destroy');
 
         Route::get('/kos', [AdminKosController::class, 'index'])->name('kos.index');
         Route::post('/kos', [AdminKosController::class, 'storeKos'])->name('kos.store');

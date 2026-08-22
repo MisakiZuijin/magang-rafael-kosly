@@ -3,16 +3,19 @@
 @section('title', 'Notifikasi')
 
 @section('content')
-<div class="flex items-center justify-between mb-5">
-    <h1 class="text-xl font-bold dark:text-white">Notifikasi</h1>
-    @if($notifikasis->where('status', 'terkirim')->count() > 0)
-    <form action="{{ route('notifikasi.read-all') }}" method="POST">
-        @csrf
-        <button type="submit" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 active:text-emerald-700">
-            Tandai Semua
-        </button>
-    </form>
-    @endif
+<div class="mb-5">
+    <x-page-header title="Notifikasi" subtitle="Pemberitahuan & pengumuman akun Anda" backUrl="{{ route('dashboard') }}">
+        @slot('action')
+        @if($notifikasis->where('status', 'terkirim')->count() > 0)
+        <form action="{{ route('notifikasi.read-all') }}" method="POST">
+            @csrf
+            <button type="submit" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 active:text-emerald-700">
+                Tandai Semua
+            </button>
+        </form>
+        @endif
+        @endslot
+    </x-page-header>
 </div>
 
 @if($notifikasis->isEmpty())
