@@ -53,7 +53,12 @@ class PembayaranService
         $kamar = $pembayaran->penghuniKamar->kamar ?? null;
 
         $isBerbagi = ($kamar && $kamar->tipe === 'berbagi');
-        if (!$isBerbagi) {
+        $activePenghuniCount = $kamar
+            ? \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count()
+            : 1;
+        if ($activePenghuniCount < 1) $activePenghuniCount = 1;
+
+        if (!$isBerbagi || $activePenghuniCount >= 3) {
             $porsiBayar = 100;
         }
 
@@ -76,7 +81,7 @@ class PembayaranService
                 $fullBiaya = ($pembayaran->jumlah_hari ?: 1) * $hargaHarian;
                 $tipePerpanjangan = 'harian';
                 $jumlahHari = $pembayaran->jumlah_hari ?: 1;
-                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50 && $activePenghuniCount <= 2) ? round($fullBiaya / 2) : $fullBiaya;
             } elseif ($isMingguanPk) {
                 $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0
                     ? $kamar->harga_per_minggu
@@ -84,10 +89,10 @@ class PembayaranService
                 $fullBiaya = $hargaMingguan;
                 $tipePerpanjangan = 'mingguan';
                 $jumlahHari = 7;
-                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50 && $activePenghuniCount <= 2) ? round($fullBiaya / 2) : $fullBiaya;
             } else {
                 $fullBiaya = $kamar ? $kamar->harga_per_bulan : $pembayaran->jumlah;
-                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                $jumlahBiaya = ($isBerbagi && $porsiBayar == 50 && $activePenghuniCount <= 2) ? round($fullBiaya / 2) : $fullBiaya;
                 $tipePerpanjangan = 'bulanan';
                 $jumlahHari = 30;
             }
@@ -99,17 +104,17 @@ class PembayaranService
                         ? $kamar->harga_per_hari
                         : round(($kamar->harga_per_bulan ?? 0) / 30);
                     $fullBiaya = $jumlahHari * $hargaHarian;
-                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50 && $activePenghuniCount <= 2) ? round($fullBiaya / 2) : $fullBiaya;
                 } elseif ($tipePerpanjangan === 'mingguan') {
                     $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0
                         ? $kamar->harga_per_minggu
                         : round(($kamar->harga_per_bulan ?? 0) / 4);
                     $jumlahHari = 7;
                     $fullBiaya = $hargaMingguan;
-                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50 && $activePenghuniCount <= 2) ? round($fullBiaya / 2) : $fullBiaya;
                 } else {
                     $fullBiaya = $kamar->harga_per_bulan;
-                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50) ? round($fullBiaya / 2) : $fullBiaya;
+                    $jumlahBiaya = ($isBerbagi && $porsiBayar == 50 && $activePenghuniCount <= 2) ? round($fullBiaya / 2) : $fullBiaya;
                     $jumlahHari = 30;
                 }
             }
@@ -140,19 +145,19 @@ class PembayaranService
 
         // Jika kamar berbagi:
         if ($isBerbagi && $pembayaran->penghuniKamar) {
-            $roommatePk = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+            $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
                 ->where('status', 'aktif')
                 ->where('id', '!=', $pembayaran->penghuni_kamar_id)
-                ->first();
+                ->get();
 
-            if ($roommatePk) {
+            foreach ($roommatePks as $roommatePk) {
                 $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
                     ->where('status', 'pending')
                     ->whereNull('bukti_transfer_url')
                     ->first();
                 if ($roommatePending) {
                     $targetPorsi = $porsiBayar;
-                    $targetAmount = ($porsiBayar == 100) ? $fullBiaya : round($fullBiaya / 2);
+                    $targetAmount = ($porsiBayar == 100) ? $fullBiaya : round($fullBiaya / $activePenghuniCount);
                     $roommatePending->update([
                         'jumlah' => $targetAmount,
                         'porsi_bayar' => $targetPorsi,
@@ -200,7 +205,7 @@ class PembayaranService
             }
 
             // JIKA KAMAR BERBAGI DAN DIBAYAR FULL (100%):
-            // Otomatis verifikasi / lunaskan pembayaran teman sekamar untuk periode yang sama dengan nominal FULL 100%!
+            // Otomatis verifikasi / lunaskan pembayaran seluruh teman sekamar untuk periode yang sama dengan nominal FULL 100%!
             if ($kamar && $kamar->tipe === 'berbagi' && $pembayaran->porsi_bayar == 100) {
                 $uploaderName = $pk->penghuni->nama ?? 'Penghuni Kamar';
                 $fullAmount = (float)$pembayaran->jumlah;
@@ -208,12 +213,12 @@ class PembayaranService
                     $fullAmount = (float)($kamar->harga_per_bulan ?? 0);
                 }
 
-                $roommatePk = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+                $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
                     ->where('status', 'aktif')
                     ->where('id', '!=', $pk->id)
-                    ->first();
+                    ->get();
 
-                if ($roommatePk) {
+                foreach ($roommatePks as $roommatePk) {
                     $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
                         ->where('status', 'pending')
                         ->first();
@@ -228,7 +233,7 @@ class PembayaranService
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 2 Orang oleh {$uploaderName})",
+                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 1 Kamar oleh {$uploaderName})",
                         ]);
                     } else {
                         Pembayaran::create([
@@ -243,7 +248,7 @@ class PembayaranService
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 2 Orang oleh {$uploaderName})",
+                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 1 Kamar oleh {$uploaderName})",
                         ]);
                     }
 
@@ -326,14 +331,19 @@ class PembayaranService
                 $hargaMingguan = ($kamar->harga_per_minggu ?? 0) > 0 ? $kamar->harga_per_minggu : round(($kamar->harga_per_bulan ?? 0) / 4);
                 $hargaHarian = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round(($kamar->harga_per_bulan ?? 0) / 30);
 
+                $activePenghuniCount = $kamar
+                    ? \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count()
+                    : 1;
+                if ($activePenghuniCount < 1) $activePenghuniCount = 1;
+
                 if ($isBerbagi && $penghuniKamar->durasi === 'bulanan') {
-                    $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / 2);
+                    $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / $activePenghuniCount);
                     $defaultPorsi = 50;
                 } elseif ($isBerbagi && $penghuniKamar->durasi === 'mingguan') {
-                    $jumlahBiaya = round($hargaMingguan / 2);
+                    $jumlahBiaya = round($hargaMingguan / $activePenghuniCount);
                     $defaultPorsi = 50;
                 } elseif ($isBerbagi && $penghuniKamar->durasi === 'harian') {
-                    $jumlahBiaya = round($hargaHarian / 2);
+                    $jumlahBiaya = round($hargaHarian / $activePenghuniCount);
                     $defaultPorsi = 50;
                 } elseif ($penghuniKamar->durasi === 'mingguan') {
                     $jumlahBiaya = $hargaMingguan;

@@ -29,8 +29,10 @@ class NotifikasiController extends Controller
             }
         }
 
-        // Fetch announcements matching user scope
-        $pengumumanQuery = \App\Models\Pengumuman::with('targets');
+        // Fetch announcements matching user scope and meant for web (web or keduanya)
+        $pengumumanQuery = \App\Models\Pengumuman::with('targets')
+            ->whereIn('channel', ['web', 'keduanya']);
+
         if ($user->role === 'penghuni') {
             $pengumumanQuery->where(function($q) use ($userKosId, $userKamarId) {
                 $q->whereDoesntHave('targets')
@@ -58,7 +60,7 @@ class NotifikasiController extends Controller
             if (!$alreadyExists) {
                 $notifItem = \App\Models\Notifikasi::create([
                     'user_id' => $user->id,
-                    'judul' => '[Pengumuman] ' . $p->judul,
+                    'judul' => $p->judul,
                     'pesan' => $p->isi,
                     'channel' => 'web',
                     'status' => 'terkirim',
@@ -69,9 +71,6 @@ class NotifikasiController extends Controller
         }
 
         $notifikasis = $notifikasis->sortByDesc('created_at')->values();
-
-        // Tandai semua notifikasi sebagai dibaca saat pengguna membuka halaman Notifikasi
-        $this->service->markAllAsRead($user->id);
 
         return view('notifikasi.index', compact('notifikasis'));
     }

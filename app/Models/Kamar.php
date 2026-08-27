@@ -15,6 +15,8 @@ class Kamar extends Model
         'kos_id',
         'kode_kamar',
         'tipe',
+        'detail',
+        'foto',
         'harga_per_hari',
         'harga_per_minggu',
         'harga_per_bulan',
@@ -27,6 +29,7 @@ class Kamar extends Model
     protected function casts(): array
     {
         return [
+            'foto' => 'array',
             'harga_per_hari' => 'integer',
             'harga_per_minggu' => 'integer',
             'harga_per_bulan' => 'integer',

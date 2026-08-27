@@ -72,6 +72,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:mitra'])->prefix('mitra')->name('mitra.')->group(function () {
         Route::get('/dashboard', [MitraDashboardController::class, 'index'])->name('dashboard');
         Route::get('/kamar', [MitraDashboardController::class, 'kamar'])->name('kamar');
+        Route::get('/kamar/{id}', [MitraDashboardController::class, 'showKamar'])->name('kamar.show');
     });
 
     /*
@@ -99,7 +100,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kosongkan-kamar/{id}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
         Route::post('/checkout-penghuni/{id}', [AdminKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
         Route::put('/kos/{id}', [AdminKosController::class, 'updateKos'])->name('kos.update');
+        Route::get('/kamar/{id}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{id}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{id}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
 
         // Pengumuman
         Route::get('/pengumuman', [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
@@ -173,7 +176,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kosongkan-kamar/{id}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
         Route::post('/checkout-penghuni/{id}', [AdminKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
         Route::put('/kos/{id}', [AdminKosController::class, 'updateKos'])->name('kos.update');
+        Route::get('/kamar/{id}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{id}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{id}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
 
         Route::get('/pengumuman', [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
         Route::get('/pengumuman/create', [AdminPengumumanController::class, 'create'])->name('pengumuman.create');
