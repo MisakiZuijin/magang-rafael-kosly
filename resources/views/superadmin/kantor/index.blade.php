@@ -65,13 +65,13 @@
             <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" @click="editKantor = @js($kan); modalEdit = true"
                     class="flex-1 py-1.5 px-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl transition-all text-center">
-                    ✏️ Edit Kantor
+                    Edit Kantor
                 </button>
 
                 <form action="{{ route('superadmin.kantor.toggle', $kan->id) }}" method="POST" class="flex-1">
                     @csrf
                     <x-btn type="submit" size="sm" variant="{{ $kan->is_active ? 'danger' : 'primary' }}" class="w-full !min-h-[34px] !py-1 text-xs">
-                        {{ $kan->is_active ? '🚫 Nonaktifkan' : '✅ Aktifkan' }}
+                        {{ $kan->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                     </x-btn>
                 </form>
 

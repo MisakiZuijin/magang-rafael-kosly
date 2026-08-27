@@ -30,8 +30,7 @@ class SuperAdminDashboardController extends Controller
 
     public function adminIndex()
     {
-        $admins = $this->userService->getByRole('admin');
-        return view('superadmin.admin.index', compact('admins'));
+        return redirect()->route('superadmin.pengguna.index');
     }
 
     public function adminStore(Request $request)
@@ -47,7 +46,7 @@ class SuperAdminDashboardController extends Controller
         $user = $this->userService->createUser($validated);
         $this->logAktivitasService->log('tambah_admin', "Super Admin membuat akun Admin baru: {$user->nama}");
 
-        return redirect()->route('superadmin.admin.index')->with('success', 'Admin berhasil dibuat.');
+        return redirect()->route('superadmin.pengguna.index')->with('success', 'Admin berhasil dibuat.');
     }
 
     public function adminUpdate(Request $request, int $id)
@@ -62,7 +61,7 @@ class SuperAdminDashboardController extends Controller
         $this->userService->updateUser($id, array_filter($validated));
         $this->logAktivitasService->log('update_admin', "Super Admin memperbarui data Admin ID: {$id}");
 
-        return redirect()->route('superadmin.admin.index')->with('success', 'Data admin berhasil diupdate.');
+        return redirect()->route('superadmin.pengguna.index')->with('success', 'Data admin berhasil diupdate.');
     }
 
     public function adminToggle(int $id)
@@ -81,7 +80,7 @@ class SuperAdminDashboardController extends Controller
         $user->delete();
         $this->logAktivitasService->log('hapus_admin', "Super Admin menghapus akun Admin: {$nama}");
 
-        return redirect()->route('superadmin.admin.index')->with('success', 'Akun admin berhasil dihapus.');
+        return redirect()->route('superadmin.pengguna.index')->with('success', 'Akun admin berhasil dihapus.');
     }
 
     // ==========================================

@@ -48,7 +48,7 @@ $namaBulan = [
 }">
 
     {{-- Page Header --}}
-    <x-page-header title="Pencairan Biaya Per Kos" subtitle="Khusus Super Admin - Pemrosesan Transfer Pendapatan Properti Kos ke Mitra">
+    <x-page-header title="Pencairan Biaya Per Kos" subtitle="Khusus Super Admin - Pemrosesan Transfer Pendapatan Kos ke Mitra" backUrl="{{ route('dashboard') }}">
 
     </x-page-header>
 
@@ -174,17 +174,17 @@ $namaBulan = [
         </div>
     </div>
 
-    {{-- Lista Properti Kos (Spacious Item Cards) --}}
+    {{-- Daftar Kos (Spacious Item Cards) --}}
     <div class="space-y-4">
         <div class="flex items-center justify-between px-1">
             <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                Daftar Properti Kos (Periode {{ $namaBulan[$bulan] }} {{ $tahun }})
+                Daftar Kos (Periode {{ $namaBulan[$bulan] }} {{ $tahun }})
             </h2>
             <span class="text-xs text-gray-500 font-normal" x-show="searchQuery" x-text="'Hasil pencarian: &quot;' + searchQuery + '&quot;'"></span>
         </div>
 
         @if($pencairanData->isEmpty())
-        <x-empty-state message="Belum ada properti kos terdaftar dalam sistem." />
+        <x-empty-state message="Belum ada kos terdaftar dalam sistem." />
         @else
         <div class="grid grid-cols-1 gap-4">
             @foreach($pencairanData as $item)
