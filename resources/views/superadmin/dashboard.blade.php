@@ -104,6 +104,29 @@
                 <p class="text-base font-bold text-amber-600 dark:text-amber-400">{{ $data['kamar_kosong'] ?? 0 }}</p>
             </div>
         </div>
+
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 col-span-2 sm:col-span-4">
+            <div class="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="flex-1 flex justify-between items-center">
+                <div>
+                    <p class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Masa Sewa Habis Tempo</p>
+                    <p class="text-lg font-bold text-red-600 dark:text-red-400">{{ isset($data['expired_sewa']) ? $data['expired_sewa']->count() : 0 }} Penghuni</p>
+                </div>
+                @if(isset($data['expired_sewa']) && $data['expired_sewa']->count() > 0)
+                @php
+                $expiredKamarIds = $data['expired_sewa']->pluck('kamar_id')->unique()->implode(',');
+                $actionRoute = route('superadmin.pengumuman.create', ['kamar_ids' => $expiredKamarIds]);
+                @endphp
+                <a href="{{ $actionRoute }}" class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 transition-all animate-pulse flex items-center gap-1 shadow-xs cursor-pointer" title="Kirim Pengumuman ke Kamar Jatuh Tempo">
+                    ⚡ Perlu Tindakan &rarr;
+                </a>
+                @endif
+            </div>
+        </div>
     </div>
 
     {{-- Grafik Visualisasi Kamar (Occupancy Chart Bar) --}}
@@ -139,8 +162,8 @@
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
         <h2 class="text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pintas Cepat Tindakan Super Admin</h2>
         <div class="grid grid-cols-2 sm:grid-cols-1 gap-2">
-            <x-btn href="{{ route('superadmin.admin.index') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
-                👤 Kelola Admin
+            <x-btn href="{{ route('superadmin.pengguna.index') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
+                👤 Kelola Pengguna
             </x-btn>
             <x-btn href="{{ route('superadmin.kantor.index') }}" variant="secondary" size="sm" class="!justify-start text-xs dark:hover:bg-gray-700">
                 🏢 Lokasi Kantor
@@ -172,18 +195,33 @@
                 @foreach($data['penghuni_aktif']->take(5) as $pk)
                 @php
                 $isExpired = $pk->tanggal_keluar && $pk->tanggal_keluar < now();
-                    $daysLeft=$pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
-                    @endphp
-                    <div class="p-2.5 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                $daysLeft = $pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
+                @endphp
+                    <div class="p-2.5 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $pk->penghuni->nama ?? '-' }}</p>
                             <p class="text-[10px] text-gray-500 truncate">{{ $pk->kamar->kode_kamar ?? '-' }} · {{ $pk->kamar->kos->nama ?? '-' }}</p>
                         </div>
-                        <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
-                            {{ $isExpired ? 'Expired' : ($daysLeft . ' Hr') }}
-                        </span>
+                        <div class="text-right flex-shrink-0 flex items-center gap-2">
+                            <div>
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : ($daysLeft !== null && $daysLeft <= 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
+                                    {{ $isExpired ? 'Expired' : ($daysLeft == 0 ? 'Hari Ini' : ($daysLeft . ' Hr')) }}
+                                </span>
+                            </div>
+
+                            @if($isExpired || ($daysLeft !== null && $daysLeft <= 3))
+                            @php
+                            $targetRoute = route('superadmin.pengumuman.create', ['kamar_id' => $pk->kamar_id]);
+                            @endphp
+                            <a href="{{ $targetRoute }}" title="Kirim Pengumuman Jatuh Tempo Ke Kamar {{ $pk->kamar->kode_kamar ?? '' }}" class="p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex-shrink-0">
+                                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z"/>
+                                </svg>
+                            </a>
+                            @endif
+                        </div>
                     </div>
-                    @endforeach
+                @endforeach
             </div>
             @endif
         </div>
