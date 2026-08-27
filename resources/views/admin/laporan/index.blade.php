@@ -133,7 +133,7 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
     {{-- Tab 3: Log Penggunaan Per Kos --}}
     <div x-show="tab === 'perkos'" class="space-y-3" x-transition x-cloak>
         @if($kosList->isEmpty())
-        <x-empty-state message="Belum ada data properti kos terdaftar." />
+        <x-empty-state message="Belum ada data kos terdaftar." />
         @else
         @foreach($kosList as $kos)
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">

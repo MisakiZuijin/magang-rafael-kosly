@@ -73,6 +73,8 @@ class AdminKosController extends Controller
             'kos_id' => 'required|exists:kos,id',
             'kode_kamar' => 'required|string|max:20',
             'tipe' => 'required|in:standar,berbagi',
+            'detail' => 'nullable|string',
+            'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_minggu' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric',
@@ -81,8 +83,17 @@ class AdminKosController extends Controller
             'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
+        $fotoPaths = [];
+        if ($request->hasFile('foto')) {
+            foreach ($request->file('foto') as $file) {
+                if ($file && $file->isValid()) {
+                    $fotoPaths[] = $file->store('kamar', 'public');
+                }
+            }
+        }
+        $validated['foto'] = $fotoPaths;
         $validated['status'] = 'kosong';
-        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 3 : 1;
+        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 2 : 1;
         $kamar = $this->kamarService->create($validated);
         $kosNama = $kamar->kos->nama ?? 'Kos';
         $this->logAktivitasService->log('tambah_kamar', "Menambahkan Kamar {$kamar->kode_kamar} di {$kosNama}");
@@ -301,6 +312,8 @@ class AdminKosController extends Controller
             'kos_id' => 'required|exists:kos,id',
             'kode_kamar' => 'required|string|max:20',
             'tipe' => 'required|in:standar,berbagi',
+            'detail' => 'nullable|string',
+            'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_minggu' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric',
@@ -309,10 +322,53 @@ class AdminKosController extends Controller
             'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
-        $validated['kapasitas'] = $validated['tipe'] === 'berbagi' ? 3 : 1;
+        $existingKamar = $this->kamarService->getById($id);
+        $fotoPaths = $existingKamar->foto ?? [];
+
+        if ($request->hasFile('foto')) {
+            foreach ($request->file('foto') as $file) {
+                if ($file && $file->isValid()) {
+                    $fotoPaths[] = $file->store('kamar', 'public');
+                }
+            }
+        }
+
+        $validated['foto'] = array_values($fotoPaths);
+        $activeCount = \App\Models\PenghuniKamar::where('kamar_id', $id)->where('status', 'aktif')->count();
+        if ($validated['tipe'] === 'berbagi') {
+            $validated['kapasitas'] = $activeCount >= 3 ? 3 : 2;
+        } else {
+            $validated['kapasitas'] = 1;
+        }
+
         $this->kamarService->update($id, $validated);
         $this->logAktivitasService->log('update_kamar', "Memperbarui data Kamar {$validated['kode_kamar']}");
 
         return redirect()->back()->with('success', 'Data kamar berhasil diperbarui.');
+    }
+
+    public function showKamar(int $id)
+    {
+        $kamar = \App\Models\Kamar::with(['kos.mitra', 'penghuniKamar.penghuni'])->findOrFail($id);
+
+        return view('admin.kamar.show', [
+            'kamar' => $kamar,
+            'isSuperAdmin' => auth()->user()->role === 'super_admin'
+        ]);
+    }
+
+    public function deleteFotoKamar(Request $request, int $id)
+    {
+        $kamar = \App\Models\Kamar::findOrFail($id);
+        $index = (int)$request->input('index');
+        $fotos = $kamar->foto ?? [];
+
+        if (isset($fotos[$index])) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($fotos[$index]);
+            array_splice($fotos, $index, 1);
+            $kamar->update(['foto' => array_values($fotos)]);
+        }
+
+        return redirect()->back()->with('success', 'Foto kamar berhasil dihapus.');
     }
 }

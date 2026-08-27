@@ -80,9 +80,13 @@
                     <p class="text-lg font-bold text-red-600 dark:text-red-400">{{ $data['expired_sewa']->count() }} Penghuni</p>
                 </div>
                 @if($data['expired_sewa']->count() > 0)
-                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 animate-pulse">
-                    Perlu Tindakan
-                </span>
+                @php
+                $expiredKamarIds = $data['expired_sewa']->pluck('kamar_id')->unique()->implode(',');
+                $actionRoute = request()->is('superadmin*') ? route('superadmin.pengumuman.create', ['kamar_ids' => $expiredKamarIds]) : route('admin.pengumuman.create', ['kamar_ids' => $expiredKamarIds]);
+                @endphp
+                <a href="{{ $actionRoute }}" class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900 transition-all animate-pulse flex items-center gap-1 shadow-xs cursor-pointer" title="Kirim Pengumuman ke Kamar Jatuh Tempo">
+                    ⚡ Perlu Tindakan &rarr;
+                </a>
                 @endif
             </div>
         </div>
@@ -149,14 +153,27 @@
                             </div>
                         </div>
 
-                        <div class="text-right flex-shrink-0">
-                            @if($pk->tanggal_keluar)
-                            <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : ($daysLeft <= 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
-                                {{ $isExpired ? 'Sudah Expired' : ($daysLeft == 0 ? 'Hari Ini' : $daysLeft . ' Hari Lagi') }}
-                            </span>
-                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ $pk->tanggal_keluar->format('d M Y') }}</p>
-                            @else
-                            <span class="text-xs text-gray-400">-</span>
+                        <div class="text-right flex-shrink-0 flex items-center gap-2">
+                            <div>
+                                @if($pk->tanggal_keluar)
+                                <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : ($daysLeft <= 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
+                                    {{ $isExpired ? 'Sudah Expired' : ($daysLeft == 0 ? 'Hari Ini' : $daysLeft . ' Hari Lagi') }}
+                                </span>
+                                <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ $pk->tanggal_keluar->format('d M Y') }}</p>
+                                @else
+                                <span class="text-xs text-gray-400">-</span>
+                                @endif
+                            </div>
+
+                            @if($isExpired || ($daysLeft !== null && $daysLeft <= 3))
+                            @php
+                            $targetRoute = request()->is('superadmin*') ? route('superadmin.pengumuman.create', ['kamar_id' => $pk->kamar_id]) : route('admin.pengumuman.create', ['kamar_id' => $pk->kamar_id]);
+                            @endphp
+                            <a href="{{ $targetRoute }}" title="Kirim Pengumuman Jatuh Tempo Ke Kamar {{ $pk->kamar->kode_kamar ?? '' }}" class="p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex-shrink-0">
+                                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z"/>
+                                </svg>
+                            </a>
                             @endif
                         </div>
                     </div>
