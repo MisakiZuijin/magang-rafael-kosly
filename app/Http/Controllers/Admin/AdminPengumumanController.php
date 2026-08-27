@@ -34,8 +34,26 @@ class AdminPengumumanController extends Controller
     public function create()
     {
         $kosList = $this->kosService->getAll();
+
+        $selectedKamarId = request()->query('kamar_id');
+        $selectedKamarIdsStr = request()->query('kamar_ids');
+        $selectedKamarIds = [];
+
+        if ($selectedKamarIdsStr) {
+            $selectedKamarIds = array_map('intval', explode(',', $selectedKamarIdsStr));
+        }
+        if ($selectedKamarId) {
+            $selectedKamarIds[] = (int) $selectedKamarId;
+        }
+        $selectedKamarIds = array_values(array_unique(array_filter($selectedKamarIds)));
+
+        $prefilledKamar = null;
+        if (!empty($selectedKamarId)) {
+            $prefilledKamar = \App\Models\Kamar::with('kos')->find($selectedKamarId);
+        }
+
         $view = request()->is('superadmin*') ? 'superadmin.pengumuman.create' : 'admin.pengumuman.create';
-        return view($view, compact('kosList'));
+        return view($view, compact('kosList', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar'));
     }
 
     public function store(Request $request)

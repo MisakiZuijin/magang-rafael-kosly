@@ -11,25 +11,19 @@ $exportUrl = $exportRoute . '?start=' . request('start') . '&end=' . request('en
 
 @section('content')
 <div class="space-y-4">
-    <div class="grid grid-cols-1 gap-2">
-        <div>
-            <h1 class="text-xl font-bold text-gray-900 dark:text-white leading-tight">Hasil Filter Laporan</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                Periode: {{ request('start') }} s/d {{ request('end') }}
-            </p>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-            <x-btn href="{{ $backRoute }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs">
-                &larr; Kembali
-            </x-btn>
+    <x-page-header 
+        title="Hasil Filter Laporan" 
+        subtitle="Periode: {{ request('start') }} s/d {{ request('end') }}" 
+        backUrl="{{ $backRoute }}">
+        <x-slot name="action">
             <x-btn href="{{ $exportUrl }}" variant="secondary" size="sm" class="!min-h-[36px] !py-1 text-xs flex items-center gap-1.5 border border-emerald-500/40 text-emerald-700 dark:text-emerald-300 bg-emerald-50/50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 transition-all">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Export CSV
             </x-btn>
-        </div>
-    </div>
+        </x-slot>
+    </x-page-header>
 
     {{-- Section 1: Pembayaran Terverifikasi --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">

@@ -74,7 +74,7 @@
                     <button type="button"
                         @click="openEditModal(@js($aturan))"
                         class="px-2 py-1 text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 rounded-lg transition-all">
-                        ✏️ Edit
+                        Edit
                     </button>
 
                     <form action="{{ route('admin.aturan.destroy', $aturan->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus aturan ini?')">

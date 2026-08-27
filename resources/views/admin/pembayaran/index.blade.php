@@ -106,8 +106,11 @@
                         {{ $jumlahFormatted }}
                     </span>
                     @if($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
-                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
-                        {{ $p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang' }}
+                    @php
+                    $kapasitasKamar = $p->penghuniKamar->kamar->kapasitas ?? 2;
+                    @endphp
+                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $kapasitasKamar >= 3 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : ($p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
+                        {{ $kapasitasKamar >= 3 ? 'Tarif 3 Orang' : ($p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang') }}
                     </span>
                     @endif
                 </div>
@@ -145,7 +148,7 @@
         $kosKamar = ($p->penghuniKamar->kamar->kode_kamar ?? '-') . ' · ' . ($p->penghuniKamar->kamar->kos->nama ?? '-');
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
         $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar');
-        $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
+        $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang|Tarif 3 Orang|Tarif 1 Kamar) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
         $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : ($p->tanggal_verifikasi ? $p->tanggal_verifikasi->format('d M Y') : '-');
         $buktiUrl = $p->bukti_transfer_url ? asset('storage/' . $p->bukti_transfer_url) : '';
         @endphp
@@ -166,8 +169,11 @@
                         Wakil: {{ $uploaderName }}
                     </span>
                     @elseif($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
-                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' }}">
-                        {{ $p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang' }}
+                    @php
+                    $kapasitasKamar = $p->penghuniKamar->kamar->kapasitas ?? 2;
+                    @endphp
+                    <span class="px-1.5 py-0.5 text-[9px] font-bold rounded inline-block mt-0.5 {{ $kapasitasKamar >= 3 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : ($p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
+                        {{ $kapasitasKamar >= 3 ? 'Tarif 3 Orang' : ($p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang') }}
                     </span>
                     @endif
                 </div>
@@ -315,35 +321,35 @@
          x-transition.opacity.duration.200ms
          @keydown.window.escape="showImageFullscreen = false; zoomLevel = 1; resetPan();"
          @click="showImageFullscreen = false; zoomLevel = 1; resetPan();"
-         class="fixed inset-0 z-[150] bg-black/95 backdrop-blur-lg flex flex-col items-center justify-between p-3 select-none">
+         class="fixed inset-0 z-[999999] w-screen h-screen bg-black/95 backdrop-blur-lg flex flex-col items-center justify-between p-3 box-border overflow-hidden select-none">
 
         {{-- Top Bar: Info & Zoom Controls --}}
-        <div class="w-full flex items-center justify-between text-white z-20 pt-2 px-2">
-            <div class="flex items-center gap-2 min-w-0">
-                <span class="text-xs font-bold font-mono bg-white/10 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10 truncate max-w-[180px]">
-                    Bukti Transfer - <span x-text="selectedPenghuni"></span>
+        <div class="w-full flex items-center justify-between gap-2 text-white z-20 pt-1 pb-1 box-border">
+            <div class="flex items-center gap-1.5 min-w-0 flex-1">
+                <span class="text-[11px] font-bold font-mono bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-md border border-white/10 truncate max-w-[120px] sm:max-w-[180px]">
+                    <span x-text="selectedPenghuni"></span>
                 </span>
-                <span class="text-[11px] font-mono text-emerald-400 font-bold bg-white/10 px-2 py-1 rounded-lg border border-white/10" x-text="Math.round(zoomLevel * 100) + '%'"></span>
+                <span class="text-[10px] font-mono text-emerald-400 font-bold bg-white/10 px-1.5 py-0.5 rounded-lg border border-white/10 flex-shrink-0" x-text="Math.round(zoomLevel * 100) + '%'"></span>
             </div>
 
             {{-- Zoom & Close Action Buttons --}}
-            <div class="flex items-center gap-1.5 flex-shrink-0">
-                <button type="button" @click.stop="zoomIn()" class="p-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Perbesar (+)">
+            <div class="flex items-center gap-1 flex-shrink-0">
+                <button type="button" @click.stop="zoomIn()" class="p-1.5 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Perbesar (+)">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
                     </svg>
                 </button>
-                <button type="button" @click.stop="zoomOut()" class="p-2 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Perkecil (-)">
+                <button type="button" @click.stop="zoomOut()" class="p-1.5 text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Perkecil (-)">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7" />
                     </svg>
                 </button>
-                <button type="button" @click.stop="zoomLevel = 1; resetPan();" class="px-2.5 py-1 text-[10px] font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Reset Zoom & Geser">
+                <button type="button" @click.stop="zoomLevel = 1; resetPan();" class="px-2 py-1 text-[9px] font-bold text-white/90 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95" title="Reset Zoom">
                     Reset
                 </button>
-                <button type="button" @click="showImageFullscreen = false; zoomLevel = 1; resetPan();" class="p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all active:scale-95 ml-1" title="Tutup">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button type="button" @click="showImageFullscreen = false; zoomLevel = 1; resetPan();" class="p-1.5 text-white/90 hover:text-white bg-white/20 hover:bg-white/30 rounded-full transition-all active:scale-95 ml-0.5" title="Tutup">
+                    <svg class="w-4 h-4 text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/>
                     </svg>
                 </button>
             </div>
@@ -366,9 +372,9 @@
         </div>
 
         {{-- Bottom Hint Bar --}}
-        <div class="text-center pb-2 z-20">
-            <p class="text-[11px] text-white/80 font-medium bg-black/60 px-4 py-1.5 rounded-full backdrop-blur-md border border-white/10">
-                🖐️ Drag/Geser gambar saat Zoom | Scroll / (+/-) untuk Zoom | Klik area hitam untuk menutup
+        <div class="text-center pb-1 z-20 max-w-full px-2">
+            <p class="text-[10px] text-white/80 font-medium bg-black/60 px-3 py-1 rounded-full backdrop-blur-md border border-white/10 truncate">
+                🖐️ Drag untuk geser | Zoom (+/-) | Klik area hitam untuk menutup
             </p>
         </div>
     </div>

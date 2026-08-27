@@ -18,11 +18,14 @@ class AdminPenggunaController extends Controller
 
     public function index()
     {
+        /** @var \App\Models\User $currentUser */
+        $currentUser = Auth::user();
+        $admins = $currentUser->role === 'super_admin' ? $this->userService->getByRole('admin') : collect();
         $mitras = $this->userService->getByRole('mitra');
         $penghunis = $this->userService->getByRole('penghuni');
 
         $view = request()->is('superadmin*') ? 'superadmin.pengguna.index' : 'admin.pengguna.index';
-        return view($view, compact('mitras', 'penghunis'));
+        return view($view, compact('admins', 'mitras', 'penghunis'));
     }
 
     public function create()
@@ -55,12 +58,24 @@ class AdminPenggunaController extends Controller
     public function edit(int $id)
     {
         $user = $this->userService->getUserById($id);
+        
+        // Admin biasa tidak bisa mengedit akun Admin
+        if ($user->role === 'admin' && Auth::user()->role !== 'super_admin') {
+            return redirect()->back()->with('error', 'Akses ditolak. Pengelolaan akun Admin hanya dapat dilakukan oleh Super Admin.');
+        }
+
         $view = request()->is('superadmin*') ? 'superadmin.pengguna.edit' : 'admin.pengguna.edit';
         return view($view, compact('user'));
     }
 
     public function update(Request $request, int $id)
     {
+        $user = User::findOrFail($id);
+
+        if ($user->role === 'admin' && Auth::user()->role !== 'super_admin') {
+            return redirect()->back()->with('error', 'Akses ditolak. Pengelolaan akun Admin hanya dapat dilakukan oleh Super Admin.');
+        }
+
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . $id,
@@ -81,7 +96,7 @@ class AdminPenggunaController extends Controller
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         if ($currentUser->role !== 'super_admin') {
-            return redirect()->back()->with('error', 'Aksi penonaktifan pengguna hanya dapat dilakukan oleh Super Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak. Aksi penonaktifan pengguna hanya dapat dilakukan oleh Super Admin.');
         }
 
         $user = User::findOrFail($id);
@@ -103,7 +118,7 @@ class AdminPenggunaController extends Controller
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
         if ($currentUser->role !== 'super_admin') {
-            return redirect()->back()->with('error', 'Aksi hapus pengguna hanya dapat dilakukan oleh Super Admin.');
+            return redirect()->back()->with('error', 'Akses ditolak. Aksi hapus pengguna hanya dapat dilakukan oleh Super Admin.');
         }
 
         $user = User::findOrFail($id);

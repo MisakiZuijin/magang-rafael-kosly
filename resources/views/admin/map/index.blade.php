@@ -29,7 +29,7 @@
                     <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
-                    Titik Awal (Kantor Admin dari Database)
+                    Titik Awal
                 </label>
                 <select id="office-select" x-model="selectedOffice" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500">
                     @foreach($kantors as $kantor)
@@ -48,7 +48,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    Tujuan Properti Kos
+                    Tujuan Kos
                 </label>
                 <select id="kos-select" x-model="selectedKos" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500">
                     <option value="semua">🔍 Semua Kos (Cari Rute Kos Terdekat)</option>
@@ -95,7 +95,7 @@
             <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
                 <h2 class="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1">
                     <span>🏢</span>
-                    <span>Data Kantor Admin ({{ $kantors->count() }})</span>
+                    <span>Data Kantor ({{ $kantors->count() }})</span>
                 </h2>
             </div>
 
@@ -120,7 +120,7 @@
             <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
                 <h2 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center gap-1">
                     <span>🏡</span>
-                    <span>Daftar Properti Kos ({{ $locations->count() }})</span>
+                    <span>Daftar Kos ({{ $locations->count() }})</span>
                 </h2>
             </div>
 
