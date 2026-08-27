@@ -99,6 +99,11 @@ $menunggu = $pembayarans->where('status', 'pending');
         $fullRoomPriceAwal = $isHarianAwal
         ? (($p->jumlah_hari ?: 1) * $hargaHari)
         : ($isMingguanAwal ? $hargaMinggu : $hargaBulan);
+
+        $activeCount = ($p->penghuniKamar && $p->penghuniKamar->kamar_id)
+        ? \App\Models\PenghuniKamar::where('kamar_id', $p->penghuniKamar->kamar_id)->where('status', 'aktif')->count()
+        : 2;
+        if ($activeCount < 1) $activeCount = 1;
         @endphp
 
         <div class="space-y-0"
@@ -106,7 +111,8 @@ $menunggu = $pembayarans->where('status', 'pending');
             isExtension: {{ $isExtensionMode ? 'true' : 'false' }},
             isHarianAwal: {{ $isHarianAwal ? 'true' : 'false' }},
             tipe: '{{ $isExtensionMode ? ($p->penghuniKamar->durasi === 'harian' ? 'harian' : ($p->penghuniKamar->durasi === 'mingguan' ? 'mingguan' : ($p->tipe_perpanjangan ?? 'bulanan'))) : ($isHarianAwal ? 'harian' : ($isMingguanAwal ? 'mingguan' : 'bulanan')) }}',
-            porsiBayar: {{ $p->porsi_bayar ?? ($isKamarBerbagi ? 50 : 100) }},
+            activeCount: {{ $activeCount }},
+            porsiBayar: {{ ($isKamarBerbagi && $activeCount <= 2) ? ($p->porsi_bayar ?? 100) : 100 }},
             jumlahHari: {{ $p->jumlah_hari && $p->jumlah_hari != 30 ? $p->jumlah_hari : 1 }},
             hargaBulan: {{ $hargaBulan }},
             hargaMinggu: {{ $hargaMinggu }},
@@ -132,7 +138,7 @@ $menunggu = $pembayarans->where('status', 'pending');
                 return 30;
             },
             get totalCalculated() {
-                return this.porsiBayar == 50 ? Math.round(this.fullPeriodPrice / 2) : this.fullPeriodPrice;
+                return (this.porsiBayar == 50 && this.activeCount <= 2) ? Math.round(this.fullPeriodPrice / 2) : this.fullPeriodPrice;
             },
             get formattedStartDate() {
                 if (!this.baseDateStr) return '-';
@@ -191,19 +197,20 @@ $menunggu = $pembayarans->where('status', 'pending');
                     <input type="hidden" name="pembayaran_id" value="{{ $p->id }}">
 
                     @if($isKamarBerbagi)
-                    {{-- Porsi Pembayaran Kamar Berbagi --}}
+                    @if($activeCount <= 2)
+                    {{-- Porsi Pembayaran Kamar Berbagi (2 Orang) --}}
                     <div class="space-y-2">
                         <label class="block text-[11px] font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1">
-                            👥 Skema Pembayaran Kamar Berbagi
+                            👥 Skema Pembayaran Kamar Berbagi (2 Orang)
                         </label>
                         <div class="grid grid-cols-2 gap-2">
                             <label :class="porsiBayar == 100 ? 'border-purple-500 bg-purple-50/70 dark:bg-purple-950/40 text-purple-900 dark:text-purple-200 ring-2 ring-purple-500/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300'"
                                 class="p-3 rounded-xl border cursor-pointer flex flex-col justify-between transition-all">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-xs font-bold">Bayar Full (100%)</span>
+                                    <span class="text-xs font-bold">Bayar Full (1 Kamar)</span>
                                     <input type="radio" name="porsi_bayar" value="100" x-model.number="porsiBayar" class="text-purple-600 focus:ring-purple-500">
                                 </div>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Pelunasan 1 Kamar</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Pelunasan Seluruh Kamar</p>
                                 <p class="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1" x-text="formatRupiah(fullPeriodPrice)"></p>
                             </label>
 
@@ -213,11 +220,22 @@ $menunggu = $pembayarans->where('status', 'pending');
                                     <span class="text-xs font-bold">Tarif 1 Orang</span>
                                     <input type="radio" name="porsi_bayar" value="50" x-model.number="porsiBayar" class="text-purple-600 focus:ring-purple-500">
                                 </div>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Separuh Harga Kamar</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Separuh Harga Kamar (50%)</p>
                                 <p class="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1" x-text="formatRupiah(Math.round(fullPeriodPrice / 2))"></p>
                             </label>
                         </div>
                     </div>
+                    @else
+                    <input type="hidden" name="porsi_bayar" value="100">
+                    <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800/60 space-y-1">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-purple-900 dark:text-purple-200">
+                            <span>👥 Pembayaran Kamar Berbagi (3 Penghuni - Pelunasan 1 Kamar)</span>
+                        </div>
+                        <p class="text-[11px] text-purple-700 dark:text-purple-300">
+                            Pembayaran sewa kamar berbagi (3 orang) ditanggung penuh oleh 1 perwakilan kamar. Pembagian biaya dilakukan secara internal di antara Anda dan teman sekamar.
+                        </p>
+                    </div>
+                    @endif
                     @else
                     <input type="hidden" name="porsi_bayar" value="100">
                     @endif
@@ -238,7 +256,7 @@ $menunggu = $pembayarans->where('status', 'pending');
                                     <input type="radio" name="tipe_perpanjangan" value="bulanan" x-model="tipe" class="text-emerald-600 focus:ring-emerald-500">
                                 </div>
                                 <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">+30 Hari</p>
-                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1" x-text="formatRupiah(porsiBayar == 50 ? Math.round(hargaBulan / 2) : hargaBulan)"></p>
+                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1" x-text="formatRupiah((porsiBayar == 50 && activeCount <= 2) ? Math.round(hargaBulan / 2) : hargaBulan)"></p>
                             </label>
 
                             <label :class="tipe === 'mingguan' ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300'"
@@ -248,7 +266,7 @@ $menunggu = $pembayarans->where('status', 'pending');
                                     <input type="radio" name="tipe_perpanjangan" value="mingguan" x-model="tipe" class="text-emerald-600 focus:ring-emerald-500">
                                 </div>
                                 <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">+7 Hari</p>
-                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1" x-text="formatRupiah(porsiBayar == 50 ? Math.round(hargaMinggu / 2) : hargaMinggu)"></p>
+                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1" x-text="formatRupiah((porsiBayar == 50 && activeCount <= 2) ? Math.round(hargaMinggu / 2) : hargaMinggu)"></p>
                             </label>
 
                             <label :class="tipe === 'harian' ? 'border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 ring-2 ring-emerald-500/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300'"
@@ -258,7 +276,7 @@ $menunggu = $pembayarans->where('status', 'pending');
                                     <input type="radio" name="tipe_perpanjangan" value="harian" x-model="tipe" class="text-emerald-600 focus:ring-emerald-500">
                                 </div>
                                 <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono">Custom Hari</p>
-                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1" x-text="formatRupiah(porsiBayar == 50 ? Math.round(hargaHari / 2) : hargaHari) + ' / hari'"></p>
+                                <p class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1" x-text="formatRupiah((porsiBayar == 50 && activeCount <= 2) ? Math.round(hargaHari / 2) : hargaHari) + ' / hari'"></p>
                             </label>
                         </div>
                     </div>
@@ -346,18 +364,19 @@ $menunggu = $pembayarans->where('status', 'pending');
                     <input type="hidden" name="jumlah_hari" value="{{ $p->jumlah_hari ?? ($isHarianAwal ? ($p->jumlah_hari ?: 1) : ($isMingguanAwal ? 7 : 30)) }}">
 
                     @if($isKamarBerbagi)
+                    @if($activeCount <= 2)
                     <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-100 dark:border-purple-900/50 space-y-2">
                         <label class="block text-[11px] font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider">
-                            👥 Skema Pembayaran Kamar Berbagi ({{ $isHarianAwal ? $p->jumlah_hari . ' Hari Harian' : ($isMingguanAwal ? '1 Minggu (7 Hari)' : 'Bulanan') }})
+                            👥 Skema Pembayaran Kamar Berbagi (2 Penghuni)
                         </label>
                         <div class="grid grid-cols-2 gap-2">
                             <label :class="porsiBayar == 100 ? 'border-purple-500 bg-white dark:bg-gray-800 ring-2 ring-purple-500/20' : 'border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/40'"
                                 class="p-2.5 rounded-xl border cursor-pointer flex flex-col justify-between transition-all">
                                 <div class="flex items-center justify-between mb-1">
-                                    <span class="text-xs font-bold text-gray-900 dark:text-white">Tarif 2 Orang</span>
+                                    <span class="text-xs font-bold text-gray-900 dark:text-white">Bayar Full (1 Kamar)</span>
                                     <input type="radio" name="porsi_bayar" value="100" x-model.number="porsiBayar" class="text-purple-600 focus:ring-purple-500">
                                 </div>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Pelunasan 1 Kamar</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Pelunasan Seluruh Kamar</p>
                                 <p class="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1" x-text="formatRupiah(fullPriceAwal)"></p>
                             </label>
 
@@ -367,11 +386,22 @@ $menunggu = $pembayarans->where('status', 'pending');
                                     <span class="text-xs font-bold text-gray-900 dark:text-white">Tarif 1 Orang</span>
                                     <input type="radio" name="porsi_bayar" value="50" x-model.number="porsiBayar" class="text-purple-600 focus:ring-purple-500">
                                 </div>
-                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Separuh Harga Kamar</p>
+                                <p class="text-[10px] text-gray-500 dark:text-gray-400">Separuh Harga Kamar (50%)</p>
                                 <p class="text-xs font-bold text-purple-600 dark:text-purple-400 mt-1" x-text="formatRupiah(Math.round(fullPriceAwal / 2))"></p>
                             </label>
                         </div>
                     </div>
+                    @else
+                    <input type="hidden" name="porsi_bayar" value="100">
+                    <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800/60 space-y-1">
+                        <div class="flex items-center gap-1.5 text-xs font-bold text-purple-900 dark:text-purple-200">
+                            <span>👥 Pembayaran Kamar Berbagi (3 Penghuni - Pelunasan 1 Kamar)</span>
+                        </div>
+                        <p class="text-[11px] text-purple-700 dark:text-purple-300">
+                            Pembayaran sewa kamar berbagi (3 orang) ditanggung lunas oleh 1 perwakilan kamar. Pembagian biaya dilakukan secara internal.
+                        </p>
+                    </div>
+                    @endif
                     @else
                     <input type="hidden" name="porsi_bayar" value="100">
                     @endif
@@ -438,11 +468,32 @@ $menunggu = $pembayarans->where('status', 'pending');
                 @else
                 <div class="space-y-3">
                     {{-- Status --}}
-                    <div class="flex items-center gap-2 p-2.5 bg-amber-50 dark:bg-amber-900/20 rounded-xl">
-                        <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="text-xs text-amber-700 dark:text-amber-300 font-medium">Bukti transfer sebesar <strong>Rp {{ number_format($p->jumlah, 0, ',', '.') }}</strong> telah diupload, menunggu verifikasi admin ({{ $p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang' }}).</p>
+                    @php
+                    $kamarKapasitas = $p->penghuniKamar->kamar->kapasitas ?? 1;
+                    if ($isKamarBerbagi) {
+                        if ($activeCount >= 3 || $kamarKapasitas >= 3) {
+                            $porsiText = 'Pelunasan Kamar 3 Orang';
+                        } elseif ($p->porsi_bayar == 50) {
+                            $porsiText = 'Tarif 1 Orang';
+                        } else {
+                            $porsiText = 'Tarif 2 Orang';
+                        }
+                    } else {
+                        $porsiText = 'Kamar Standar';
+                    }
+                    @endphp
+                    <div class="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-xl space-y-1">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p class="text-xs text-amber-700 dark:text-amber-300 font-medium">Bukti transfer sebesar <strong>Rp {{ number_format($p->jumlah, 0, ',', '.') }}</strong> telah diupload, menunggu verifikasi admin ({{ $porsiText }}).</p>
+                        </div>
+                        @if($isKamarBerbagi && ($activeCount >= 3 || $kamarKapasitas >= 3))
+                        <p class="text-[11px] text-amber-700/80 dark:text-amber-400/90 pl-6 font-medium">
+                            💡 Pembayaran perwakilan kamar 3 orang sedang diproses. Setelah diverifikasi admin, seluruh anggota kamar akan otomatis berstatus lunas.
+                        </p>
+                        @endif
                     </div>
 
                     {{-- LINK LIHAT BUKTI --}}
@@ -500,10 +551,13 @@ $riwayat = $pembayarans->whereIn('status', ['terverifikasi', 'ditolak']);
                     Rp {{ number_format($p->jumlah, 0, ',', '.') }}
                     @if($isCoveredByRoommate)
                     <span class="text-[10px] font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded ml-1">Dibayar oleh {{ $uploaderName }}</span>
-                    @elseif($p->porsi_bayar == 50)
+                    @elseif($p->porsi_bayar == 50 && $isKamarBerbagi)
                     <span class="text-[10px] font-semibold text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded ml-1">Tarif 1 Orang</span>
                     @elseif($p->porsi_bayar == 100 && $isKamarBerbagi)
-                    <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded ml-1">Tarif 2 Orang</span>
+                    @php
+                    $histKapasitas = $p->penghuniKamar->kamar->kapasitas ?? 2;
+                    @endphp
+                    <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded ml-1">{{ $histKapasitas >= 3 ? 'Pelunasan Kamar 3 Orang' : 'Tarif 2 Orang' }}</span>
                     @endif
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Periode: {{ $p->periode_mulai ? $p->periode_mulai->format('d M Y') : '-' }} s/d {{ $p->periode_selesai ? $p->periode_selesai->format('d M Y') : '-' }}</p>
