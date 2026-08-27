@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Mitra;
 use App\Http\Controllers\Controller;
 use App\Services\DashboardService;
 use App\Services\KamarService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class MitraDashboardController extends Controller
 {
@@ -32,5 +34,16 @@ class MitraDashboardController extends Controller
         }
 
         return view('mitra.kamar', compact('kamarData', 'kosList'));
+    }
+
+    public function showKamar(int $id)
+    {
+        $user = Auth::user();
+        $mitraKosIds = $user->kos->pluck('id');
+        $kamar = \App\Models\Kamar::with(['kos.mitra', 'penghuniKamar.penghuni'])
+            ->whereIn('kos_id', $mitraKosIds)
+            ->findOrFail($id);
+
+        return view('mitra.show', compact('kamar'));
     }
 }

@@ -3,7 +3,7 @@
 @section('title', 'Daftar Kos & Kamar')
 
 @section('content')
-<div class="space-y-4" x-data="{ 
+<div class="max-w-md mx-auto space-y-3.5 pb-10" x-data="{ 
     search: '', 
     selectedKos: 'semua', 
     statusFilter: 'semua',
@@ -23,37 +23,37 @@
             <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <input type="text" 
-                   x-model="search"
-                   placeholder="Cari kode kamar atau nama penghuni..." 
-                   class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all">
+            <input type="text"
+                x-model="search"
+                placeholder="Cari kode kamar atau nama penghuni..."
+                class="w-full pl-10 pr-4 py-2 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all">
         </div>
 
-        {{-- Filter Selects & Pills --}}
+        {{-- Filter Selects --}}
         <div class="grid grid-cols-3 gap-2">
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pilih Kos</label>
-                <select x-model="selectedKos" class="w-full py-1.5 px-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-emerald-500">
+                <label class="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Pilih Kos</label>
+                <select x-model="selectedKos" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-emerald-500">
                     <option value="semua">Semua Kos</option>
                     @foreach($kosList as $k)
-                        <option value="{{ $k->id }}">{{ $k->nama }}</option>
+                    <option value="{{ $k->id }}">{{ $k->nama }}</option>
                     @endforeach
                 </select>
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</label>
-                <select x-model="statusFilter" class="w-full py-1.5 px-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-emerald-500">
-                    <option value="semua">Semua Status</option>
+                <label class="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Status</label>
+                <select x-model="statusFilter" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-emerald-500">
+                    <option value="semua">Semua</option>
                     <option value="terisi">Terisi</option>
                     <option value="kosong">Kosong</option>
                 </select>
             </div>
 
             <div>
-                <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Jenis Kamar</label>
-                <select x-model="tipeFilter" class="w-full py-1.5 px-2.5 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-emerald-500">
-                    <option value="semua">Semua Jenis</option>
+                <label class="block text-[9px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Jenis Kamar</label>
+                <select x-model="tipeFilter" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-800 dark:text-gray-200 focus:ring-emerald-500">
+                    <option value="semua">Semua</option>
                     <option value="standar">Standar</option>
                     <option value="berbagi">Berbagi</option>
                 </select>
@@ -63,143 +63,150 @@
 
     {{-- Data List --}}
     @if($kamarData->isEmpty())
-        <x-empty-state message="Belum ada data kamar kos yang terdaftar." />
+    <x-empty-state message="Belum ada data kamar kos yang terdaftar." />
     @else
-        <div class="space-y-3">
-            @foreach($kamarData as $kamar)
-                @php
-                    $penghuniAktifList = $kamar->penghuniKamar ? $kamar->penghuniKamar->where('status', 'aktif') : collect();
-                    $hasPenghuni = $penghuniAktifList->isNotEmpty();
-                    $allPenghuniNames = $penghuniAktifList->map(fn($p) => $p->penghuni->nama ?? '')->implode(' ');
-                @endphp
+    <div class="space-y-3">
+        @foreach($kamarData as $kamar)
+        @php
+        $penghuniAktifList = $kamar->penghuniKamar ? $kamar->penghuniKamar->where('status', 'aktif') : collect();
+        $hasPenghuni = $penghuniAktifList->isNotEmpty();
+        $todayDate = \Carbon\Carbon::now()->startOfDay();
+        $hasExpiredPenghuni = $penghuniAktifList->contains(function($pk) use ($todayDate) {
+        return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+        });
+        $allPenghuniNames = $penghuniAktifList->map(fn($p) => $p->penghuni->nama ?? '')->implode(' ');
+        @endphp
 
-                <div x-show="
+        <div x-show="
                         (selectedKos === 'semua' || selectedKos == '{{ $kamar->kos_id }}') &&
                         (statusFilter === 'semua' || statusFilter === '{{ $kamar->status }}') &&
                         (tipeFilter === 'semua' || tipeFilter === '{{ $kamar->tipe }}') &&
                         matchSearch(@js($kamar->kode_kamar . ' ' . $allPenghuniNames . ' ' . ($kamar->kos->nama ?? '')))
                      "
-                     x-transition
-                     class="bg-white dark:bg-gray-900 rounded-2xl border-l-4 {{ $hasPenghuni ? 'border-l-emerald-500 border-gray-200 dark:border-gray-800' : 'border-l-amber-400 border-gray-200 dark:border-gray-800' }} shadow-sm p-4 space-y-3.5 hover:shadow-md transition-all">
-                    
-                    {{-- Card Header --}}
-                    <div class="flex items-start justify-between gap-2 border-b border-gray-100 dark:border-gray-800/80 pb-3">
-                        <div class="space-y-1">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <span class="px-2.5 py-1 rounded-xl text-xs font-black font-mono bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800">
-                                    🚪 Kamar {{ $kamar->kode_kamar }}
-                                </span>
-                                <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' }}">
-                                    {{ $kamar->tipe === 'berbagi' ? '👥 Kamar Berbagi' : '👤 Kamar Standar' }}
-                                </span>
-                            </div>
-                            <h3 class="font-bold text-sm text-gray-800 dark:text-gray-200 leading-tight">
-                                {{ $kamar->kos->nama ?? 'Properti Kos' }}
-                            </h3>
-                        </div>
+            x-transition
+            class="p-3.5 sm:p-4 rounded-2xl border {{ $hasExpiredPenghuni ? 'bg-red-50/40 dark:bg-red-950/20 border-red-200 dark:border-red-900/50' : ($hasPenghuni ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/50' : 'bg-gray-50/80 dark:bg-gray-800/40 border-gray-200/80 dark:border-gray-800') }} space-y-2.5 shadow-2xs">
 
-                        <span class="inline-flex items-center gap-1 px-3 py-1 text-[11px] font-bold rounded-full {{ $hasPenghuni ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' }}">
-                            <span class="w-1.5 h-1.5 rounded-full {{ $hasPenghuni ? 'bg-emerald-600 animate-pulse' : 'bg-amber-500' }}"></span>
-                            {{ $hasPenghuni ? 'Terisi (' . $penghuniAktifList->count() . '/' . $kamar->kapasitas . ')' : 'Kosong' }}
+            {{-- Baris Header Kamar & Status --}}
+            <div class="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-gray-200/50 dark:border-gray-700/40 pb-2">
+                <div class="grid grid-flow-col auto-cols-max items-center gap-1.5 min-w-0">
+                    <span class="font-bold text-xs font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-gray-800 truncate">
+                        {{ $kamar->kos->nama ?? 'Kos' }} · {{ $kamar->kode_kamar }}
+                    </span>
+                    <span class="px-1.5 py-0.5 text-[8px] uppercase font-bold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' }}">
+                        {{ ucfirst($kamar->tipe) }}
+                    </span>
+                    <x-badge type="{{ $hasExpiredPenghuni ? 'danger' : ($hasPenghuni ? 'success' : 'warning') }}" size="xs">
+                        {{ $hasExpiredPenghuni ? 'Jatuh Tempo' : ($hasPenghuni ? 'Terisi' : 'Kosong') }}
+                    </x-badge>
+                </div>
+
+                <div class="grid grid-flow-col auto-cols-max items-center gap-1">
+                    <a href="{{ route('mitra.kamar.show', $kamar->id) }}"
+                        class="px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 hover:bg-emerald-200 dark:bg-emerald-900/50 rounded-md transition-all grid grid-flow-col auto-cols-max items-center gap-0.5 active:scale-95">
+                        <span>Detail</span>
+                    </a>
+                </div>
+            </div>
+
+            {{-- Detail Perabotan / Fasilitas --}}
+            <div class="text-[11px] font-medium text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-900/60 p-2 rounded-xl border border-gray-200/70 dark:border-gray-700/60 grid grid-cols-[auto_1fr] items-start gap-1.5">
+                <span class="font-bold text-amber-600 dark:text-amber-400">📦 Perabotan:</span>
+                @if(!empty($kamar->detail))
+                <span class="text-gray-900 dark:text-white font-semibold truncate">{{ $kamar->detail }}</span>
+                @else
+                <span class="text-gray-400 italic font-mono">Kosong (Tanpa Perabotan)</span>
+                @endif
+            </div>
+
+            {{-- Rincian Biaya & Link WA Group --}}
+            <div class="grid grid-cols-1 sm:grid-cols-[1fr_auto] items-center gap-1.5 text-[10px] font-mono bg-white/60 dark:bg-gray-900/40 p-2 rounded-xl border border-gray-200/50 dark:border-gray-800">
+                <div class="grid grid-cols-1 gap-2">
+                    <p class="text-xs text-mono text-black dark:text-white">Jenis Biaya</p>
+                    <div class="grid grid-cols-3 items-center gap-1.5 text-[10px]">
+                        <span class="text-center text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                            Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }}/bln
+                        </span>
+                        @if($kamar->harga_per_minggu)
+                        <span class="text-center text-purple-600 dark:text-purple-400 font-bold bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded">
+                            Rp {{ number_format($kamar->harga_per_minggu, 0, ',', '.') }}/minggu
+                        </span>
+                        @endif
+                        @if($kamar->harga_per_hari)
+                        <span class="text-center text-blue-600 dark:text-blue-400 font-bold bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">
+                            Rp {{ number_format($kamar->harga_per_hari, 0, ',', '.') }}/hari
+                        </span>
+                        @endif
+                    </div>
+                </div>
+
+                @if($kamar->link_grup_wa)
+                <a href="{{ $kamar->link_grup_wa }}" target="_blank" class="text-[9px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 dark:bg-emerald-900/50 px-2 py-0.5 rounded-md hover:underline grid grid-flow-col auto-cols-max items-center gap-1 justify-self-start sm:justify-self-auto">
+                    <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400 fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                    </svg>
+                    <span>WhatsApp Group</span>
+                </a>
+                @elseif($kamar->wa_group_id)
+                <span class="text-[9px] font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded justify-self-start sm:justify-self-auto" title="ID Grup Fonnte: {{ $kamar->wa_group_id }}">
+                    WhatsApp Group Registered
+                </span>
+                @endif
+            </div>
+
+            {{-- Occupants Section --}}
+            @if($hasPenghuni)
+            <div class="mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 space-y-1.5">
+                <div class="grid grid-cols-1 items-center text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                    <span>👥 PENGHUNI AKTIF ({{ $penghuniAktifList->count() }}/{{ $kamar->kapasitas }})</span>
+                </div>
+
+                @foreach($penghuniAktifList as $pk)
+                @php
+                $pUser = $pk->penghuni;
+                $isPkExpired = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+                $tglKeluarStr = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
+                @endphp
+                @if($pUser)
+                <div class="grid grid-cols-[1fr_auto] items-center text-xs p-2 rounded-xl border {{ $isPkExpired ? 'bg-red-100/70 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white/90 dark:bg-gray-900/80 border-emerald-100 dark:border-emerald-900/30' }}">
+                    <div class="truncate min-w-0 flex-1">
+                        <span class="font-bold text-gray-900 dark:text-white block truncate text-[11px]">
+                            {{ $pUser->nama }}
+                        </span>
+                        <span class="text-[9px] font-mono text-gray-500 block">
+                            Sewa {{ ucfirst($pk->durasi) }} · s/d {{ $tglKeluarStr }}
                         </span>
                     </div>
 
-                    {{-- Price & Capacity Grid Strip --}}
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-50/80 dark:bg-gray-800/40 p-2.5 rounded-xl border border-gray-100 dark:border-gray-800/60 text-center">
-                        <div class="p-1">
-                            <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Harga / Bulan</p>
-                            <p class="text-xs font-bold font-mono text-gray-900 dark:text-white mt-0.5">
-                                Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }}
-                            </p>
-                        </div>
-                        <div class="p-1 border-l sm:border-l border-gray-200 dark:border-gray-700/60">
-                            <p class="text-[10px] text-purple-600 dark:text-purple-400 uppercase font-bold tracking-wider">Harga / Minggu</p>
-                            <p class="text-xs font-bold font-mono text-purple-700 dark:text-purple-300 mt-0.5">
-                                {{ $kamar->harga_per_minggu ? 'Rp ' . number_format($kamar->harga_per_minggu, 0, ',', '.') : '-' }}
-                            </p>
-                        </div>
-                        <div class="p-1 border-t sm:border-t-0 sm:border-l border-gray-200 dark:border-gray-700/60">
-                            <p class="text-[10px] text-blue-600 dark:text-blue-400 uppercase font-bold tracking-wider">Harga / Hari</p>
-                            <p class="text-xs font-bold font-mono text-blue-700 dark:text-blue-300 mt-0.5">
-                                {{ $kamar->harga_per_hari ? 'Rp ' . number_format($kamar->harga_per_hari, 0, ',', '.') : '-' }}
-                            </p>
-                        </div>
-                        <div class="p-1 border-t sm:border-t-0 border-l border-gray-200 dark:border-gray-700/60">
-                            <p class="text-[10px] text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wider">Kapasitas</p>
-                            <p class="text-xs font-bold font-mono text-gray-900 dark:text-white mt-0.5">
-                                {{ $kamar->kapasitas }} Orang
-                            </p>
-                        </div>
-                    </div>
-
-                    {{-- Occupants Section --}}
-                    @if($hasPenghuni)
-                        <div class="space-y-2">
-                            <p class="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                                <span>👤 Penghuni Aktif Kamar ({{ $penghuniAktifList->count() }})</span>
-                            </p>
-                            @foreach($penghuniAktifList as $pk)
-                                @php
-                                    $pUser = $pk->penghuni;
-                                @endphp
-                                @if($pUser)
-                                <div class="p-3 bg-gradient-to-r from-emerald-50/80 to-emerald-100/30 dark:from-emerald-950/30 dark:to-emerald-900/10 rounded-xl border border-emerald-200/70 dark:border-emerald-900/50 flex items-center justify-between gap-3">
-                                    <div class="flex items-center gap-3 min-w-0">
-                                        <div class="relative flex-shrink-0">
-                                            <img src="{{ $pUser->foto_profile ? asset('storage/' . $pUser->foto_profile) : 'https://ui-avatars.com/api/?name=' . urlencode($pUser->nama) . '&background=10b981&color=fff' }}" 
-                                                 class="w-10 h-10 rounded-full object-cover ring-2 ring-emerald-500/40 shadow-xs"
-                                                 alt="{{ $pUser->nama }}">
-                                            <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-gray-900 rounded-full"></span>
-                                        </div>
-                                        <div class="min-w-0 space-y-0.5">
-                                            <p class="text-xs font-bold text-gray-900 dark:text-white truncate flex items-center gap-1.5">
-                                                <span>{{ $pUser->nama }}</span>
-                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-semibold bg-emerald-200/80 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
-                                                    {{ ucfirst($pk->durasi) }}
-                                                </span>
-                                            </p>
-                                            @if($pk->tanggal_masuk && $pk->tanggal_keluar)
-                                                <p class="text-[10px] text-emerald-800 dark:text-emerald-300 font-mono font-medium flex items-center gap-1">
-                                                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                    </svg>
-                                                    {{ $pk->tanggal_masuk->format('d M Y') }} s/d {{ $pk->tanggal_keluar->format('d M Y') }}
-                                                </p>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    @if($pUser->no_hp)
-                                        @php
-                                            $phone = preg_replace('/[^0-9]/', '', $pUser->no_hp);
-                                            if(str_starts_with($phone, '0')) {
-                                                $phone = '62' . substr($phone, 1);
-                                            }
-                                            $waMessage = rawurlencode("Halo Kak {$pUser->nama}, pengingat dari Pemilik Kos {$kamar->kos->nama} mengenai Kamar {$kamar->kode_kamar}.");
-                                        @endphp
-                                        <a href="https://wa.me/{{ $phone }}?text={{ $waMessage }}" 
-                                           target="_blank"
-                                           class="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-xl text-xs font-bold shadow-xs transition-all flex-shrink-0">
-                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/>
-                                            </svg>
-                                            <span>WA</span>
-                                        </a>
-                                    @endif
-                                </div>
-                                @endif
-                            @endforeach
-                        </div>
-                    @else
-                        <div class="p-3 bg-amber-50/60 dark:bg-amber-950/20 rounded-xl border border-amber-200/60 dark:border-amber-900/40 text-center">
-                            <p class="text-xs text-amber-800 dark:text-amber-300 font-semibold flex items-center justify-center gap-1.5">
-                                🏠 Kamar ini sedang kosong &amp; siap dihuni (Tipe {{ ucfirst($kamar->tipe) }})
-                            </p>
-                        </div>
+                    @if($pUser->no_hp)
+                    @php
+                    $phone = preg_replace('/[^0-9]/', '', $pUser->no_hp);
+                    if(str_starts_with($phone, '0')) {
+                    $phone = '62' . substr($phone, 1);
+                    }
+                    $waMessage = rawurlencode("Halo Kak {$pUser->nama}, pengingat dari Pemilik Kos {$kamar->kos->nama} mengenai Kamar {$kamar->kode_kamar}.");
+                    @endphp
+                    <a href="https://wa.me/{{ $phone }}?text={{ $waMessage }}"
+                        target="_blank"
+                        class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-[10px] font-bold shadow-2xs transition-transform grid grid-flow-col auto-cols-max items-center gap-1 justify-self-end ml-2">
+                        <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                        </svg>
+                        <span>WhatsApp</span>
+                    </a>
                     @endif
                 </div>
-            @endforeach
+                @endif
+                @endforeach
+            </div>
+            @else
+            <div class="mt-2 pt-2 border-t border-gray-200/60 dark:border-gray-700/60 flex justify-between items-center text-xs">
+                <span class="text-amber-600 font-bold text-[11px]">🏠 Kamar Kosong (Siap Dihuni)</span>
+                <span class="text-[10px] font-mono font-bold text-gray-400">Kapasitas {{ $kamar->kapasitas }} Org</span>
+            </div>
+            @endif
         </div>
+        @endforeach
+    </div>
     @endif
 </div>
 @endsection
