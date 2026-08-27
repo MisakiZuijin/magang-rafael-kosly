@@ -13,6 +13,8 @@ return new class extends Migration
             $table->foreignId('kos_id')->constrained('kos')->onDelete('cascade');
             $table->string('kode_kamar', 20);
             $table->enum('tipe', ['standar', 'berbagi'])->default('standar');
+            $table->text('detail')->nullable();
+            $table->json('foto')->nullable();
             $table->decimal('harga_per_hari', 12, 2)->nullable();
             $table->decimal('harga_per_minggu', 12, 2)->nullable();
             $table->decimal('harga_per_bulan', 12, 2);

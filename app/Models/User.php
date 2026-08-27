@@ -35,6 +35,30 @@ class User extends Authenticatable
         ];
     }
 
+    public function hasRole(string|array $roles): bool
+    {
+        if (is_array($roles)) {
+            return $this->hasAnyRole($roles);
+        }
+        $currentRole = $this->role;
+        if ($roles === 'superadmin') {
+            return in_array($currentRole, ['super_admin', 'superadmin']);
+        }
+        return $currentRole === $roles;
+    }
+
+    public function hasAnyRole(array $roles): bool
+    {
+        $currentRole = $this->role;
+        $normalizedRoles = array_map(function($r) {
+            return $r === 'superadmin' ? 'super_admin' : $r;
+        }, $roles);
+        if (in_array('superadmin', $roles)) {
+            $normalizedRoles[] = 'super_admin';
+        }
+        return in_array($currentRole, $normalizedRoles);
+    }
+
     public function kos()
     {
         return $this->hasMany(Kos::class, 'mitra_id');

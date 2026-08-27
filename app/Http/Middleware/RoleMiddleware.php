@@ -25,13 +25,18 @@ class RoleMiddleware
             ]);
         }
 
-        // Allow super_admin or users with matching roles
-        if ($user->role === 'super_admin' || in_array($user->role, $roles)) {
+        // Strictly verify user role matches the required role(s) for the current route
+        if (in_array($user->role, $roles)) {
             return $next($request);
         }
 
-        abort(403, 'Akses ditolak. Peran ' . $user->role . ' tidak memiliki izin mengakses halaman ini.');
-
-        return $next($request);
+        // Redirect user to their appropriate role dashboard if accessing unauthorized route
+        return match ($user->role) {
+            'super_admin' => redirect()->route('superadmin.dashboard')->with('error', 'Akses ditolak. Anda telah dialihkan ke Dashboard Super Admin.'),
+            'admin' => redirect()->route('admin.dashboard')->with('error', 'Akses ditolak. Anda telah dialihkan ke Dashboard Admin.'),
+            'mitra' => redirect()->route('mitra.dashboard')->with('error', 'Akses ditolak. Anda telah dialihkan ke Dashboard Mitra.'),
+            'penghuni' => redirect()->route('penghuni.dashboard')->with('error', 'Akses ditolak. Anda telah dialihkan ke Dashboard Penghuni.'),
+            default => abort(403, 'Akses ditolak. Peran ' . $user->role . ' tidak memiliki izin mengakses halaman ini.'),
+        };
     }
 }

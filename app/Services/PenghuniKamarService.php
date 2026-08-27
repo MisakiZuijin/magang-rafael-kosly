@@ -50,17 +50,42 @@ class PenghuniKamarService
         return $this->repository->findById($id);
     }
 
+    public function syncKapasitasDanStatus(int $kamarId): void
+    {
+        $kamar = Kamar::find($kamarId);
+        if (!$kamar) return;
+
+        $jumlahAktif = PenghuniKamar::where('kamar_id', $kamarId)
+            ->where('status', 'aktif')
+            ->count();
+
+        if ($kamar->tipe === 'berbagi') {
+            if ($jumlahAktif >= 3) {
+                if ((int)$kamar->kapasitas !== 3) {
+                    $kamar->update(['kapasitas' => 3]);
+                }
+            } elseif ($jumlahAktif === 0) {
+                if ((int)$kamar->kapasitas !== 2) {
+                    $kamar->update(['kapasitas' => 2]);
+                }
+            }
+        }
+
+        if ($jumlahAktif >= $kamar->kapasitas) {
+            $this->kamarRepository->updateStatus($kamarId, 'terisi');
+        } elseif ($jumlahAktif === 0) {
+            $this->kamarRepository->updateStatus($kamarId, 'kosong');
+        }
+    }
+
     public function create(array $data): PenghuniKamar
     {
         $penghuniKamar = $this->repository->create($data);
 
-        // Update status kamar jika penuh
-        $kamar = $this->kamarRepository->findById($data['kamar_id']);
-        $jumlahPenghuni = $this->repository->getByKamar($data['kamar_id'])->where('status', 'aktif')->count();
+        // Sync kapasitas dan status kamar
+        $this->syncKapasitasDanStatus($data['kamar_id']);
 
-        if ($jumlahPenghuni >= $kamar->kapasitas) {
-            $this->kamarRepository->updateStatus($data['kamar_id'], 'terisi');
-        }
+        $kamar = $this->kamarRepository->findById($data['kamar_id']);
 
         // --- BUAT TAGIHAN PEMBAYARAN AWAL AUTOMATIS ---
         $tanggalMasukObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay();
@@ -80,6 +105,10 @@ class PenghuniKamarService
         }
 
         $selisihHari = max(1, (int) $tanggalMasukObj->diffInDays($tanggalKeluarObj));
+        $activePenghuniCount = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+            ->where('status', 'aktif')
+            ->count();
+        if ($activePenghuniCount < 1) $activePenghuniCount = 1;
 
         $defaultPorsi = 100;
         if ($penghuniKamar->durasi === 'harian') {
@@ -87,8 +116,7 @@ class PenghuniKamarService
                 ? $kamar->harga_per_hari
                 : round(($kamar->harga_per_bulan ?? 0) / 30);
             $totalDailyRoom = $selisihHari * $hargaHarian;
-
-            if ($kamar->tipe === 'berbagi') {
+            if ($kamar->tipe === 'berbagi' && $activePenghuniCount <= 2) {
                 $jumlahBiaya = round($totalDailyRoom / 2);
                 $defaultPorsi = 50;
             } else {
@@ -107,8 +135,7 @@ class PenghuniKamarService
                 ? $kamar->harga_per_minggu
                 : round(($kamar->harga_per_bulan ?? 0) / 4);
             $totalWeeklyRoom = $jumlahMinggu * $hargaMingguan;
-
-            if ($kamar->tipe === 'berbagi') {
+            if ($kamar->tipe === 'berbagi' && $activePenghuniCount <= 2) {
                 $jumlahBiaya = round($totalWeeklyRoom / 2);
                 $defaultPorsi = 50;
             } else {
@@ -119,11 +146,12 @@ class PenghuniKamarService
             $nominalNotif = $totalWeeklyRoom;
             $tipePerpanjangan = 'mingguan';
         } else {
-            if ($kamar->tipe === 'berbagi') {
-                $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / 2);
+            $fullRoomMonth = $kamar->harga_per_bulan ?? 0;
+            if ($kamar->tipe === 'berbagi' && $activePenghuniCount <= 2) {
+                $jumlahBiaya = round($fullRoomMonth / 2);
                 $defaultPorsi = 50;
             } else {
-                $jumlahBiaya = $kamar->harga_per_bulan ?? 0;
+                $jumlahBiaya = $fullRoomMonth;
                 $defaultPorsi = 100;
             }
             $jumlahHari = $selisihHari > 0 ? $selisihHari : 30;
@@ -159,26 +187,34 @@ class PenghuniKamarService
 
     public function update(int $id, array $data): PenghuniKamar
     {
-        return $this->repository->update($id, $data);
+        $penghuniKamar = $this->repository->update($id, $data);
+        if (isset($data['kamar_id'])) {
+            $this->syncKapasitasDanStatus($data['kamar_id']);
+        }
+        return $penghuniKamar;
     }
 
     public function checkout(int $id): PenghuniKamar
     {
         $record = $this->repository->updateStatus($id, 'selesai');
 
-        // Cek apakah kamar jadi kosong
-        $kamarId = $record->kamar_id;
-        $jumlahAktif = $this->repository->getByKamar($kamarId)->where('status', 'aktif')->count();
-
-        if ($jumlahAktif === 0) {
-            $this->kamarRepository->updateStatus($kamarId, 'kosong');
-        }
+        // Sync kapasitas dan status kamar
+        $this->syncKapasitasDanStatus($record->kamar_id);
 
         return $record;
     }
 
     public function delete(int $id): bool
     {
-        return $this->repository->delete($id);
+        $record = $this->repository->findById($id);
+        $kamarId = $record ? $record->kamar_id : null;
+
+        $result = $this->repository->delete($id);
+
+        if ($kamarId) {
+            $this->syncKapasitasDanStatus($kamarId);
+        }
+
+        return $result;
     }
 }

@@ -2,39 +2,49 @@
 $role = Auth::user()->role;
 $menus = [];
 
+// Flowbite Icons Path Data
+$iconDashboard = 'm4 12 8-8 8 8M6 10.5V19a1 1 0 0 0 1 1h3v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3a1 1 0 0 0 1-1v-8.5';
+$iconAturan = 'M15 4h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3m0 3h6m-6 5h6m-6 4h4M9 3v4h6V3H9Z';
+$iconBayar = 'M3 10h18M6 14h2m3 0h4M5 5h14a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z';
+$iconKamar = 'M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14m12 0H6m12 0h2M6 20H4m10-7h.01';
+$iconPengguna = 'M16 12h4m-2 2v-4M4 18v-1a3 3 0 0 1 3-3h4a3 3 0 0 1 3 3v1M12 8a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z';
+$iconMap = 'M12 13a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z M17.8 13.938C16.5 16 14 19 12 21c-2-2-4.5-5-5.8-7.062C5.2 12.4 4.5 10.7 4.5 9a7.5 7.5 0 1 1 15 0c0 1.7-.7 3.4-1.7 4.938Z';
+$iconPengumuman = 'M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z';
+$iconLaporan = 'M3 15v4m6-6v6m6-10v10m6-16v16';
+$iconPencairan = 'M12 6v13m0-13 4 4m-4-4-4 4';
+$iconWAGateway = 'M16 12H4m12 0-4 4m4-4-4-4';
+
 // Sidebar Penghuni
 if (in_array($role, ['penghuni'])) {
-$menus[] = ['icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 'label' => 'Dashboard', 'route' => 'penghuni.dashboard'];
-$menus[] = ['icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'label' => 'Aturan', 'route' => 'penghuni.aturan'];
-$menus[] = ['icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', 'label' => 'Bayar', 'route' => 'penghuni.pembayaran'];
+    $menus[] = ['icon' => $iconDashboard, 'label' => 'Dashboard', 'route' => 'penghuni.dashboard'];
+    $menus[] = ['icon' => $iconAturan, 'label' => 'Aturan', 'route' => 'penghuni.aturan'];
+    $menus[] = ['icon' => $iconBayar, 'label' => 'Bayar', 'route' => 'penghuni.pembayaran'];
 }
 
 // Sidebar Mitra
 if (in_array($role, ['mitra'])) {
-$menus[] = ['icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 'label' => 'Dashboard', 'route' => 'mitra.dashboard'];
-$menus[] = ['icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', 'label' => 'Kamar', 'route' => 'mitra.kamar'];
+    $menus[] = ['icon' => $iconDashboard, 'label' => 'Dashboard', 'route' => 'mitra.dashboard'];
+    $menus[] = ['icon' => $iconKamar, 'label' => 'Kamar', 'route' => 'mitra.kamar'];
 }
 
 // Sidebar Gabungan Admin & Super Admin
 if (in_array($role, ['admin', 'super_admin'])) {
-$p = $role === 'super_admin' ? 'superadmin.' : 'admin.';
-$menus[] = ['icon' => 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', 'label' => 'Dashboard', 'route' => $p . 'dashboard'];
-$menus[] = ['icon' => 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', 'label' => 'Pengguna', 'route' => $p . 'pengguna.index'];
-// Khusus Super Admin (otomatis di-hide jika login sebagai Admin biasa)
-if ($role === 'super_admin') {
-$menus[] = ['icon' => 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', 'label' => 'Kelola Admin', 'route' => 'superadmin.admin.index'];
-$menus[] = ['icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', 'label' => 'Lokasi Kantor', 'route' => 'superadmin.kantor.index'];
-}
-$menus[] = ['icon' => 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4', 'label' => 'Kos', 'route' => $p . 'kos.index'];
-$menus[] = ['icon' => 'M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z', 'label' => 'Pengumuman', 'route' => $p . 'pengumuman.index'];
-$menus[] = ['icon' => 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'label' => 'Aturan', 'route' => $p . 'aturan.index'];
-$menus[] = ['icon' => 'M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z', 'label' => 'Bayar', 'route' => $p . 'pembayaran.index'];
-$menus[] = ['icon' => 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z', 'label' => 'Map', 'route' => $p . 'map.index'];
-$menus[] = ['icon' => 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'label' => 'Laporan', 'route' => $p . 'laporan.index'];
-if ($role === 'super_admin'){
-$menus[] = ['icon' => 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 'label' => 'Pencairan Biaya', 'route' => 'superadmin.pencairan.index'];
-}
-$menus[] = ['icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z', 'label' => 'WA Gateway', 'route' => $p . 'whatsapp.index'];
+    $p = $role === 'super_admin' ? 'superadmin.' : 'admin.';
+    $menus[] = ['icon' => $iconDashboard, 'label' => 'Dashboard', 'route' => $p . 'dashboard'];
+    $menus[] = ['icon' => $iconPengguna, 'label' => 'Pengguna', 'route' => $p . 'pengguna.index'];
+    if ($role === 'super_admin') {
+        $menus[] = ['icon' => $iconMap, 'label' => 'Lokasi Kantor', 'route' => 'superadmin.kantor.index'];
+    }
+    $menus[] = ['icon' => $iconKamar, 'label' => 'Kos', 'route' => $p . 'kos.index'];
+    $menus[] = ['icon' => $iconPengumuman, 'label' => 'Pengumuman', 'route' => $p . 'pengumuman.index'];
+    $menus[] = ['icon' => $iconAturan, 'label' => 'Aturan', 'route' => $p . 'aturan.index'];
+    $menus[] = ['icon' => $iconBayar, 'label' => 'Bayar', 'route' => $p . 'pembayaran.index'];
+    $menus[] = ['icon' => $iconMap, 'label' => 'Map', 'route' => $p . 'map.index'];
+    $menus[] = ['icon' => $iconLaporan, 'label' => 'Laporan', 'route' => $p . 'laporan.index'];
+    if ($role === 'super_admin'){
+        $menus[] = ['icon' => $iconPencairan, 'label' => 'Pencairan Biaya', 'route' => 'superadmin.pencairan.index'];
+    }
+    $menus[] = ['icon' => $iconWAGateway, 'label' => 'WA Gateway', 'route' => $p . 'whatsapp.index'];
 }
 @endphp
 
@@ -51,8 +61,8 @@ $menus[] = ['icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.
             <a href="{{ route($menu['route']) }}" @click="sidebarOpen = false"
                 class="flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold transition-all active:scale-[0.98]
                    {{ $isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 shadow-sm' : 'text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800' }}">
-                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $menu['icon'] }}" />
+                <svg class="w-5 h-5 flex-shrink-0" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $menu['icon'] }}" />
                 </svg>
                 <span>{{ $menu['label'] }}</span>
                 @if($isActive)
@@ -63,16 +73,16 @@ $menus[] = ['icon' => 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.
         </nav>
     </div>
 
-    {{-- Dark Mode Toggle di Sidebar --}}
+    {{-- Dark Mode Toggle di Sidebar dengan Flowbite Icons --}}
     <div class="px-4 mt-4">
         <button id="theme-toggle" type="button" class="w-full flex items-center gap-3.5 px-4 py-3.5 rounded-xl text-sm font-semibold text-gray-600 dark:text-gray-400 active:bg-gray-100 dark:active:bg-gray-800 transition-all">
-            {{-- Moon (tampil saat light mode) --}}
-            <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            {{-- Flowbite Moon --}}
+            <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21a9 9 0 0 1-.5-17.986V3c-.354.966-.5 1.911-.5 3a9 9 0 0 0 9 9c.242 0 .474-.014.7-.033A9 9 0 0 1 12 21Z"/>
             </svg>
-            {{-- Sun (tampil saat dark mode) --}}
-            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+            {{-- Flowbite Sun --}}
+            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5V3m0 18v-2m7-7h2M3 12h2m13.364 6.364-1.414-1.414M6.343 6.343 4.929 4.929m12.728 0 1.414 1.414M6.343 17.657l-1.414 1.414M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/>
             </svg>
             <span id="theme-toggle-label">Mode</span>
         </button>

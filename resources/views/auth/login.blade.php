@@ -5,10 +5,10 @@
 @section('content')
 <div class="w-full max-w-sm">
     <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 sm:p-8">
-        <div class="text-center mb-6">
-            <div class="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-3">K</div>
-            <h1 class="text-xl font-bold">Kosly</h1>
-            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manajemen Kos</p>
+        <div class="grid grid-cols-1 text-center mb-6">
+            <img src="{{ asset('images/logo.png') }}" alt="Kosly Logo" class="sm:col-span-2 w-25 h-25 object-contain mx-auto mb-3 drop-shadow-md">
+            <!-- <h1 class="col-span-4 text-xl font-bold text-emerald-600 uppercase">Kosly</h1> -->
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Selamat Datang, Silahkan Login!</p>
         </div>
 
         @if($errors->any())

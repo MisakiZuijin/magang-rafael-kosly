@@ -1,19 +1,19 @@
 <nav class="absolute top-0 left-0 right-0 h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 z-60 flex items-center justify-between px-4">
 
-    <!-- Kiri: Burger -->
+    <!-- Kiri: Burger Flowbite Icon -->
     <button @click="sidebarOpen = !sidebarOpen" class="p-2 -ml-2 rounded-xl active:bg-gray-100 dark:active:bg-gray-800 dark:text-white min-w-[44px] min-h-[44px] flex items-center justify-center">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        <svg class="w-6 h-6 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15h18M3 9h18"/>
         </svg>
     </button>
 
     <!-- Tengah: Logo -->
     <div class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
-        <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-emerald-500/30">K</div>
+        <img src="{{ asset('images/logo.png') }}" alt="Kosly Logo" class="w-8 h-8 object-contain">
         <span class="font-bold text-lg tracking-tight dark:text-white">Kosly</span>
     </div>
 
-    <!-- Kanan: Notif + Profile -->
+    <!-- Kanan: Notif + Profile Flowbite Icons -->
     <div class="flex items-center gap-1 ml-auto">
         @php
         $hasUnreadNotif = \App\Models\Notifikasi::where('user_id', Auth::id())
@@ -21,8 +21,8 @@
             ->exists();
         @endphp
         <a href="{{ route('notifikasi.index') }}" class="p-2.5 rounded-xl active:bg-gray-100 dark:active:bg-gray-800 dark:text-white min-w-[44px] min-h-[44px] flex items-center justify-center relative">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <svg class="w-5 h-5 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5.365V3m0 2.365a5.338 5.338 0 0 0-5.133 5.368v1.8c0 .323-.13.633-.36.861l-1.01 1.004A1 1 0 0 0 6.2 16h11.6a1 1 0 0 0 .707-1.702l-1.01-1.004a1.18 1.18 0 0 1-.36-.861v-1.8A5.337 5.338 0 0 0 12 5.365ZM9 17a3 3 0 0 0 6 0M9 17h6"/>
             </svg>
             @if($hasUnreadNotif)
             <span id="notif-badge" class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white dark:ring-gray-900 animate-pulse"></span>
@@ -50,16 +50,16 @@
                     </span>
                 </div>
                 <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium active:bg-gray-50 dark:text-white dark:active:bg-gray-700">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 17v1a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1a3 3 0 0 0-3-3h-4a3 3 0 0 0-3 3Zm8-9a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
                     </svg>
                     Profil
                 </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 dark:text-red-400 active:bg-red-50 dark:active:bg-red-900/20">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        <svg class="w-4 h-4 text-red-600 dark:text-red-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H8m12 0-4 4m4-4-4-4M9 4H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2"/>
                         </svg>
                         Keluar
                     </button>
