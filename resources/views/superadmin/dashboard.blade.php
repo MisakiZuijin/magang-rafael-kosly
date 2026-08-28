@@ -20,7 +20,7 @@
 
     {{-- User Statistics Cards --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-blue-200 dark:border-blue-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-purple-200 dark:border-purple-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
                 👤
             </div>
@@ -42,7 +42,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-amber-200 dark:border-amber-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
                 🏢
             </div>
@@ -52,7 +52,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-emerald-200 dark:border-emerald-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                 🏠
             </div>
@@ -65,7 +65,7 @@
 
     {{-- Property & Room Statistics Cards --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-indigo-200 dark:border-indigo-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600 text-xs font-bold">
                 🏡
             </div>
@@ -75,7 +75,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-blue-200 dark:border-blue-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-9 h-9 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center text-blue-600 text-xs font-bold">
                 🛏️
             </div>
@@ -85,7 +85,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-emerald-200 dark:border-emerald-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 text-xs font-bold">
                 ✅
             </div>
@@ -95,7 +95,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 sm:col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-amber-200 dark:border-amber-800 border-l-4 shadow-sm flex items-center gap-3 sm:col-span-2">
             <div class="w-9 h-9 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center text-amber-600 text-xs font-bold">
                 ⏳
             </div>
@@ -105,7 +105,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 col-span-2 sm:col-span-4">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-red-200 dark:border-red-800 border-l-4 shadow-sm flex items-center gap-3 col-span-2 sm:col-span-4">
             <div class="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -195,8 +195,8 @@
                 @foreach($data['penghuni_aktif']->take(5) as $pk)
                 @php
                 $isExpired = $pk->tanggal_keluar && $pk->tanggal_keluar < now();
-                $daysLeft = $pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
-                @endphp
+                    $daysLeft=$pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
+                    @endphp
                     <div class="p-2.5 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $pk->penghuni->nama ?? '-' }}</p>
@@ -210,18 +210,18 @@
                             </div>
 
                             @if($isExpired || ($daysLeft !== null && $daysLeft <= 3))
-                            @php
-                            $targetRoute = route('superadmin.pengumuman.create', ['kamar_id' => $pk->kamar_id]);
-                            @endphp
-                            <a href="{{ $targetRoute }}" title="Kirim Pengumuman Jatuh Tempo Ke Kamar {{ $pk->kamar->kode_kamar ?? '' }}" class="p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex-shrink-0">
-                                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z"/>
-                                </svg>
-                            </a>
-                            @endif
+                                @php
+                                $targetRoute=route('superadmin.pengumuman.create', ['kamar_id'=> $pk->kamar_id]);
+                                @endphp
+                                <a href="{{ $targetRoute }}" title="Kirim Pengumuman Jatuh Tempo Ke Kamar {{ $pk->kamar->kode_kamar ?? '' }}" class="p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex-shrink-0">
+                                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z" />
+                                    </svg>
+                                </a>
+                                @endif
                         </div>
                     </div>
-                @endforeach
+                    @endforeach
             </div>
             @endif
         </div>

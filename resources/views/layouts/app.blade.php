@@ -44,8 +44,28 @@
 
         input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, input[type="url"]:focus, input[type="file"]:focus, select:focus, textarea:focus {
             outline: none !important;
-            border-color: #10b981 !important;
-            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+            border-color: #10b981;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+        }
+
+        select[class*="purple"]:focus, .focus-purple:focus {
+            border-color: #a855f7 !important;
+            box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.35) !important;
+        }
+
+        select[class*="blue"]:focus, .focus-blue:focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+        }
+
+        select[class*="amber"]:focus, .focus-amber:focus {
+            border-color: #f59e0b !important;
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35) !important;
+        }
+
+        textarea[class*="red"]:focus, .focus-red:focus {
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35) !important;
         }
 
         button:focus, button:focus-visible, a:focus, a:focus-visible, input[type="radio"]:focus, input[type="checkbox"]:focus, .navbar-avatar:focus, .modal-close-btn:focus {

@@ -20,7 +20,7 @@
 
     {{-- Stats Cards --}}
     <div class="grid grid-cols-2 gap-2.5">
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-indigo-200 dark:border-indigo-800 border-l-4 shadow-sm flex items-center gap-3">
             <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/40 rounded-xl flex items-center justify-center text-indigo-600 dark:text-indigo-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -32,7 +32,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-emerald-200 dark:border-emerald-800 border-l-4 shadow-sm flex items-center gap-3">
             <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 rounded-xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -44,7 +44,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-blue-200 dark:border-blue-800 border-l-4 shadow-sm flex items-center gap-3">
             <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center text-blue-600 dark:text-blue-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -56,7 +56,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-amber-200 dark:border-amber-800 border-l-4 shadow-sm flex items-center gap-3">
             <div class="w-10 h-10 bg-amber-100 dark:bg-amber-900/40 rounded-xl flex items-center justify-center text-amber-600 dark:text-amber-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -68,7 +68,7 @@
             </div>
         </div>
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-3 col-span-2">
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3.5 border border-red-200 dark:border-red-800 border-l-4 shadow-sm flex items-center gap-3 col-span-2">
             <div class="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-xl flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -137,9 +137,9 @@
             <div class="space-y-2.5">
                 @foreach($data['penghuni_aktif']->take(6) as $pk)
                 @php
-                    $isExpired = $pk->tanggal_keluar && $pk->tanggal_keluar < now();
-                    $daysLeft = $pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
-                @endphp
+                $isExpired = $pk->tanggal_keluar && $pk->tanggal_keluar < now();
+                    $daysLeft=$pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
+                    @endphp
                     <div class="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/40 rounded-full flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-300 flex-shrink-0">
@@ -166,18 +166,18 @@
                             </div>
 
                             @if($isExpired || ($daysLeft !== null && $daysLeft <= 3))
-                            @php
-                            $targetRoute = request()->is('superadmin*') ? route('superadmin.pengumuman.create', ['kamar_id' => $pk->kamar_id]) : route('admin.pengumuman.create', ['kamar_id' => $pk->kamar_id]);
-                            @endphp
-                            <a href="{{ $targetRoute }}" title="Kirim Pengumuman Jatuh Tempo Ke Kamar {{ $pk->kamar->kode_kamar ?? '' }}" class="p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex-shrink-0">
-                                <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z"/>
-                                </svg>
-                            </a>
-                            @endif
+                                @php
+                                $targetRoute=request()->is('superadmin*') ? route('superadmin.pengumuman.create', ['kamar_id' => $pk->kamar_id]) : route('admin.pengumuman.create', ['kamar_id' => $pk->kamar_id]);
+                                @endphp
+                                <a href="{{ $targetRoute }}" title="Kirim Pengumuman Jatuh Tempo Ke Kamar {{ $pk->kamar->kode_kamar ?? '' }}" class="p-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 transition-all active:scale-95 flex-shrink-0">
+                                    <svg class="w-4 h-4" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
+                                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-3.5ZM6 8h2v8H6V8Zm-2 2h2v4H4v-4Z" />
+                                    </svg>
+                                </a>
+                                @endif
                         </div>
                     </div>
-                @endforeach
+                    @endforeach
             </div>
             @endif
         </div>

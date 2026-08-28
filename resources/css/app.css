@@ -34,8 +34,10 @@ body::-webkit-scrollbar,
 }
 
 /* ==================================================
-   2. FORM INPUT FOCUS STYLING (MATCHING THEME COLOR)
+   2. FORM INPUT FOCUS STYLING (THEMED BY CONTROL COLOR)
    ================================================== */
+
+/* Default Emerald Focus */
 input[type="text"]:focus,
 input[type="number"]:focus,
 input[type="email"]:focus,
@@ -46,27 +48,44 @@ input[type="file"]:focus,
 select:focus,
 textarea:focus {
     outline: none !important;
-    border-color: #10b981 !important;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+    border-color: #10b981;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
 }
 
-/* Purple focused inputs/selects */
+/* Purple Focus (Tipe Kamar filter & shared room controls) */
+.focus\:ring-purple-500:focus,
 .focus-purple:focus,
-.focus-purple:focus-visible,
-select.border-purple-200:focus,
-select.border-purple-800:focus {
+select[class*="purple"]:focus {
     outline: none !important;
     border-color: #a855f7 !important;
-    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25) !important;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.35) !important;
 }
 
-/* Red focused textareas (catatan penolakan / error) */
-textarea.border-red-200:focus,
-textarea.border-red-800:focus,
-.focus-red:focus {
+/* Blue Focus (Tipe Sewa filter & info controls) */
+.focus\:ring-blue-500:focus,
+.focus-blue:focus,
+select[class*="blue"]:focus {
+    outline: none !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35) !important;
+}
+
+/* Amber Focus (Status Masa Aktif filter & warning controls) */
+.focus\:ring-amber-500:focus,
+.focus-amber:focus,
+select[class*="amber"]:focus {
+    outline: none !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.35) !important;
+}
+
+/* Red Focus (Catatan Penolakan / Error controls) */
+.focus\:ring-red-500:focus,
+.focus-red:focus,
+textarea[class*="red"]:focus {
     outline: none !important;
     border-color: #ef4444 !important;
-    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.35) !important;
 }
 
 /* ==================================================

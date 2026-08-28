@@ -2,16 +2,24 @@
 
 @php
 $colorStyles = [
-    'emerald' => 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400',
-    'blue' => 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
-    'amber' => 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
-    'purple' => 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400',
-    'red' => 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+'emerald' => 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400',
+'blue' => 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+'amber' => 'bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400',
+'purple' => 'bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400',
+'red' => 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+];
+$borderStyles = [
+'emerald' => 'border-emerald-200 dark:border-emerald-600',
+'blue' => 'border-blue-200 dark:border-blue-600',
+'amber' => 'border-amber-200 dark:border-amber-600',
+'purple' => 'border-purple-200 dark:border-purple-600',
+'red' => 'border-red-200 dark:border-red-600',
 ];
 $iconStyle = $colorStyles[$color] ?? $colorStyles['emerald'];
+$borderClass = $borderStyles[$color] ?? $borderStyles['emerald'];
 @endphp
 
-<div {{ $attributes->merge(['class' => 'bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm flex items-center gap-2.5 min-w-0']) }}>
+<div {{ $attributes->merge(['class' => 'bg-white dark:bg-gray-900 rounded-2xl p-3 border border-l-4 ' . $borderClass . ' shadow-sm flex items-center gap-2.5 min-w-0']) }}>
     @if(isset($icon))
     <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 {{ $iconStyle }}">
         {{ $icon }}
