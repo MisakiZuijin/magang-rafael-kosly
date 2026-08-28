@@ -110,6 +110,23 @@ class PenghuniDashboardController extends Controller
             'bukti_transfer' => 'required|image|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
+        /** @var User $user */
+        $user = Auth::user();
+        $penghuniKamarIds = $user->penghuniKamar()->pluck('id')->toArray();
+
+        if (empty($penghuniKamarIds)) {
+            return redirect()->back()->with('error', 'Anda belum terdaftar di kamar manapun.');
+        }
+
+        // Proteksi Keamanan IDOR: Pastikan tagihan milik kamar penghuni yang sedang login
+        $pembayaran = \App\Models\Pembayaran::where('id', $request->input('pembayaran_id'))
+            ->whereIn('penghuni_kamar_id', $penghuniKamarIds)
+            ->first();
+
+        if (!$pembayaran) {
+            return redirect()->back()->with('error', 'Tagihan pembayaran tidak ditemukan atau bukan milik Anda.');
+        }
+
         $tipePerpanjangan = $request->input('tipe_perpanjangan', 'bulanan');
         $porsiBayar = (int) $request->input('porsi_bayar', 100);
         $jumlahHari = $tipePerpanjangan === 'harian' ? (int) $request->input('jumlah_hari', 1) : ($tipePerpanjangan === 'mingguan' ? 7 : 30);
@@ -118,7 +135,7 @@ class PenghuniDashboardController extends Controller
         $path = $file->store('images/bukti-transfer', 'public');
 
         $pb = $this->pembayaranService->uploadBukti(
-            $request->input('pembayaran_id'),
+            $pembayaran->id,
             $path,
             $tipePerpanjangan,
             $jumlahHari,

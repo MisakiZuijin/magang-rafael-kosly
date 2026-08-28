@@ -59,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', [PenghuniDashboardController::class, 'index'])->name('dashboard');
         Route::get('/aturan', [PenghuniDashboardController::class, 'aturan'])->name('aturan');
         Route::get('/pembayaran', [PenghuniDashboardController::class, 'pembayaran'])->name('pembayaran');
-        Route::post('/pembayaran/upload', [PenghuniDashboardController::class, 'uploadBukti'])->name('pembayaran.upload');
+        Route::post('/pembayaran/upload', [PenghuniDashboardController::class, 'uploadBukti'])->name('pembayaran.upload')->middleware('throttle:10,1');
         Route::post('/checkout', [PenghuniDashboardController::class, 'selfCheckout'])->name('checkout');
     });
 
