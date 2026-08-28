@@ -11,7 +11,32 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
         [x-cloak] {
-            display: none !important
+            display: none !important;
+        }
+
+        * {
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
+        }
+
+        *::-webkit-scrollbar,
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, input[type="url"]:focus, input[type="file"]:focus, select:focus, textarea:focus {
+            outline: none !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+        }
+
+        button:focus, button:focus-visible, a:focus, a:focus-visible, input[type="radio"]:focus, input[type="checkbox"]:focus {
+            outline: none !important;
+            box-shadow: none !important;
         }
     </style>
 </head>

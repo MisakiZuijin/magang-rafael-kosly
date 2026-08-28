@@ -14,3 +14,76 @@
     --color-primary-800: #065f46;
     --color-primary-900: #064e3b;
 }
+
+/* ==================================================
+   1. HIDE SCROLLBARS GLOBALLY ACROSS ALL PAGES & VIEWS
+   ================================================== */
+html, body, *, ::-webkit-scrollbar {
+    -ms-overflow-style: none !important; /* IE and Edge */
+    scrollbar-width: none !important; /* Firefox */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar,
+::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+    background: transparent !important;
+}
+
+/* ==================================================
+   2. FORM INPUT FOCUS STYLING (MATCHING THEME COLOR)
+   ================================================== */
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="url"]:focus,
+input[type="file"]:focus,
+select:focus,
+textarea:focus {
+    outline: none !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+}
+
+/* Purple focused inputs/selects */
+.focus-purple:focus,
+.focus-purple:focus-visible,
+select.border-purple-200:focus,
+select.border-purple-800:focus {
+    outline: none !important;
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25) !important;
+}
+
+/* Red focused textareas (catatan penolakan / error) */
+textarea.border-red-200:focus,
+textarea.border-red-800:focus,
+.focus-red:focus {
+    outline: none !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.25) !important;
+}
+
+/* ==================================================
+   3. EXCLUDE NAVBAR AVATAR, MODAL CLOSE (X), BUTTONS, & RADIOS/CHECKBOXES FROM OUTLINE BORDERS
+   ================================================== */
+button:focus,
+button:focus-visible,
+a:focus,
+a:focus-visible,
+input[type="radio"]:focus,
+input[type="checkbox"]:focus,
+input[type="radio"]:focus-visible,
+input[type="checkbox"]:focus-visible,
+.navbar-avatar:focus,
+.navbar-avatar:focus-visible,
+.modal-close-btn:focus,
+.modal-close-btn:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}

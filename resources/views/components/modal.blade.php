@@ -19,7 +19,7 @@ $showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true'
         @if($title)
         <div class="flex items-center justify-between mb-3 border-b border-gray-100 dark:border-gray-800 pb-2">
             <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug">{{ $title }}</h3>
-            <button type="button" @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button type="button" @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-0 focus:border-transparent modal-close-btn">
                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/>
                 </svg>
@@ -52,7 +52,7 @@ $showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true'
         @if($title)
         <div class="flex items-center justify-between mb-3 border-b border-gray-100 dark:border-gray-800 pb-2">
             <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug">{{ $title }}</h3>
-            <button type="button" @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <button type="button" @click="open = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-0 focus:border-transparent modal-close-btn">
                 <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24">
                     <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18 17.94 6M18 18 6.06 6"/>
                 </svg>
