@@ -83,7 +83,7 @@
         </x-btn>
     </div>
 
-    <div class="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+    <div class="flex gap-2 overflow-x-auto pb-1 m-2 no-scrollbar">
         <button @click="filterStatus = 'semua'"
             :class="filterStatus === 'semua' ? 'bg-emerald-600 text-white shadow-sm font-bold' : 'bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-800 font-semibold'"
             class="px-4 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all">
