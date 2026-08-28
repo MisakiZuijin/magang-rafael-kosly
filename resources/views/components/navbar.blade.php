@@ -31,7 +31,7 @@
 
         <!-- Profile -->
         <div class="relative" x-data="{ open: false }">
-            <button @click="open = !open" class="flex items-center gap-2 p-1 pl-1 pr-2 rounded-xl active:bg-gray-100 dark:active:bg-gray-800 min-h-[44px]">
+            <button @click="open = !open" class="flex items-center gap-2 p-1 pl-1 pr-2 rounded-xl active:bg-gray-100 dark:active:bg-gray-800 min-h-[44px] focus:outline-none focus:ring-0 focus:border-transparent navbar-avatar">
                 <img src="{{ Auth::user()->foto_profile ? asset('storage/' . Auth::user()->foto_profile) : 'https://ui-avatars.com/api/?name=' . urlencode(Auth::user()->nama) . '&background=10b981&color=fff&size=128' }}"
                     class="w-8 h-8 rounded-full object-cover ring-2 ring-gray-100 dark:ring-gray-700"
                     onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->nama) }}&background=10b981&color=fff&size=128'">

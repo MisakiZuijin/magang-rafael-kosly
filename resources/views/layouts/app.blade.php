@@ -29,15 +29,28 @@
 
         * {
             -webkit-tap-highlight-color: transparent;
+            -ms-overflow-style: none !important;
+            scrollbar-width: none !important;
         }
 
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        *::-webkit-scrollbar,
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar {
+            display: none !important;
+            width: 0 !important;
+            height: 0 !important;
+            background: transparent !important;
         }
 
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="date"]:focus, input[type="url"]:focus, input[type="file"]:focus, select:focus, textarea:focus {
+            outline: none !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+        }
+
+        button:focus, button:focus-visible, a:focus, a:focus-visible, input[type="radio"]:focus, input[type="checkbox"]:focus, .navbar-avatar:focus, .modal-close-btn:focus {
+            outline: none !important;
+            box-shadow: none !important;
         }
     </style>
 </head>
