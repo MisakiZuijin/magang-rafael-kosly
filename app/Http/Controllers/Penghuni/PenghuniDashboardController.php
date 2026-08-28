@@ -49,17 +49,6 @@ class PenghuniDashboardController extends Controller
         return view('penghuni.aturan', compact('aturans'));
     }
 
-    public function dismissPopup(Request $request)
-    {
-        /** @var User $user */
-        $user = Auth::user();
-        $kosId = $request->input('kos_id');
-
-        $this->aturanKosService->markPopupAsShown($user->id, $kosId);
-
-        return response()->json(['success' => true]);
-    }
-
     public function pembayaran()
     {
         /** @var User $user */

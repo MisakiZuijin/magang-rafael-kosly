@@ -37,7 +37,6 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         // Saat Super Admin menonaktifkan user, hapus seluruh data log aktivitas user tersebut dari database
         if (!$newStatus) {
             \App\Models\LogAktivitas::where('user_id', $user->id)->delete();
-            \App\Models\LogPopupAturan::where('penghuni_id', $user->id)->delete();
         }
 
         return $user->fresh();

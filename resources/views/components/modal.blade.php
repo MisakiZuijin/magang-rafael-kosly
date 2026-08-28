@@ -12,7 +12,7 @@ $showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true'
      x-cloak 
      class="fixed -inset-10 z-[99999] min-h-screen flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md overflow-y-auto box-border">
     <div @click.away="open = false" 
-         class="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-2rem)] max-w-[340px] sm:max-w-[360px] p-4 sm:p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[80vh] overflow-y-auto no-scrollbar my-auto relative transform transition-all box-border text-left" 
+         class="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-2rem)] max-w-[340px] sm:max-w-[360px] p-4 sm:p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[80vh] overflow-y-auto overflow-x-hidden no-scrollbar my-auto relative transform transition-all box-border text-left" 
          x-transition:enter="transition ease-out duration-300" 
          x-transition:enter-start="opacity-0 scale-95" 
          x-transition:enter-end="opacity-100 scale-100">
@@ -45,7 +45,7 @@ $showExpr = $isLiteral ? ($showString === 'true' || $showString === '1' ? 'true'
      x-cloak 
      class="fixed -inset-10 z-[99999] min-h-screen flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-md overflow-y-auto box-border">
     <div @click.away="open = false" 
-         class="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-2rem)] max-w-[340px] sm:max-w-[360px] p-4 sm:p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[80vh] overflow-y-auto no-scrollbar my-auto relative transform transition-all box-border text-left" 
+         class="bg-white dark:bg-gray-900 rounded-3xl w-[calc(100%-2rem)] max-w-[340px] sm:max-w-[360px] p-4 sm:p-5 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[80vh] overflow-y-auto overflow-x-hidden no-scrollbar my-auto relative transform transition-all box-border text-left" 
          x-transition:enter="transition ease-out duration-300" 
          x-transition:enter-start="opacity-0 scale-95" 
          x-transition:enter-end="opacity-100 scale-100">

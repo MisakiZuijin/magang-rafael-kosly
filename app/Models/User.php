@@ -88,9 +88,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Pengumuman::class, 'dibuat_oleh');
     }
-
-    public function logPopupAturan()
-    {
-        return $this->hasMany(LogPopupAturan::class, 'penghuni_id');
-    }
 }

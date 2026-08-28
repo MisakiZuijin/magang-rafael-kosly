@@ -11,18 +11,6 @@
         </div>
     </div>
 
-    @if(session('show_aturan_popup'))
-    <x-modal show="true" title="Aturan Kos">
-        <p class="mb-2">Harap baca dan patuhi aturan kos yang berlaku di tempat tinggal Anda.</p>
-        @slot('footer')
-        <x-btn variant="secondary" @click="open = false">Nanti</x-btn>
-        <x-btn @click="open = false; fetch('{{ route('penghuni.aturan.dismiss') }}', {method:'POST', headers:{'X-CSRF-TOKEN':'{{ csrf_token() }}','Content-Type':'application/json'}, body:JSON.stringify({kos_id:{{ session('kos_id_popup') ?? 'null' }}})})">
-            Mengerti
-        </x-btn>
-        @endslot
-    </x-modal>
-    @endif
-
     @if($data['kos'])
     {{-- Info Card --}}
     <x-card class="border-l-4 border-l-emerald-500 space-y-3">

@@ -15,7 +15,6 @@ class RepositoryServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\PenghuniKamarRepositoryInterface::class => \App\Repositories\PenghuniKamarRepository::class,
             \App\Repositories\Contracts\PembayaranRepositoryInterface::class => \App\Repositories\PembayaranRepository::class,
             \App\Repositories\Contracts\AturanKosRepositoryInterface::class => \App\Repositories\AturanKosRepository::class,
-            \App\Repositories\Contracts\LogPopupAturanRepositoryInterface::class => \App\Repositories\LogPopupAturanRepository::class,
             \App\Repositories\Contracts\PengumumanRepositoryInterface::class => \App\Repositories\PengumumanRepository::class,
             \App\Repositories\Contracts\PengumumanTargetRepositoryInterface::class => \App\Repositories\PengumumanTargetRepository::class,
             \App\Repositories\Contracts\NotifikasiRepositoryInterface::class => \App\Repositories\NotifikasiRepository::class,

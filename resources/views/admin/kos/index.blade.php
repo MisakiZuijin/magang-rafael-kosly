@@ -602,10 +602,10 @@ $listBank = [
 
         <div>
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Pemilik / Mitra Kos</label>
-            <select name="mitra_id" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+            <select name="mitra_id" required class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate" style="max-width: 100%; box-sizing: border-box;">
                 <option value="">-- Pilih Mitra --</option>
                 @foreach($mitras as $mitra)
-                <option value="{{ $mitra->id }}">{{ $mitra->nama }} ({{ $mitra->email }})</option>
+                <option value="{{ $mitra->id }}">{{ \Illuminate\Support\Str::limit($mitra->nama, 20) }} ({{ \Illuminate\Support\Str::limit($mitra->email, 22) }})</option>
                 @endforeach
             </select>
         </div>
@@ -673,10 +673,10 @@ $listBank = [
 
         <div>
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Pemilik / Mitra Kos</label>
-            <select name="mitra_id" x-model="editKosData.mitra_id" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+            <select name="mitra_id" x-model="editKosData.mitra_id" required class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate" style="max-width: 100%; box-sizing: border-box;">
                 <option value="">-- Pilih Mitra --</option>
                 @foreach($mitras as $mitra)
-                <option value="{{ $mitra->id }}">{{ $mitra->nama }} ({{ $mitra->email }})</option>
+                <option value="{{ $mitra->id }}">{{ \Illuminate\Support\Str::limit($mitra->nama, 20) }} ({{ \Illuminate\Support\Str::limit($mitra->email, 22) }})</option>
                 @endforeach
             </select>
         </div>
@@ -964,7 +964,7 @@ $allKamars = \App\Models\Kamar::with('kos')->get();
                 x-model="selectedKamarIdForPenghuni"
                 @change="updateKamarTipe()"
                 required
-                class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate focus:ring-emerald-500">
                 <option value="" data-tipe="standar">-- Pilih Kamar Kos --</option>
                 @foreach($allKamars as $km)
                 @php
@@ -974,7 +974,7 @@ $allKamars = \App\Models\Kamar::with('kos')->get();
                     data-tipe="{{ $km->tipe }}"
                     {{ $isFull ? 'disabled' : '' }}
                     class="{{ $isFull ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
-                    {{ $km->kos->nama ?? 'Kos' }} - Kamar {{ $km->kode_kamar }} (Jenis: {{ ucfirst($km->tipe) }}) {{ $isFull ? '[TERISI - TIDAK DAPAT DIPILIH]' : '[TERSEDIA]' }}
+                    Kamar {{ $km->kode_kamar }} · {{ $km->kos->nama ?? 'Kos' }} ({{ ucfirst($km->tipe) }}) {{ $isFull ? '[TERISI]' : '[TERSEDIA]' }}
                 </option>
                 @endforeach
             </select>
@@ -994,21 +994,20 @@ $allKamars = \App\Models\Kamar::with('kos')->get();
             <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
                 Pilih Penghuni 1 <span class="text-red-500">*</span>
             </label>
-            <select name="penghuni_id" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+            <select name="penghuni_id" required class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate focus:ring-emerald-500" style="max-width: 100%; width: 100%; box-sizing: border-box;">
                 <option value="">-- Pilih Anak Kos Ke-1 --</option>
                 @foreach($penghuniUsers as $pu)
                 @php
                 $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
                 $alreadyOccupying = $activePk !== null;
                 $isDisabled = $alreadyOccupying || !$pu->is_active;
-                $statusText = !$pu->is_active
-                ? '[NONAKTIF]'
-                : ($alreadyOccupying ? '[AKTIF - MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[AKTIF]');
+                $statusTag = !$pu->is_active ? '[NONAKTIF]' : ($alreadyOccupying ? '[' . ($activePk->kamar->kode_kamar ?? 'TERISI') . ']' : '[READY]');
+                $shortNama = \Illuminate\Support\Str::limit($pu->nama, 20);
                 @endphp
                 <option value="{{ $pu->id }}"
                     {{ $isDisabled ? 'disabled' : '' }}
                     class="{{ $isDisabled ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
-                    {{ $pu->nama }} ({{ $pu->email }}) {{ $statusText }}
+                    {{ $shortNama }} {{ $statusTag }}
                 </option>
                 @endforeach
             </select>
@@ -1019,21 +1018,20 @@ $allKamars = \App\Models\Kamar::with('kos')->get();
             <label class="block text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
                 Pilih Penghuni 2 <span class="text-red-500">* (Wajib - Minimal 2 Orang)</span>
             </label>
-            <select name="penghuni_id_2" :required="selectedKamarTipe === 'berbagi'" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+            <select name="penghuni_id_2" :required="selectedKamarTipe === 'berbagi'" class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate focus:ring-purple-500" style="max-width: 100%; width: 100%; box-sizing: border-box;">
                 <option value="">-- Pilih Anak Kos Ke-2 --</option>
                 @foreach($penghuniUsers as $pu)
                 @php
                 $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
                 $alreadyOccupying = $activePk !== null;
                 $isDisabled = $alreadyOccupying || !$pu->is_active;
-                $statusText = !$pu->is_active
-                ? '[NONAKTIF]'
-                : ($alreadyOccupying ? '[AKTIF - MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[AKTIF]');
+                $statusTag = !$pu->is_active ? '[NONAKTIF]' : ($alreadyOccupying ? '[' . ($activePk->kamar->kode_kamar ?? 'TERISI') . ']' : '[READY]');
+                $shortNama = \Illuminate\Support\Str::limit($pu->nama, 20);
                 @endphp
                 <option value="{{ $pu->id }}"
                     {{ $isDisabled ? 'disabled' : '' }}
                     class="{{ $isDisabled ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
-                    {{ $pu->nama }} ({{ $pu->email }}) {{ $statusText }}
+                    {{ $shortNama }} {{ $statusTag }}
                 </option>
                 @endforeach
             </select>
@@ -1044,21 +1042,20 @@ $allKamars = \App\Models\Kamar::with('kos')->get();
             <label class="block text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
                 Pilih Penghuni 3 <span class="text-gray-500 dark:text-gray-400 font-normal">(Opsional - Maksimal 3 Orang)</span>
             </label>
-            <select name="penghuni_id_3" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+            <select name="penghuni_id_3" class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate focus:ring-purple-500" style="max-width: 100%; width: 100%; box-sizing: border-box;">
                 <option value="">-- Tanpa Penghuni Ke-3 (Kapasitas 2 Orang) --</option>
                 @foreach($penghuniUsers as $pu)
                 @php
                 $activePk = $pu->penghuniKamar ? $pu->penghuniKamar->where('status', 'aktif')->first() : null;
                 $alreadyOccupying = $activePk !== null;
                 $isDisabled = $alreadyOccupying || !$pu->is_active;
-                $statusText = !$pu->is_active
-                ? '[NONAKTIF]'
-                : ($alreadyOccupying ? '[AKTIF - MENEMPATI ' . ($activePk->kamar->kode_kamar ?? 'KAMAR LAIN') . ']' : '[AKTIF]');
+                $statusTag = !$pu->is_active ? '[NONAKTIF]' : ($alreadyOccupying ? '[' . ($activePk->kamar->kode_kamar ?? 'TERISI') . ']' : '[READY]');
+                $shortNama = \Illuminate\Support\Str::limit($pu->nama, 20);
                 @endphp
                 <option value="{{ $pu->id }}"
                     {{ $isDisabled ? 'disabled' : '' }}
                     class="{{ $isDisabled ? 'text-gray-400 bg-gray-100 dark:bg-gray-800' : 'text-gray-900 dark:text-white font-bold' }}">
-                    {{ $pu->nama }} ({{ $pu->email }}) {{ $statusText }}
+                    {{ $shortNama }} {{ $statusTag }}
                 </option>
                 @endforeach
             </select>
@@ -1068,7 +1065,7 @@ $allKamars = \App\Models\Kamar::with('kos')->get();
         <div class="grid grid-cols-2 gap-2">
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Durasi Sewa</label>
-                <select name="durasi" x-model="durasiSewa" required class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                <select name="durasi" x-model="durasiSewa" required class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate">
                     <option value="bulanan">Bulanan (Auto 30 Hari)</option>
                     <option value="mingguan">Mingguan (Auto 7 Hari)</option>
                     <option value="harian">Harian (Tentukan Selesai)</option>

@@ -56,10 +56,9 @@ class UserService
             return false;
         }
 
-        // Hapus log aktivitas, notifikasi, dan log aturan terkait user dari database
+        // Hapus log aktivitas dan notifikasi terkait user dari database
         \App\Models\LogAktivitas::where('user_id', $id)->delete();
         \App\Models\Notifikasi::where('user_id', $id)->delete();
-        \App\Models\LogPopupAturan::where('penghuni_id', $id)->delete();
 
         // Jika user yang dihapus adalah anak kos (penghuni), bersihkan penempatan kamar & perbarui status kamar
         if ($user->role === 'penghuni') {

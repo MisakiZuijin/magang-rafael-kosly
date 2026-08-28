@@ -62,12 +62,6 @@ class DatabaseSeeder extends Seeder
                         'penghuni_kamar_id' => $penghuniKamar->id,
                     ]);
 
-                    // Buat log popup aturan
-                    \App\Models\LogPopupAturan::factory()->create([
-                        'penghuni_id' => $penghuni->id,
-                        'kos_id' => $kos->id,
-                    ]);
-
                     // Buat notifikasi untuk penghuni
                     \App\Models\Notifikasi::factory(fake()->numberBetween(1, 3))->create([
                         'user_id' => $penghuni->id,

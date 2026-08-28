@@ -47,9 +47,4 @@ class Kos extends Model
     {
         return $this->hasMany(AturanKos::class, 'kos_id');
     }
-
-    public function logPopupAturan()
-    {
-        return $this->hasMany(LogPopupAturan::class, 'kos_id');
-    }
 }

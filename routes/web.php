@@ -58,7 +58,6 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:penghuni'])->prefix('penghuni')->name('penghuni.')->group(function () {
         Route::get('/dashboard', [PenghuniDashboardController::class, 'index'])->name('dashboard');
         Route::get('/aturan', [PenghuniDashboardController::class, 'aturan'])->name('aturan');
-        Route::post('/aturan/dismiss', [PenghuniDashboardController::class, 'dismissPopup'])->name('aturan.dismiss');
         Route::get('/pembayaran', [PenghuniDashboardController::class, 'pembayaran'])->name('pembayaran');
         Route::post('/pembayaran/upload', [PenghuniDashboardController::class, 'uploadBukti'])->name('pembayaran.upload');
         Route::post('/checkout', [PenghuniDashboardController::class, 'selfCheckout'])->name('checkout');
