@@ -64,7 +64,7 @@
 
             <div class="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <button type="button" @click="editKantor = @js($kan); modalEdit = true"
-                    class="flex-1 py-1.5 px-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl transition-all text-center">
+                    class="flex-1 py-1.5 px-3 !min-h-[34px] bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-bold rounded-xl transition-all text-center">
                     Edit Kantor
                 </button>
 
@@ -113,11 +113,11 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Latitude</label>
-                        <input type="number" step="any" name="latitude" required placeholder="-7.250445" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono">
+                        <input type="text" inputmode="decimal" name="latitude" required placeholder="-7.250445" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Longitude</label>
-                        <input type="number" step="any" name="longitude" required placeholder="112.768845" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono">
+                        <input type="text" inputmode="decimal" name="longitude" required placeholder="112.768845" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                     </div>
                 </div>
 
@@ -159,11 +159,11 @@
                 <div class="grid grid-cols-2 gap-2">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Latitude</label>
-                        <input type="number" step="any" name="latitude" x-model="editKantor.latitude" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono">
+                        <input type="text" inputmode="decimal" name="latitude" x-model="editKantor.latitude" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Longitude</label>
-                        <input type="number" step="any" name="longitude" x-model="editKantor.longitude" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono">
+                        <input type="text" inputmode="decimal" name="longitude" x-model="editKantor.longitude" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                     </div>
                 </div>
 
