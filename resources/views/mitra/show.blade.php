@@ -8,13 +8,20 @@ $activePenghunis = $kamar->penghuniKamar ? $kamar->penghuniKamar->where('status'
 $isTerisi = $kamar->status === 'terisi' || $activePenghunis->isNotEmpty();
 $todayDate = \Carbon\Carbon::now()->startOfDay();
 
-$hasExpiredPenghuni = $activePenghunis->contains(function($pk) use ($todayDate) {
-    return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+$hasExpiredPenghuni = $activePenghunis->contains(function($pk) {
+    return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
 });
 $fotos = is_array($kamar->foto) ? array_values($kamar->foto) : [];
 $fotoUrls = array_map(function($f) {
     return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
 }, $fotos);
+@endphp
+
+@php
+$hBulanRaw = (string)($kamar->harga_per_bulan ?? '');
+$hMingguRaw = (string)($kamar->harga_per_minggu ?? '');
+$hHariRaw = (string)($kamar->harga_per_hari ?? '');
+$isKosLocked = $kamar->kos && $kamar->kos->is_locked;
 @endphp
 
 <div class="max-w-md mx-auto space-y-3.5 pb-10" x-data="{ 
@@ -24,6 +31,24 @@ $fotoUrls = array_map(function($f) {
     showImageModal: false, 
     modalImageSrc: '', 
     modalImageTitle: '',
+    modalEditKamar: false,
+    editTipe: '{{ $kamar->tipe }}',
+    editKapasitas: {{ $kamar->kapasitas }},
+    rawHargaBulan: '{{ $hBulanRaw }}',
+    displayHargaBulan: '{{ $hBulanRaw ? "Rp " . number_format((int)$hBulanRaw, 0, ",", ".") : "" }}',
+    rawHargaMinggu: '{{ $hMingguRaw }}',
+    displayHargaMinggu: '{{ $hMingguRaw ? "Rp " . number_format((int)$hMingguRaw, 0, ",", ".") : "" }}',
+    rawHargaHari: '{{ $hHariRaw }}',
+    displayHargaHari: '{{ $hHariRaw ? "Rp " . number_format((int)$hHariRaw, 0, ",", ".") : "" }}',
+    formatRupiah(val) {
+        if (!val) return '';
+        const num = val.toString().replace(/[^0-9]/g, '');
+        return num ? 'Rp ' + new Intl.NumberFormat('id-ID').format(num) : '';
+    },
+    parseDigits(val) {
+        if (!val) return '';
+        return val.toString().replace(/[^0-9]/g, '');
+    },
     init() {
         if (this.photos.length > 1) {
             this.startAutoSlide();
@@ -70,6 +95,16 @@ $fotoUrls = array_map(function($f) {
             <x-badge type="{{ $hasExpiredPenghuni ? 'danger' : ($isTerisi ? 'success' : 'warning') }}" size="xs">
                 {{ $hasExpiredPenghuni ? 'Jatuh Tempo' : ($isTerisi ? 'Terisi (' . $activePenghunis->count() . '/' . $kamar->kapasitas . ')' : 'Kosong') }}
             </x-badge>
+
+            @if($isKosLocked)
+            <span class="px-2 py-0.5 text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-lg" title="Akses edit kamar untuk kos ini dikunci oleh Admin/SuperAdmin">
+                🔒 Terkunci
+            </span>
+            @else
+            <button type="button" @click="modalEditKamar = true" class="px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100/90 hover:bg-blue-200 dark:bg-blue-900/50 rounded-lg transition-all active:scale-95 flex items-center gap-1 shadow-2xs">
+                <span>✏️ Edit</span>
+            </button>
+            @endif
         </div>
     </x-page-header>
 
@@ -81,7 +116,9 @@ $fotoUrls = array_map(function($f) {
                 📸
             </div>
             <p class="text-xs font-bold text-gray-700 dark:text-gray-300">Belum Ada Foto Kamar</p>
-            <p class="text-[10px] text-gray-400 mt-0.5">Foto kamar dapat ditambahkan oleh Admin / Super Admin.</p>
+            @if(!$isKosLocked)
+            <p class="text-[10px] text-emerald-600 mt-1 cursor-pointer hover:underline font-bold" @click="modalEditKamar = true">+ Tambah Foto Kamar</p>
+            @endif
         </div>
         @else
         {{-- Primary Main Image Slider --}}
@@ -138,7 +175,7 @@ $fotoUrls = array_map(function($f) {
             </template>
         </div>
 
-        {{-- Horizontal Scrollable Thumbnails (ReadOnly view for Mitra - No delete button) --}}
+        {{-- Horizontal Scrollable Thumbnails (Mitra can delete if not locked) --}}
         @if(count($fotos) > 1)
         <div class="p-2 bg-gray-50 dark:bg-gray-800/50 grid grid-flow-col auto-cols-max items-center gap-2 overflow-x-auto no-scrollbar border-t border-gray-100 dark:border-gray-800">
             @foreach($fotoUrls as $index => $thumbUrl)
@@ -146,6 +183,17 @@ $fotoUrls = array_map(function($f) {
                  :class="activePhotoIndex === {{ $index }} ? 'border-emerald-500 scale-95 shadow-md' : 'border-transparent opacity-60 hover:opacity-100'"
                  @click="selectPhoto({{ $index }})">
                 <img src="{{ $thumbUrl }}" alt="Thumb {{ $index + 1 }}" class="w-full h-full object-cover">
+
+                @if(!$isKosLocked)
+                <form action="{{ route('mitra.kamar.foto.delete', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" onsubmit="return confirm('Hapus foto ini?')" class="absolute top-0.5 right-0.5 z-20">
+                    @csrf
+                    @method('DELETE')
+                    <input type="hidden" name="index" value="{{ $index }}">
+                    <button type="submit" class="w-4 h-4 bg-red-600 hover:bg-red-700 text-white rounded-full grid place-items-center text-[8px] font-bold shadow-xs transition-transform active:scale-90" title="Hapus Foto">
+                        ✕
+                    </button>
+                </form>
+                @endif
             </div>
             @endforeach
         </div>
@@ -179,14 +227,40 @@ $fotoUrls = array_map(function($f) {
             <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Detail Perabotan &amp; Fasilitas</h3>
         </div>
 
+        @php
+        $getFacilityIcon = function($name) {
+            $lower = strtolower($name);
+            if (str_contains($lower, 'kasur') || str_contains($lower, 'bed') || str_contains($lower, 'matras')) return '🛏️';
+            if (str_contains($lower, 'lemari') || str_contains($lower, 'wardrobe') || str_contains($lower, 'kabinet')) return '🗄️';
+            if (str_contains($lower, 'meja') || str_contains($lower, 'kursi') || str_contains($lower, 'desk')) return '🪑';
+            if (str_contains($lower, 'kipas') || str_contains($lower, 'fan')) return '🪭';
+            if (str_contains($lower, 'mandi') || str_contains($lower, 'toilet') || str_contains($lower, 'wc')) return '🚿';
+            if (str_contains($lower, 'ac') || str_contains($lower, 'pendingin')) return '❄️';
+            if (str_contains($lower, 'wifi') || str_contains($lower, 'internet')) return '📶';
+            if (str_contains($lower, 'dapur') || str_contains($lower, 'masak')) return '🍳';
+            if (str_contains($lower, 'tv') || str_contains($lower, 'televisi')) return '📺';
+            return '📦';
+        };
+        $detailsList = array_filter(array_map('trim', explode(',', $kamar->detail ?? '')));
+        @endphp
         <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 text-xs">
-            @if(!empty($kamar->detail))
-            <p class="text-gray-800 dark:text-gray-200 leading-relaxed font-semibold whitespace-pre-line">{{ $kamar->detail }}</p>
-            @else
+            @if(empty($kamar->detail) || strtolower(trim($kamar->detail)) === 'kosong')
             <div class="text-center py-1">
-                <span class="px-2.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[11px] font-mono font-bold rounded-lg inline-block">
+                <span class="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-400 text-[11px] italic font-semibold rounded-lg inline-block">
                     Kosong (Tanpa Perabotan)
                 </span>
+            </div>
+            @else
+            <div class="flex flex-wrap items-center gap-1.5">
+                @foreach($detailsList as $item)
+                    @php
+                    $icon = $getFacilityIcon($item);
+                    @endphp
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/70 dark:border-amber-800/50 rounded-lg text-xs font-bold">
+                        <span>{{ $icon }}</span>
+                        <span>{{ $item }}</span>
+                    </span>
+                @endforeach
             </div>
             @endif
         </div>
@@ -246,7 +320,7 @@ $fotoUrls = array_map(function($f) {
             $penghuniUser = $pk->penghuni;
             $tglMasuk = $pk->tanggal_masuk ? \Carbon\Carbon::parse($pk->tanggal_masuk)->format('d M Y') : '-';
             $tglKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
-            $isExpiredPenghuni = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+            $isExpiredPenghuni = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
             @endphp
             <div class="p-3 rounded-xl border {{ $isExpiredPenghuni ? 'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/50' : 'bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50' }} grid grid-cols-[1fr_auto] items-center gap-2 text-xs">
                 <div class="min-w-0">
@@ -257,7 +331,7 @@ $fotoUrls = array_map(function($f) {
                         </span>
                     </div>
                     <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
-                        Sewa {{ ucfirst($pk->durasi) }} · s/d {{ $tglKeluar }}
+                        Sewa {{ ucfirst($pk->durasi) }} · s/d {{ $tglKeluar }} (Batas Checkout 14.00 WIB)
                     </p>
                 </div>
 
@@ -322,5 +396,189 @@ $fotoUrls = array_map(function($f) {
             </div>
         </div>
     </x-modal>
+
+    @if(!$isKosLocked)
+    {{-- Modal Edit Kamar untuk Mitra --}}
+    <x-modal show="modalEditKamar" title="Edit Data Kamar {{ $kamar->kode_kamar }}">
+        <form action="{{ route('mitra.kamar.update', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+            @csrf
+            @method('PUT')
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Tambah Foto Kamar Baru (Opsional)</label>
+                <input type="file" name="foto[]" multiple accept="image/*" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
+                <p class="text-[10px] text-gray-400 mt-0.5 italic">* Foto baru yang diunggah akan ditambahkan ke galeri foto kamar ini.</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5 items-end">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate">Kode Kamar</label>
+                    <input type="text" name="kode_kamar" value="{{ old('kode_kamar', $kamar->kode_kamar) }}" required class="w-full h-9 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate">Jenis Kamar</label>
+                    <select name="tipe" x-model="editTipe" @change="editKapasitas = (editTipe === 'berbagi' ? 2 : 1)" required class="w-full h-9 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
+                        <option value="standar">Standar (1 Orang)</option>
+                        <option value="berbagi">Berbagi (2 Orang)</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- Checklist Fasilitas / Perabotan --}}
+            <div x-data="{
+                facilities: [
+                    { name: 'Kasur', icon: '🛏️' },
+                    { name: 'Meja', icon: '🪑' },
+                    { name: 'Kipas', icon: '🪭' },
+                    { name: 'Lemari', icon: '🗄️' },
+                    { name: 'Kamar Mandi Dalam', icon: '🚿' },
+                    { name: 'AC', icon: '❄️' },
+                    { name: 'Wifi', icon: '📶' },
+                    { name: 'Dapur Bersama', icon: '🍳' }
+                ],
+                selected: [],
+                customDetail: '',
+                init() {
+                    this.parseDetail(@js($kamar->detail ?? ''));
+                },
+                parseDetail(val) {
+                    if (!val || val === 'Kosong') {
+                        this.selected = [];
+                        this.customDetail = '';
+                        return;
+                    }
+                    const parts = val.split(',').map(s => s.trim()).filter(Boolean);
+                    const selectedList = [];
+                    const customList = [];
+
+                    const matchFacility = (part) => {
+                        const lower = part.toLowerCase();
+                        if (lower.includes('kasur') || lower.includes('bed') || lower.includes('matras')) return 'Kasur';
+                        if (lower.includes('lemari') || lower.includes('wardrobe') || lower.includes('kabinet')) return 'Lemari';
+                        if (lower.includes('meja') || lower.includes('kursi') || lower.includes('desk')) return 'Meja';
+                        if (lower.includes('kipas') || lower.includes('fan')) return 'Kipas';
+                        if (lower.includes('mandi') || lower.includes('toilet') || lower.includes('wc')) return 'Kamar Mandi Dalam';
+                        if (lower.includes('ac') || lower.includes('pendingin')) return 'AC';
+                        if (lower.includes('wifi') || lower.includes('internet')) return 'Wifi';
+                        if (lower.includes('dapur') || lower.includes('masak')) return 'Dapur Bersama';
+                        return null;
+                    };
+
+                    parts.forEach(part => {
+                        const matched = matchFacility(part);
+                        if (matched) {
+                            if (!selectedList.includes(matched)) {
+                                selectedList.push(matched);
+                            }
+                        } else {
+                            customList.push(part);
+                        }
+                    });
+
+                    this.selected = selectedList;
+                    this.customDetail = customList.join(', ');
+                },
+                get finalDetail() {
+                    if (this.selected.length === 0 && !this.customDetail.trim()) {
+                        return 'Kosong';
+                    }
+                    let list = [...this.selected];
+                    if (this.customDetail.trim()) {
+                        list.push(this.customDetail.trim());
+                    }
+                    return list.join(', ');
+                },
+                toggle(name) {
+                    if (this.selected.includes(name)) {
+                        this.selected = this.selected.filter(i => i !== name);
+                    } else {
+                        this.selected.push(name);
+                    }
+                }
+            }" class="space-y-2">
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
+                    Detail Perabotan & Fasilitas Kamar
+                </label>
+
+                {{-- Grid Checklist --}}
+                <div class="grid grid-cols-2 sm:grid-cols-2 gap-1.5">
+                    <template x-for="item in facilities" :key="item.name">
+                        <div @click="toggle(item.name)"
+                            :class="selected.includes(item.name) ? 'bg-amber-50 dark:bg-amber-950/50 border-amber-400 dark:border-amber-600 text-amber-900 dark:text-amber-200 font-bold shadow-xs' : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300'"
+                            class="p-2 rounded-xl border text-xs flex items-center gap-1.5 cursor-pointer transition-all select-none">
+                            <input type="checkbox" :checked="selected.includes(item.name)" class="w-3.5 h-3.5 rounded text-amber-600 focus:ring-amber-500 pointer-events-none">
+                            <span x-text="item.icon" class="text-sm"></span>
+                            <span x-text="item.name" class="truncate text-[11px]"></span>
+                        </div>
+                    </template>
+                </div>
+
+                {{-- Input Teks Tambahan --}}
+                <div>
+                    <input type="text"
+                        x-model="customDetail"
+                        placeholder="Fasilitas tambahan lainnya (misal: TV 32 Inch)..."
+                        class="w-full px-3 py-1.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
+                </div>
+
+                <input type="hidden" name="detail" :value="finalDetail">
+                <p class="text-[10px] text-gray-400 italic">* Jika tidak ada yang dicentang dan input tambahan kosong, perabotan otomatis tertulis "Kosong".</p>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 items-end">
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate" title="Harga per Bulan">Harga/Bulan</label>
+                    <input type="text"
+                        x-model="displayHargaBulan"
+                        @input="displayHargaBulan = formatRupiah($event.target.value); rawHargaBulan = parseDigits($event.target.value)"
+                        placeholder="Rp 1.000.000"
+                        required
+                        class="w-full h-9 px-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_bulan" :value="rawHargaBulan">
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate" title="Harga per Minggu">Harga/Minggu</label>
+                    <input type="text"
+                        x-model="displayHargaMinggu"
+                        @input="displayHargaMinggu = formatRupiah($event.target.value); rawHargaMinggu = parseDigits($event.target.value)"
+                        placeholder="Rp 300.000"
+                        class="w-full h-9 px-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_minggu" :value="rawHargaMinggu">
+                </div>
+                <div>
+                    <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate" title="Harga per Hari">Harga/Hari</label>
+                    <input type="text"
+                        x-model="displayHargaHari"
+                        @input="displayHargaHari = formatRupiah($event.target.value); rawHargaHari = parseDigits($event.target.value)"
+                        placeholder="Rp 100.000"
+                        class="w-full h-9 px-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <input type="hidden" name="harga_per_hari" :value="rawHargaHari">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Batas Kapasitas Penghuni</label>
+                <input type="number" name="kapasitas" x-model="editKapasitas" readonly required class="w-full px-3 py-2 bg-gray-100 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-500 dark:text-gray-400 cursor-not-allowed select-none">
+                <p class="text-[10px] text-gray-400 mt-1 italic">* Otomatis terisi 1 orang untuk Standar & 2 orang untuk Berbagi (tidak dapat diubah manual)</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
+                <div>
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte)</label>
+                    <input type="text" name="wa_group_id" value="{{ old('wa_group_id', $kamar->wa_group_id) }}" placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar</label>
+                    <input type="url" name="link_grup_wa" value="{{ old('link_grup_wa', $kamar->link_grup_wa) }}" placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-end gap-2">
+                <x-btn type="button" variant="secondary" size="sm" @click="modalEditKamar = false">Batal</x-btn>
+                <x-btn type="submit" variant="primary" size="sm">Update Kamar</x-btn>
+            </div>
+        </form>
+    </x-modal>
+    @endif
 </div>
 @endsection
