@@ -18,7 +18,7 @@ class StorePenghuniKamarRequest extends FormRequest
             'penghuni_id' => 'required|exists:users,id',
             'tanggal_masuk' => 'required|date',
             'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
-            'durasi' => 'required|in:harian,bulanan',
+            'durasi' => 'required|in:harian,mingguan,bulanan',
         ];
     }
 }

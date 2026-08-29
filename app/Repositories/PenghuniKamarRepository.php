@@ -66,8 +66,10 @@ class PenghuniKamarRepository extends BaseRepository implements PenghuniKamarRep
 
     public function getExpired(): Collection
     {
+        $cutoffDate = now()->hour >= 14 ? now()->toDateString() : now()->subDay()->toDateString();
+
         return $this->model->where('status', 'aktif')
-            ->where('tanggal_keluar', '<', now())
+            ->where('tanggal_keluar', '<=', $cutoffDate)
             ->with(['kamar.kos', 'penghuni'])
             ->get();
     }

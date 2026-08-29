@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('pembayaran', function (Blueprint $table) {
             $table->id();
+            $table->string('kode_invoice', 60)->nullable()->unique();
             $table->foreignId('penghuni_kamar_id')->constrained('penghuni_kamar')->onDelete('cascade');
             $table->decimal('jumlah', 12, 2);
             $table->integer('porsi_bayar')->default(100)->comment('100 for Full, 50 for 50% split');

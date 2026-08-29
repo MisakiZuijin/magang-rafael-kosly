@@ -49,7 +49,7 @@ class PembayaranService
 
     public function uploadBukti(int $id, string $buktiUrl, string $tipePerpanjangan = 'bulanan', int $jumlahHari = 30, int $porsiBayar = 100): Pembayaran
     {
-        $pembayaran = Pembayaran::with('penghuniKamar.kamar')->findOrFail($id);
+        $pembayaran = Pembayaran::with(['penghuniKamar.kamar', 'penghuniKamar.penghuni'])->findOrFail($id);
         $kamar = $pembayaran->penghuniKamar->kamar ?? null;
 
         $isBerbagi = ($kamar && $kamar->tipe === 'berbagi');
@@ -58,7 +58,22 @@ class PembayaranService
             : 1;
         if ($activePenghuniCount < 1) $activePenghuniCount = 1;
 
-        if (!$isBerbagi || $activePenghuniCount >= 3) {
+        // Cek jika teman sekamar sudah membayar setengah (50%), maka porsi bayar wajib 50%
+        if ($isBerbagi && $activePenghuniCount <= 2) {
+            $roommateHas50 = Pembayaran::whereHas('penghuniKamar', function ($q) use ($kamar, $pembayaran) {
+                $q->where('kamar_id', $kamar->id)
+                  ->where('status', 'aktif')
+                  ->where('id', '!=', $pembayaran->penghuni_kamar_id);
+            })
+            ->whereIn('status', ['pending', 'terverifikasi'])
+            ->whereNotNull('bukti_transfer_url')
+            ->where('porsi_bayar', 50)
+            ->exists();
+
+            if ($roommateHas50) {
+                $porsiBayar = 50;
+            }
+        } elseif (!$isBerbagi || $activePenghuniCount >= 3) {
             $porsiBayar = 100;
         }
 
@@ -120,12 +135,17 @@ class PembayaranService
             }
         }
 
+        $uploaderUser = \Illuminate\Support\Facades\Auth::user() ?? ($pembayaran->penghuniKamar->penghuni ?? null);
+        $uploaderName = $uploaderUser->nama ?? 'Penghuni Kamar';
+        $uploadTimeStr = now()->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB';
+
         $updateData = [
             'bukti_transfer_url' => $buktiUrl,
             'tanggal_bayar' => now(),
             'status' => 'pending',
             'porsi_bayar' => $porsiBayar,
             'jumlah' => $jumlahBiaya,
+            'catatan_verifikasi' => "Menunggu verifikasi admin (Diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
         ];
 
         // Hanya perbarui skema biaya & periode jika ini adalah pembayaran perpanjangan sewa
@@ -135,10 +155,18 @@ class PembayaranService
                 ? \Carbon\Carbon::parse($pk->tanggal_keluar)
                 : \Carbon\Carbon::now();
 
+            if ($tipePerpanjangan === 'bulanan') {
+                $periodeSelesai = $baseDate->copy()->addDays(30)->toDateString();
+            } elseif ($tipePerpanjangan === 'mingguan') {
+                $periodeSelesai = $baseDate->copy()->addDays(7)->toDateString();
+            } else {
+                $periodeSelesai = $baseDate->copy()->addDays($jumlahHari)->toDateString();
+            }
+
             $updateData['tipe_perpanjangan'] = $tipePerpanjangan;
             $updateData['jumlah_hari'] = $jumlahHari;
             $updateData['periode_mulai'] = $baseDate->toDateString();
-            $updateData['periode_selesai'] = $baseDate->copy()->addDays($jumlahHari)->toDateString();
+            $updateData['periode_selesai'] = $periodeSelesai;
         }
 
         $pembayaran->update($updateData);
@@ -151,17 +179,51 @@ class PembayaranService
                 ->get();
 
             foreach ($roommatePks as $roommatePk) {
-                $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
-                    ->where('status', 'pending')
-                    ->whereNull('bukti_transfer_url')
-                    ->first();
-                if ($roommatePending) {
-                    $targetPorsi = $porsiBayar;
-                    $targetAmount = ($porsiBayar == 100) ? $fullBiaya : round($fullBiaya / $activePenghuniCount);
-                    $roommatePending->update([
-                        'jumlah' => $targetAmount,
-                        'porsi_bayar' => $targetPorsi,
-                    ]);
+                if ($porsiBayar == 100) {
+                    // KASUS 1: BAYAR FULL (100%) -> Teman sekamar disinkronkan porsi 100%, bukti_transfer_url tetap NULL agar hanya 1 transaksi verifikasi yang masuk ke Admin
+                    $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
+                        ->where('status', 'pending')
+                        ->first();
+
+                    $syncData = [
+                        'bukti_transfer_url' => null,
+                        'tanggal_bayar' => now(),
+                        'status' => 'pending',
+                        'porsi_bayar' => 100,
+                        'jumlah' => $jumlahBiaya,
+                        'catatan_verifikasi' => "Menunggu verifikasi admin (Pelunasan 1 kamar diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
+                    ];
+
+                    if ($hasPreviousVerified) {
+                        $syncData['tipe_perpanjangan'] = $tipePerpanjangan;
+                        $syncData['jumlah_hari'] = $jumlahHari;
+                        $syncData['periode_mulai'] = $updateData['periode_mulai'] ?? null;
+                        $syncData['periode_selesai'] = $updateData['periode_selesai'] ?? null;
+                    }
+
+                    if ($roommatePending) {
+                        $roommatePending->update($syncData);
+                    } else {
+                        $syncData['penghuni_kamar_id'] = $roommatePk->id;
+                        $syncData['periode_mulai'] = $pembayaran->periode_mulai;
+                        $syncData['periode_selesai'] = $pembayaran->periode_selesai;
+                        $syncData['tipe_perpanjangan'] = $pembayaran->tipe_perpanjangan ?? 'bulanan';
+                        $syncData['jumlah_hari'] = $pembayaran->jumlah_hari ?? 30;
+                        Pembayaran::create($syncData);
+                    }
+                } else {
+                    // KASUS 2: BAYAR SETENGAH (50%) -> Tagihan teman sekamar disesuaikan menjadi 50%
+                    $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
+                        ->where('status', 'pending')
+                        ->whereNull('bukti_transfer_url')
+                        ->first();
+                    if ($roommatePending) {
+                        $targetAmount = round($fullBiaya / 2);
+                        $roommatePending->update([
+                            'jumlah' => $targetAmount,
+                            'porsi_bayar' => 50,
+                        ]);
+                    }
                 }
             }
         }
@@ -193,11 +255,20 @@ class PembayaranService
                     ? \Carbon\Carbon::parse($pk->tanggal_keluar)
                     : \Carbon\Carbon::now();
 
-                $newTanggalKeluar = $baseDate->copy()->addDays($daysToAdd);
+                if ($pembayaran->tipe_perpanjangan === 'bulanan') {
+                    $newTanggalKeluar = $baseDate->copy()->addDays(30);
+                } elseif ($pembayaran->tipe_perpanjangan === 'mingguan') {
+                    $newTanggalKeluar = $baseDate->copy()->addDays(7);
+                } else {
+                    $newTanggalKeluar = $baseDate->copy()->addDays($daysToAdd);
+                }
+
+                $newTanggalKeluar = $newTanggalKeluar->setTime(14, 0, 0);
 
                 $pk->update([
-                    'tanggal_keluar' => $newTanggalKeluar->toDateString(),
+                    'tanggal_keluar' => $newTanggalKeluar->toDateTimeString(),
                     'durasi' => $pembayaran->tipe_perpanjangan ?? $pk->durasi,
+                    'notif_jatuh_tempo_sent_at' => null,
                 ]);
 
                 $data['periode_mulai'] = $baseDate->toDateString();
@@ -252,11 +323,14 @@ class PembayaranService
                         ]);
                     }
 
-                    // Perbarui juga tanggal_keluar teman sekamar!
-                    $roommatePk->update([
-                        'tanggal_keluar' => $pk->fresh()->tanggal_keluar,
-                        'durasi' => $pk->durasi,
-                    ]);
+                    // Perbarui juga tanggal_keluar teman sekamar jika perpanjangan sewa!
+                    if ($hasPreviousVerified) {
+                        $roommatePk->update([
+                            'tanggal_keluar' => $pk->fresh()->tanggal_keluar,
+                            'durasi' => $pk->durasi,
+                            'notif_jatuh_tempo_sent_at' => null,
+                        ]);
+                    }
                 }
             }
         }
@@ -269,7 +343,9 @@ class PembayaranService
 
     public function reject(int $id, string $catatan, int $adminId): Pembayaran
     {
-        $oldPembayaran = Pembayaran::findOrFail($id);
+        $oldPembayaran = Pembayaran::with(['penghuniKamar.kamar', 'penghuniKamar.penghuni'])->findOrFail($id);
+        $kamar = $oldPembayaran->penghuniKamar->kamar ?? null;
+        $isBerbagi = ($kamar && $kamar->tipe === 'berbagi');
 
         // 1. Update status pembayaran lama menjadi 'ditolak' (tetap tersimpan di log/riwayat)
         $oldPembayaran->update([
@@ -283,12 +359,52 @@ class PembayaranService
         Pembayaran::create([
             'penghuni_kamar_id' => $oldPembayaran->penghuni_kamar_id,
             'jumlah' => $oldPembayaran->jumlah,
+            'porsi_bayar' => $oldPembayaran->porsi_bayar,
+            'tipe_perpanjangan' => $oldPembayaran->tipe_perpanjangan,
+            'jumlah_hari' => $oldPembayaran->jumlah_hari,
             'periode_mulai' => $oldPembayaran->periode_mulai,
             'periode_selesai' => $oldPembayaran->periode_selesai,
             'status' => 'pending',
             'bukti_transfer_url' => null,
             'tanggal_bayar' => null,
         ]);
+
+        // Jika kamar berbagi dan pembayaran yang ditolak adalah 100% full:
+        if ($isBerbagi && $oldPembayaran->porsi_bayar == 100) {
+            $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+                ->where('status', 'aktif')
+                ->where('id', '!=', $oldPembayaran->penghuni_kamar_id)
+                ->get();
+
+            foreach ($roommatePks as $rPk) {
+                $rPending = Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                    ->where('status', 'pending')
+                    ->where('bukti_transfer_url', $oldPembayaran->bukti_transfer_url)
+                    ->first();
+
+                if ($rPending) {
+                    $rPending->update([
+                        'status' => 'ditolak',
+                        'catatan_verifikasi' => "Pembayaran 1 kamar ditolak oleh Admin: {$catatan}",
+                        'diverifikasi_oleh' => $adminId,
+                        'tanggal_verifikasi' => now(),
+                    ]);
+
+                    Pembayaran::create([
+                        'penghuni_kamar_id' => $rPk->id,
+                        'jumlah' => $oldPembayaran->jumlah,
+                        'porsi_bayar' => 100,
+                        'tipe_perpanjangan' => $oldPembayaran->tipe_perpanjangan,
+                        'jumlah_hari' => $oldPembayaran->jumlah_hari,
+                        'periode_mulai' => $oldPembayaran->periode_mulai,
+                        'periode_selesai' => $oldPembayaran->periode_selesai,
+                        'status' => 'pending',
+                        'bukti_transfer_url' => null,
+                        'tanggal_bayar' => null,
+                    ]);
+                }
+            }
+        }
 
         // 3. Kirim notifikasi ke penghuni mengenai penolakan dan form pembayaran baru
         $pk = $oldPembayaran->penghuniKamar;

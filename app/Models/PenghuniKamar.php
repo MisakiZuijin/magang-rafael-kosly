@@ -18,13 +18,25 @@ class PenghuniKamar extends Model
         'tanggal_keluar',
         'durasi',
         'status',
+        'notif_jatuh_tempo_sent_at',
     ];
+
+    protected static function booted()
+    {
+        static::updating(function ($model) {
+            // Jika tanggal_keluar diubah menjadi tanggal masa depan (perpanjangan sewa), reset notifikasi jatuh tempo
+            if ($model->isDirty('tanggal_keluar') && $model->tanggal_keluar && \Carbon\Carbon::parse($model->tanggal_keluar)->isFuture()) {
+                $model->notif_jatuh_tempo_sent_at = null;
+            }
+        });
+    }
 
     protected function casts(): array
     {
         return [
-            'tanggal_masuk' => 'date',
-            'tanggal_keluar' => 'date',
+            'tanggal_masuk' => 'datetime',
+            'tanggal_keluar' => 'datetime',
+            'notif_jatuh_tempo_sent_at' => 'datetime',
             'created_at' => 'datetime',
         ];
     }

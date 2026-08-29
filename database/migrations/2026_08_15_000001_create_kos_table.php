@@ -12,14 +12,15 @@ return new class extends Migration
             $table->id();
             $table->foreignId('mitra_id')->constrained('users')->onDelete('cascade');
             $table->string('nama', 100);
+            $table->string('slug', 150)->nullable();
             $table->string('foto', 255)->nullable();
             $table->text('alamat')->nullable();
-            $table->decimal('latitude', 30, 8)->nullable();
-            $table->decimal('longitude', 30, 8)->nullable();
+            $table->text('link_gmaps')->nullable();
             $table->text('deskripsi')->nullable();
             $table->string('no_rekening', 50)->nullable();
             $table->string('bank', 50)->nullable();
             $table->string('nama_pemilik_rekening', 100)->nullable();
+            $table->boolean('is_locked')->default(false);
             $table->timestamps();
         });
     }

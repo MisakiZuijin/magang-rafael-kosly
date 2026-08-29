@@ -47,4 +47,9 @@ class Kamar extends Model
     {
         return $this->hasMany(PenghuniKamar::class, 'kamar_id');
     }
+
+    public function getRouteKeyName(): string
+    {
+        return 'kode_kamar';
+    }
 }

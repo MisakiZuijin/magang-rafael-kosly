@@ -12,4 +12,5 @@ interface KamarRepositoryInterface extends BaseRepositoryInterface
     public function getTerisi(): Collection;
     public function updateStatus(int $id, string $status): Kamar;
     public function getByKosWithPenghuni(int $kosId): Collection;
+    public function findByKode(string $kode): ?Kamar;
 }

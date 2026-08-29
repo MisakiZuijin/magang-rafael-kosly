@@ -16,6 +16,7 @@ return new class extends Migration
             $table->date('tanggal_keluar')->nullable();
             $table->enum('durasi', ['harian', 'mingguan', 'bulanan']);
             $table->enum('status', ['aktif', 'selesai'])->default('aktif');
+            $table->datetime('notif_jatuh_tempo_sent_at')->nullable();
             $table->timestamps();
         });
     }

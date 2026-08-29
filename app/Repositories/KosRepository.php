@@ -30,13 +30,33 @@ class KosRepository extends BaseRepository implements KosRepositoryInterface
         }])->latest()->get();
     }
 
-    public function findWithKamar(int $id): ?Kos
+    public function findWithKamar(int|string $id): ?Kos
     {
-        return $this->model->with(['kamar.penghuniKamar.penghuni', 'aturanKos'])->find($id);
+        return $this->model->with(['kamar.penghuniKamar.penghuni', 'aturanKos'])
+            ->where('slug', $id)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->first();
     }
 
     public function getAllLocations(): Collection
     {
-        return $this->model->select('id', 'nama', 'alamat', 'latitude', 'longitude')->get();
+        return $this->model->with('mitra')->get();
+    }
+
+    public function toggleLock(int|string $id): ?Kos
+    {
+        $kos = $this->model->where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->first();
+        if ($kos) {
+            $kos->is_locked = !$kos->is_locked;
+            $kos->save();
+        }
+        return $kos;
+    }
+
+    public function findBySlug(string $slug): ?Kos
+    {
+        return $this->model->where('slug', $slug)
+            ->orWhere('id', is_numeric($slug) ? (int)$slug : 0)
+            ->first();
     }
 }
