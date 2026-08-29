@@ -115,7 +115,7 @@
             </div>
             <p class="text-xs text-blue-900 dark:text-blue-200 font-medium leading-relaxed">
                 Pendaftaran kamar ini telah berhasil atas nama Anda untuk periode mulai
-                <strong>{{ $data['tanggal_masuk']->format('d M Y') }}</strong> s/d <strong>{{ $data['tanggal_keluar']->format('d M Y') }}</strong>.
+                <strong>{{ $data['tanggal_masuk']->format('d M Y') }}</strong> s/d <strong>{{ $data['tanggal_keluar']->format('d M Y') }}</strong> (Batas Checkout Pukul 14.00 WIB).
             </p>
             <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between text-xs">
                 <span class="text-gray-600 dark:text-gray-300 font-medium">Status Kamar:</span>
@@ -127,29 +127,60 @@
         @elseif($data['tanggal_keluar'])
         {{-- Countdown jika masa sewa sudah berjalan --}}
         @php
-        $diff = now()->diff($data['tanggal_keluar']);
-        $isExpired = now()->gt($data['tanggal_keluar']);
-        $initialText = $isExpired
-        ? 'Sudah habis'
-        : ($diff->d > 0
-        ? $diff->d . ' hari ' . $diff->h . ' jam ' . $diff->i . ' menit'
-        : ($diff->h > 0
-        ? $diff->h . ' jam ' . $diff->i . ' menit'
-        : $diff->i . ' menit'));
+        $now = \Carbon\Carbon::now();
+        $targetKeluar = $data['tanggal_keluar'];
+        $isExpired = $now->gt($targetKeluar);
+        $overdueDays = $isExpired ? max(1, (int) $targetKeluar->diffInDays($now)) : 0;
+
+        if ($isExpired) {
+        $initialText = "⚠️ Masa Sewa Terlewat {$overdueDays} Hari";
+        } else {
+        $diffInSeconds = $now->diffInSeconds($targetKeluar);
+        $d = intdiv($diffInSeconds, 86400);
+        $h = intdiv($diffInSeconds % 86400, 3600);
+        $m = intdiv($diffInSeconds % 3600, 60);
+
+        if ($d > 0) {
+        $initialText = "{$d} hari {$h} jam {$m} menit";
+        } elseif ($h > 0) {
+        $initialText = "{$h} jam {$m} menit";
+        } else {
+        $initialText = "{$m} menit";
+        }
+        }
         @endphp
 
+        {{-- Rincian Periode Masuk & Keluar Penghuni --}}
+        <div class="grid grid-cols-2 gap-2 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 text-xs">
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">Tanggal Masuk</span>
+                <p class="font-bold text-emerald-700 dark:text-emerald-500 font-mono text-xs">
+                    {{ $data['tanggal_masuk'] ? $data['tanggal_masuk']->locale('id')->isoFormat('D MMMM Y') : '-' }}
+                </p>
+            </div>
+            <div class="space-y-0.5">
+                <span class="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider block">Tanggal Keluar</span>
+                <p class="font-bold text-red-700 dark:text-red-400 font-mono text-xs">
+                    {{ $data['tanggal_keluar'] ? $data['tanggal_keluar']->locale('id')->isoFormat('D MMMM Y') : '-' }}
+                </p>
+            </div>
+        </div>
+
         <div x-data="{ 
-                        target: new Date('{{ $data['tanggal_keluar']->format('Y-m-d H:i:s') }}').getTime(),
+                        target: {{ $targetKeluar->getTimestamp() * 1000 }},
                         formatted: '{{ $initialText }}',
+                        isOverdue: {{ $isExpired ? 'true' : 'false' }},
                         timer: null,
                         start() {
                             this.update();
                             this.timer = setInterval(() => this.update(), 60000);
                         },
                         update() {
-                            const distance = this.target - new Date().getTime();
+                            const distance = this.target - Date.now();
                             if (distance < 0) { 
-                                this.formatted = 'Sudah habis'; 
+                                const days = Math.max(1, Math.floor(Math.abs(distance) / (1000*60*60*24)));
+                                this.formatted = `⚠️ Masa Sewa Terlewat ${days} Hari`; 
+                                this.isOverdue = true;
                                 clearInterval(this.timer); 
                                 return; 
                             }
@@ -158,9 +189,14 @@
                             const m = Math.floor((distance % (1000*60*60)) / (1000*60));
                             this.formatted = d > 0 ? `${d} hari ${h} jam ${m} menit` : (h > 0 ? `${h} jam ${m} menit` : `${m} menit`);
                         }
-                    }" x-init="start()" class="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/50 flex flex-col justify-center">
-            <p class="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Sisa Waktu Masa Sewa</p>
-            <p class="text-xl font-bold text-emerald-700 dark:text-emerald-300 font-mono" x-text="formatted">{{ $initialText }}</p>
+                    }" x-init="start()" :class="isOverdue ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50'" class="p-3 rounded-xl border flex flex-col justify-center transition-colors">
+            <div class="grid grid-cols-1 gap-2 items-center mb-1">
+                <p class="text-[11px] font-bold uppercase tracking-wider" :class="isOverdue ? 'text-red-700 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-400'">Sisa Waktu Masa Sewa</p>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-lg" :class="isOverdue ? 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-200' : 'bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'">
+                    Batas Checkout: {{ $targetKeluar->locale('id')->isoFormat('D MMMM Y') }} · Pukul 14.00 WIB
+                </span>
+            </div>
+            <p class="text-xl font-bold font-mono" :class="isOverdue ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'" x-text="formatted">{{ $initialText }}</p>
         </div>
         @endif
 

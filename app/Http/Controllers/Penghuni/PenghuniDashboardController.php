@@ -24,6 +24,9 @@ class PenghuniDashboardController extends Controller
 
     public function index()
     {
+        // Real-time check and notify overdue leases (1x per lease)
+        $this->penghuniKamarService->periksaDanKirimNotifikasiJatuhTempo();
+
         /** @var User $user */
         $user = Auth::user();
         $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
@@ -62,6 +65,11 @@ class PenghuniDashboardController extends Controller
                 'isKamarBerbagi' => false,
                 'roommateFullPaid' => false,
                 'roommateName' => '',
+                'roommateFullPending' => false,
+                'roommatePendingName' => '',
+                'roommatePendingTime' => '',
+                'onlyHalfOption' => false,
+                'roommateHalfName' => '',
             ]);
         }
 
@@ -72,17 +80,33 @@ class PenghuniDashboardController extends Controller
         $kamar = $penghuniKamar->kamar;
         $isKamarBerbagi = ($kamar && $kamar->tipe === 'berbagi');
 
+        $activePenghuniCount = $kamar
+            ? \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count()
+            : 1;
+
+        $myPendingWithProof = $pembayarans->where('status', 'pending')
+            ->filter(fn($item) => !empty($item->bukti_transfer_url))
+            ->first();
+
         $roommateFullPaid = false;
         $roommateName = '';
+        $roommateFullPending = false;
+        $roommatePendingName = '';
+        $roommatePendingTime = '';
+        $roommatePendingBuktiUrl = '';
+        $roommatePendingJumlah = 0;
+        $onlyHalfOption = false;
+        $roommateHalfName = '';
 
         if ($isKamarBerbagi) {
-            // Cek apakah penghuni saat ini memiliki tagihan yang sedang pending
-            $hasPendingPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
-                ->where('status', 'pending')
-                ->exists();
+            $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+                ->where('status', 'aktif')
+                ->where('id', '!=', $penghuniKamar->id)
+                ->with('penghuni')
+                ->get();
 
-            // Banner 'Pembayaran Kamar Lunas - Dilunasi Full oleh Teman' HANYA tampil jika TIDAK ada tagihan pending yang sedang berjalan
-            if (!$hasPendingPayment) {
+            // 1. Cek apakah ada pelunasan penuh terverifikasi dari teman sekamar
+            if (!$myPendingWithProof) {
                 $coveredPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
                     ->where('status', 'terverifikasi')
                     ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar%oleh%')
@@ -92,12 +116,76 @@ class PenghuniDashboardController extends Controller
                 if ($coveredPayment) {
                     $roommateFullPaid = true;
                     $catatan = $coveredPayment->catatan_verifikasi;
-                    $roommateName = trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang) oleh (.+)\)$/', '$1', $catatan));
+                    $roommateName = trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif (?:1 Kamar|2 Orang)) oleh (.+)\)$/', '$1', $catatan));
+                }
+            }
+
+            // 2. Cek apakah ada pembayaran FULL (100%) yang diunggah oleh teman sekamar dan sedang PENDING
+            // PENTING: Hanya berlaku bagi teman sekamar yang BELUM mengunggah bukti pembayaran sendiri!
+            if (!$myPendingWithProof && !$roommateFullPaid) {
+                foreach ($roommatePks as $rPk) {
+                    $rPendingFull = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                        ->where('status', 'pending')
+                        ->whereNotNull('bukti_transfer_url')
+                        ->where('bukti_transfer_url', '!=', '')
+                        ->where('porsi_bayar', 100)
+                        ->latest()
+                        ->first();
+
+                    if ($rPendingFull) {
+                        $roommateFullPending = true;
+                        $roommatePendingName = $rPk->penghuni->nama ?? 'Teman Sekamar';
+                        $roommatePendingBuktiUrl = $rPendingFull->bukti_transfer_url;
+                        $roommatePendingJumlah = $rPendingFull->jumlah;
+
+                        if ($rPendingFull->catatan_verifikasi && preg_match('/pada (.+)\)/u', $rPendingFull->catatan_verifikasi, $m)) {
+                            $roommatePendingTime = trim($m[1]);
+                        } elseif ($rPendingFull->tanggal_bayar) {
+                            $roommatePendingTime = \Carbon\Carbon::parse($rPendingFull->tanggal_bayar)->locale('id')->isoFormat('D MMMM Y');
+                        } elseif ($rPendingFull->updated_at) {
+                            $roommatePendingTime = $rPendingFull->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB';
+                        } else {
+                            $roommatePendingTime = '-';
+                        }
+                        break;
+                    }
+                }
+            }
+
+            // 3. Cek apakah ada teman sekamar yang membayar SETENGAH (50%) di kamar isi 2 orang
+            if ($activePenghuniCount <= 2 && !$roommateFullPaid && !$roommateFullPending && !$myPendingWithProof) {
+                foreach ($roommatePks as $rPk) {
+                    $rHalf = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                        ->whereIn('status', ['pending', 'terverifikasi'])
+                        ->whereNotNull('bukti_transfer_url')
+                        ->where('bukti_transfer_url', '!=', '')
+                        ->where('porsi_bayar', 50)
+                        ->latest()
+                        ->first();
+
+                    if ($rHalf) {
+                        $onlyHalfOption = true;
+                        $roommateHalfName = $rPk->penghuni->nama ?? 'Teman Sekamar';
+                        break;
+                    }
                 }
             }
         }
 
-        return view('penghuni.pembayaran', compact('pembayarans', 'rekening', 'isKamarBerbagi', 'roommateFullPaid', 'roommateName'));
+        return view('penghuni.pembayaran', compact(
+            'pembayarans',
+            'rekening',
+            'isKamarBerbagi',
+            'roommateFullPaid',
+            'roommateName',
+            'roommateFullPending',
+            'roommatePendingName',
+            'roommatePendingTime',
+            'roommatePendingBuktiUrl',
+            'roommatePendingJumlah',
+            'onlyHalfOption',
+            'roommateHalfName'
+        ));
     }
 
     public function uploadBukti(Request $request)
