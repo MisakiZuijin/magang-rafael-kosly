@@ -44,7 +44,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
-    // Notifikasi
+    // Notifikasi & Nota
+    Route::get('/pembayaran/{pembayaran}/nota', [AdminPembayaranController::class, 'nota'])->name('pembayaran.nota');
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
     Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.read');
     Route::post('/notifikasi/read-all', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.read-all');
@@ -71,7 +72,9 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:mitra'])->prefix('mitra')->name('mitra.')->group(function () {
         Route::get('/dashboard', [MitraDashboardController::class, 'index'])->name('dashboard');
         Route::get('/kamar', [MitraDashboardController::class, 'kamar'])->name('kamar');
-        Route::get('/kamar/{id}', [MitraDashboardController::class, 'showKamar'])->name('kamar.show');
+        Route::get('/kamar/{kamar}', [MitraDashboardController::class, 'showKamar'])->name('kamar.show');
+        Route::put('/kamar/{kamar}', [MitraDashboardController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{kamar}/foto', [MitraDashboardController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
     });
 
     /*
@@ -86,22 +89,23 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengguna', [AdminPenggunaController::class, 'index'])->name('pengguna.index');
         Route::get('/pengguna/create', [AdminPenggunaController::class, 'create'])->name('pengguna.create');
         Route::post('/pengguna', [AdminPenggunaController::class, 'store'])->name('pengguna.store');
-        Route::get('/pengguna/{id}/edit', [AdminPenggunaController::class, 'edit'])->name('pengguna.edit');
-        Route::put('/pengguna/{id}', [AdminPenggunaController::class, 'update'])->name('pengguna.update');
-        Route::post('/pengguna/{id}/toggle', [AdminPenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
-        Route::delete('/pengguna/{id}', [AdminPenggunaController::class, 'destroy'])->name('pengguna.destroy');
+        Route::get('/pengguna/{user}/edit', [AdminPenggunaController::class, 'edit'])->name('pengguna.edit');
+        Route::put('/pengguna/{user}', [AdminPenggunaController::class, 'update'])->name('pengguna.update');
+        Route::post('/pengguna/{user}/toggle', [AdminPenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
+        Route::delete('/pengguna/{user}', [AdminPenggunaController::class, 'destroy'])->name('pengguna.destroy');
 
         // Pendaftaran Kos & Kamar
         Route::get('/kos', [AdminKosController::class, 'index'])->name('kos.index');
         Route::post('/kos', [AdminKosController::class, 'storeKos'])->name('kos.store');
         Route::post('/kamar', [AdminKosController::class, 'storeKamar'])->name('kamar.store');
         Route::post('/daftar-penghuni', [AdminKosController::class, 'daftarPenghuni'])->name('penghuni.daftar');
-        Route::post('/kosongkan-kamar/{id}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
+        Route::post('/kosongkan-kamar/{kamar}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
         Route::post('/checkout-penghuni/{id}', [AdminKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
-        Route::put('/kos/{id}', [AdminKosController::class, 'updateKos'])->name('kos.update');
-        Route::get('/kamar/{id}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
-        Route::put('/kamar/{id}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
-        Route::delete('/kamar/{id}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
+        Route::put('/kos/{kos}', [AdminKosController::class, 'updateKos'])->name('kos.update');
+        Route::post('/kos/{kos}/toggle-lock', [AdminKosController::class, 'toggleLock'])->name('kos.toggle-lock');
+        Route::get('/kamar/{kamar}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
+        Route::put('/kamar/{kamar}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{kamar}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
 
         // Pengumuman
         Route::get('/pengumuman', [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
@@ -144,16 +148,16 @@ Route::middleware(['auth'])->group(function () {
         // Kelola Admin
         Route::get('/admin', [SuperAdminDashboardController::class, 'adminIndex'])->name('admin.index');
         Route::post('/admin', [SuperAdminDashboardController::class, 'adminStore'])->name('admin.store');
-        Route::put('/admin/{id}', [SuperAdminDashboardController::class, 'adminUpdate'])->name('admin.update');
-        Route::post('/admin/{id}/toggle', [SuperAdminDashboardController::class, 'adminToggle'])->name('admin.toggle');
-        Route::delete('/admin/{id}', [SuperAdminDashboardController::class, 'adminDestroy'])->name('admin.destroy');
+        Route::put('/admin/{user}', [SuperAdminDashboardController::class, 'adminUpdate'])->name('admin.update');
+        Route::post('/admin/{user}/toggle', [SuperAdminDashboardController::class, 'adminToggle'])->name('admin.toggle');
+        Route::delete('/admin/{user}', [SuperAdminDashboardController::class, 'adminDestroy'])->name('admin.destroy');
 
         // Kelola Lokasi Kantor
         Route::get('/kantor', [SuperAdminDashboardController::class, 'kantorIndex'])->name('kantor.index');
         Route::post('/kantor', [SuperAdminDashboardController::class, 'kantorStore'])->name('kantor.store');
-        Route::put('/kantor/{id}', [SuperAdminDashboardController::class, 'kantorUpdate'])->name('kantor.update');
-        Route::post('/kantor/{id}/toggle', [SuperAdminDashboardController::class, 'kantorToggle'])->name('kantor.toggle');
-        Route::delete('/kantor/{id}', [SuperAdminDashboardController::class, 'kantorDestroy'])->name('kantor.destroy');
+        Route::put('/kantor/{kantor}', [SuperAdminDashboardController::class, 'kantorUpdate'])->name('kantor.update');
+        Route::post('/kantor/{kantor}/toggle', [SuperAdminDashboardController::class, 'kantorToggle'])->name('kantor.toggle');
+        Route::delete('/kantor/{kantor}', [SuperAdminDashboardController::class, 'kantorDestroy'])->name('kantor.destroy');
 
         // Pencairan Biaya Pendapatan Per Kos
         Route::get('/pencairan', [SuperAdminPencairanController::class, 'index'])->name('pencairan.index');
@@ -163,21 +167,22 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/pengguna', [AdminPenggunaController::class, 'index'])->name('pengguna.index');
         Route::get('/pengguna/create', [AdminPenggunaController::class, 'create'])->name('pengguna.create');
         Route::post('/pengguna', [AdminPenggunaController::class, 'store'])->name('pengguna.store');
-        Route::get('/pengguna/{id}/edit', [AdminPenggunaController::class, 'edit'])->name('pengguna.edit');
-        Route::put('/pengguna/{id}', [AdminPenggunaController::class, 'update'])->name('pengguna.update');
-        Route::post('/pengguna/{id}/toggle', [AdminPenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
-        Route::delete('/pengguna/{id}', [AdminPenggunaController::class, 'destroy'])->name('pengguna.destroy');
+        Route::get('/pengguna/{user}/edit', [AdminPenggunaController::class, 'edit'])->name('pengguna.edit');
+        Route::put('/pengguna/{user}', [AdminPenggunaController::class, 'update'])->name('pengguna.update');
+        Route::post('/pengguna/{user}/toggle', [AdminPenggunaController::class, 'toggleActive'])->name('pengguna.toggle');
+        Route::delete('/pengguna/{user}', [AdminPenggunaController::class, 'destroy'])->name('pengguna.destroy');
 
         Route::get('/kos', [AdminKosController::class, 'index'])->name('kos.index');
         Route::post('/kos', [AdminKosController::class, 'storeKos'])->name('kos.store');
         Route::post('/kamar', [AdminKosController::class, 'storeKamar'])->name('kamar.store');
         Route::post('/daftar-penghuni', [AdminKosController::class, 'daftarPenghuni'])->name('penghuni.daftar');
-        Route::post('/kosongkan-kamar/{id}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
+        Route::post('/kosongkan-kamar/{kamar}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
         Route::post('/checkout-penghuni/{id}', [AdminKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
-        Route::put('/kos/{id}', [AdminKosController::class, 'updateKos'])->name('kos.update');
-        Route::get('/kamar/{id}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
-        Route::put('/kamar/{id}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
-        Route::delete('/kamar/{id}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
+        Route::put('/kos/{kos}', [AdminKosController::class, 'updateKos'])->name('kos.update');
+        Route::post('/kos/{kos}/toggle-lock', [AdminKosController::class, 'toggleLock'])->name('kos.toggle-lock');
+        Route::get('/kamar/{kamar}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
+        Route::put('/kamar/{kamar}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{kamar}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
 
         Route::get('/pengumuman', [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
         Route::get('/pengumuman/create', [AdminPengumumanController::class, 'create'])->name('pengumuman.create');
@@ -201,5 +206,5 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/whatsapp', [AdminWhatsAppController::class, 'index'])->name('whatsapp.index');
         Route::post('/whatsapp', [AdminWhatsAppController::class, 'store'])->name('whatsapp.store');
         Route::post('/whatsapp/test', [AdminWhatsAppController::class, 'testSend'])->name('whatsapp.test');
-        });
+    });
 });

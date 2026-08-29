@@ -34,11 +34,6 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         $newStatus = !$user->is_active;
         $user->update(['is_active' => $newStatus]);
 
-        // Saat Super Admin menonaktifkan user, hapus seluruh data log aktivitas user tersebut dari database
-        if (!$newStatus) {
-            \App\Models\LogAktivitas::where('user_id', $user->id)->delete();
-        }
-
         return $user->fresh();
     }
 

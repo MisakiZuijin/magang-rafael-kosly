@@ -23,7 +23,14 @@ class ProfileController extends Controller
             'nama' => 'required|string|max:100',
             'no_hp' => 'nullable|string|max:20',
             'foto_profile' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'password' => 'nullable|string|min:6|confirmed',
         ]);
+
+        if (!empty($validated['password'])) {
+            $validated['password'] = \Illuminate\Support\Facades\Hash::make($validated['password']);
+        } else {
+            unset($validated['password']);
+        }
 
         if ($request->hasFile('foto_profile')) {
             // Hapus foto lama
@@ -33,9 +40,6 @@ class ProfileController extends Controller
 
             // Simpan ke storage/app/public/images/profiles/
             $path = $request->file('foto_profile')->store('images/profiles', 'public');
-
-            // Debug: cek path tersimpan
-            // dd($path); 
 
             $validated['foto_profile'] = $path;
         }

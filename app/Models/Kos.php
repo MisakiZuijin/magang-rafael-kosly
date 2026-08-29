@@ -14,21 +14,41 @@ class Kos extends Model
     protected $fillable = [
         'mitra_id',
         'nama',
+        'slug',
         'foto',
         'alamat',
-        'latitude',
-        'longitude',
+        'link_gmaps',
         'deskripsi',
         'no_rekening',
         'bank',
         'nama_pemilik_rekening',
+        'is_locked',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($kos) {
+            if (empty($kos->slug) || $kos->isDirty('nama')) {
+                $slug = \Illuminate\Support\Str::slug($kos->nama);
+                $originalSlug = $slug;
+                $count = 1;
+                while (static::where('slug', $slug)->where('id', '!=', $kos->id ?? 0)->exists()) {
+                    $slug = $originalSlug . '-' . $count++;
+                }
+                $kos->slug = $slug;
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 
     protected function casts(): array
     {
         return [
-            'latitude' => 'decimal:8',
-            'longitude' => 'decimal:8',
+            'is_locked' => 'boolean',
             'created_at' => 'datetime',
         ];
     }

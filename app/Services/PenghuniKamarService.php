@@ -88,21 +88,24 @@ class PenghuniKamarService
         $kamar = $this->kamarRepository->findById($data['kamar_id']);
 
         // --- BUAT TAGIHAN PEMBAYARAN AWAL AUTOMATIS ---
-        $tanggalMasukObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay();
+        $tanggalMasukObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->setTime(0, 0, 0);
 
         if ($penghuniKamar->tanggal_keluar) {
-            $tanggalKeluarObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay();
+            $tanggalKeluarObj = \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->setTime(14, 0, 0);
         } else {
             if ($penghuniKamar->durasi === 'harian') {
-                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDay();
+                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDay()->setTime(14, 0, 0);
             } elseif ($penghuniKamar->durasi === 'mingguan') {
-                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDays(7);
+                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDays(7)->setTime(14, 0, 0);
             } else {
-                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDays(30);
+                $tanggalKeluarObj = $tanggalMasukObj->copy()->addDays(30)->setTime(14, 0, 0);
             }
-
-            $penghuniKamar->update(['tanggal_keluar' => $tanggalKeluarObj->toDateString()]);
         }
+
+        $penghuniKamar->update([
+            'tanggal_masuk' => $tanggalMasukObj->toDateTimeString(),
+            'tanggal_keluar' => $tanggalKeluarObj->toDateTimeString(),
+        ]);
 
         $selisihHari = max(1, (int) $tanggalMasukObj->diffInDays($tanggalKeluarObj));
         $activePenghuniCount = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
@@ -216,5 +219,100 @@ class PenghuniKamarService
         }
 
         return $result;
+    }
+
+    /**
+     * Memeriksa dan mengirimkan notifikasi Web & WhatsApp untuk sewa kamar yang telah jatuh tempo (waktunya habis).
+     * Pesan dikirimkan tepat 1x saja per periode sewa (menggunakan flag notif_jatuh_tempo_sent_at).
+     */
+    public function periksaDanKirimNotifikasiJatuhTempo(): array
+    {
+        $now = now();
+
+        // Cari seluruh data penghuni_kamar yang:
+        // 1. Status masih aktif
+        // 2. Tanggal keluar sudah lewat atau sama dengan sekarang (tanggal_keluar <= now)
+        // 3. Belum pernah dikirimkan notifikasi jatuh tempo untuk periode ini (notif_jatuh_tempo_sent_at IS NULL)
+        $expiredList = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
+            ->where('status', 'aktif')
+            ->whereNotNull('tanggal_keluar')
+            ->where('tanggal_keluar', '<=', $now)
+            ->whereNull('notif_jatuh_tempo_sent_at')
+            ->get();
+
+        $processedCount = 0;
+        $whatsAppService = app(\App\Services\WhatsAppService::class);
+
+        foreach ($expiredList as $pk) {
+            $penghuni = $pk->penghuni;
+            $kamar = $pk->kamar;
+            $kos = $kamar->kos ?? null;
+
+            if (!$penghuni) {
+                continue;
+            }
+
+            $penghuniNama = $penghuni->nama ?? 'Penghuni';
+            $kodeKamar = $kamar->kode_kamar ?? '-';
+            $kosNama = $kos->nama ?? 'Kos';
+            $tglKeluarFormatted = $pk->tanggal_keluar ? $pk->tanggal_keluar->format('d/m/Y H:i') : '-';
+
+            // 1. Kirim Notifikasi Web ke Penghuni
+            \App\Models\Notifikasi::create([
+                'user_id' => $penghuni->id,
+                'judul' => 'Masa Sewa Kamar Telah Jatuh Tempo',
+                'pesan' => "Perhatian: Masa sewa Kamar {$kodeKamar} di {$kosNama} telah berakhir pada {$tglKeluarFormatted} WIB. Silakan lakukan perpanjangan sewa melalui menu Pembayaran atau konfirmasi penyelesaian sewa.",
+                'channel' => 'web',
+                'status' => 'terkirim',
+            ]);
+
+            // 2. Kirim Notifikasi WhatsApp ke Penghuni (1x)
+            if (!empty($penghuni->no_hp) && $penghuni->no_hp !== '-') {
+                $waMessage = "Halo *{$penghuniNama}*,\n\n"
+                    . "⚠️ *PEMBERITAHUAN MASA SEWA JATUH TEMPO*\n\n"
+                    . "Kami informasikan bahwa masa sewa kamar kos Anda telah *BERAKHIR / JATUH TEMPO*.\n\n"
+                    . "📋 *RINCIAN SEWA KAMAR:*\n"
+                    . "• Kos: *{$kosNama}*\n"
+                    . "• Kamar: *{$kodeKamar}*\n"
+                    . "• Batas Waktu Sewa: *{$tglKeluarFormatted} WIB*\n\n"
+                    . "💡 *PANDUAN SELANJUTNYA:*\n"
+                    . "1. Jika ingin *MEMPERPANJANG SEWA*, silakan buka aplikasi *Kosly*, masuk ke menu *Pembayaran*, lalu lakukan transfer dan upload bukti pembayaran perpanjangan sewa Anda.\n"
+                    . "2. Jika Anda *SUDAH SELESAI / CHECKOUT*, silakan konfirmasi kepada pihak pengelola/admin kos.\n\n"
+                    . "Terima kasih atas kerja sama Anda!";
+
+                try {
+                    $whatsAppService->sendDirect(
+                        $penghuni->no_hp,
+                        'PERINGATAN JATUH TEMPO SEWA KOSLY',
+                        $waMessage
+                    );
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error("Gagal kirim WA jatuh tempo ke {$penghuni->no_hp}: " . $e->getMessage());
+                }
+            }
+
+            // 3. Kirim Notifikasi Web ke Mitra Kos
+            if ($kos && $kos->mitra) {
+                \App\Models\Notifikasi::create([
+                    'user_id' => $kos->mitra->id,
+                    'judul' => "Masa Sewa Penghuni Kamar {$kodeKamar} Jatuh Tempo",
+                    'pesan' => "Masa sewa penghuni {$penghuniNama} di Kamar {$kodeKamar} ({$kosNama}) telah habis per {$tglKeluarFormatted} WIB.",
+                    'channel' => 'web',
+                    'status' => 'terkirim',
+                ]);
+            }
+
+            // 4. Update flag bahwa notifikasi jatuh tempo telah dikirim (1x saja)
+            $pk->update([
+                'notif_jatuh_tempo_sent_at' => $now,
+            ]);
+
+            $processedCount++;
+        }
+
+        return [
+            'total_expired' => $expiredList->count(),
+            'processed' => $processedCount,
+        ];
     }
 }

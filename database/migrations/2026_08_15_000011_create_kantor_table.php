@@ -12,9 +12,9 @@ return new class extends Migration
         Schema::create('kantor', function (Blueprint $table) {
             $table->id();
             $table->string('nama', 100);
+            $table->string('slug', 150)->nullable();
             $table->text('alamat')->nullable();
-            $table->decimal('latitude', 30, 8)->nullable();
-            $table->decimal('longitude', 30, 8)->nullable();
+            $table->text('link_gmaps')->nullable();
             $table->string('no_telp', 30)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -25,8 +25,7 @@ return new class extends Migration
             [
                 'nama' => 'Kantor Pusat Kosly (Surabaya)',
                 'alamat' => 'Jl. Pemuda No. 45, Surabaya, Jawa Timur',
-                'latitude' => -7.250445,
-                'longitude' => 112.768845,
+                'link_gmaps' => 'https://maps.google.com/?q=-7.250445,112.768845',
                 'no_telp' => '031-1234567',
                 'is_active' => true,
                 'created_at' => now(),
@@ -35,8 +34,7 @@ return new class extends Migration
             [
                 'nama' => 'Kantor Cabang Admin Timur',
                 'alamat' => 'Jl. Raya Gubeng No. 88, Surabaya, Jawa Timur',
-                'latitude' => -7.280000,
-                'longitude' => 112.790000,
+                'link_gmaps' => 'https://maps.google.com/?q=-7.280000,112.790000',
                 'no_telp' => '031-7654321',
                 'is_active' => true,
                 'created_at' => now(),
@@ -45,8 +43,7 @@ return new class extends Migration
             [
                 'nama' => 'Kantor Cabang Admin Barat',
                 'alamat' => 'Jl. HR Muhammad No. 120, Surabaya, Jawa Timur',
-                'latitude' => -7.260000,
-                'longitude' => 112.730000,
+                'link_gmaps' => 'https://maps.google.com/?q=-7.260000,112.730000',
                 'no_telp' => '031-9876543',
                 'is_active' => true,
                 'created_at' => now(),

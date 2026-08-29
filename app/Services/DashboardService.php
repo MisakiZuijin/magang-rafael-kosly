@@ -51,8 +51,8 @@ class DashboardService
         $isBerbagi = ($kamar->tipe === 'berbagi');
         $totalBiaya = $isBerbagi ? round($baseCost / 2) : $baseCost;
 
-        $tglMasuk = $penghuniKamar->tanggal_masuk ? \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->startOfDay() : null;
-        $tglKeluar = $penghuniKamar->tanggal_keluar ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay() : null;
+        $tglMasuk = $penghuniKamar->tanggal_masuk ? \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk) : null;
+        $tglKeluar = $penghuniKamar->tanggal_keluar ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar) : null;
         $today = \Carbon\Carbon::now()->startOfDay();
         $isFuture = $tglMasuk && $tglMasuk->gt($today);
 

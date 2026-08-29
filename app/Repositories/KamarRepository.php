@@ -42,4 +42,11 @@ class KamarRepository extends BaseRepository implements KamarRepositoryInterface
             ->latest()
             ->get();
     }
+
+    public function findByKode(string $kode): ?Kamar
+    {
+        return $this->model->where('kode_kamar', $kode)
+            ->orWhere('id', is_numeric($kode) ? (int)$kode : 0)
+            ->first();
+    }
 }

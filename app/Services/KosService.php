@@ -61,4 +61,9 @@ class KosService
     {
         return $this->repository->getAllLocations();
     }
+
+    public function toggleLock(int $id): ?Kos
+    {
+        return $this->repository->toggleLock($id);
+    }
 }

@@ -12,6 +12,7 @@ class Pembayaran extends Model
     protected $table = 'pembayaran';
 
     protected $fillable = [
+        'kode_invoice',
         'penghuni_kamar_id',
         'jumlah',
         'porsi_bayar',
@@ -26,6 +27,20 @@ class Pembayaran extends Model
         'tanggal_verifikasi',
         'catatan_verifikasi',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            if (empty($model->kode_invoice)) {
+                $model->kode_invoice = 'INV-' . date('Ymd') . '-' . strtoupper(\Illuminate\Support\Str::random(8));
+            }
+        });
+    }
+
+    public function getRouteKeyName()
+    {
+        return 'kode_invoice';
+    }
 
     protected function casts(): array
     {

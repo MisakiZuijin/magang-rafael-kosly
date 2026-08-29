@@ -12,6 +12,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'nama',
+        'slug',
         'email',
         'password',
         'no_hp',
@@ -19,6 +20,26 @@ class User extends Authenticatable
         'foto_profile',
         'is_active',
     ];
+
+    protected static function booted()
+    {
+        static::saving(function ($user) {
+            if (empty($user->slug) || $user->isDirty('nama')) {
+                $slug = \Illuminate\Support\Str::slug($user->nama);
+                $originalSlug = $slug;
+                $count = 1;
+                while (static::where('slug', $slug)->where('id', '!=', $user->id ?? 0)->exists()) {
+                    $slug = $originalSlug . '-' . $count++;
+                }
+                $user->slug = $slug;
+            }
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
 
     protected $hidden = [
         'password',
