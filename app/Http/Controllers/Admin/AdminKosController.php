@@ -39,8 +39,7 @@ class AdminKosController extends Controller
             'nama' => 'required|string|max:100',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'alamat' => 'nullable|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'link_gmaps' => 'nullable|string',
             'deskripsi' => 'nullable|string',
             'no_rekening' => 'nullable|string|max:50',
             'bank' => 'nullable|string|max:50',
@@ -151,15 +150,21 @@ class AdminKosController extends Controller
                 'penghuni_id_3.different' => 'Penghuni ke-3 harus orang yang berbeda dari Penghuni ke-1 dan ke-2.',
             ]);
 
+            $tglMasukObj = \Carbon\Carbon::parse($validated['tanggal_masuk'])->setTime(0, 0, 0);
             if (empty($validated['tanggal_keluar'])) {
                 if ($validated['durasi'] === 'bulanan') {
-                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString();
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(30)->setTime(14, 0, 0);
                 } elseif ($validated['durasi'] === 'mingguan') {
-                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(7)->toDateString();
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(7)->setTime(14, 0, 0);
                 } else {
-                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+                    $tglKeluarObj = $tglMasukObj->copy()->addDay()->setTime(14, 0, 0);
                 }
+            } else {
+                $tglKeluarObj = \Carbon\Carbon::parse($validated['tanggal_keluar'])->setTime(14, 0, 0);
             }
+
+            $validated['tanggal_masuk'] = $tglMasukObj->toDateTimeString();
+            $validated['tanggal_keluar'] = $tglKeluarObj->toDateTimeString();
 
             // Register Penghuni 1
             $this->penghuniKamarService->create([
@@ -215,15 +220,21 @@ class AdminKosController extends Controller
                 'durasi' => 'required|in:harian,mingguan,bulanan',
             ]);
 
+            $tglMasukObj = \Carbon\Carbon::parse($validated['tanggal_masuk'])->setTime(0, 0, 0);
             if (empty($validated['tanggal_keluar'])) {
                 if ($validated['durasi'] === 'bulanan') {
-                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(30)->toDateString();
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(30)->setTime(14, 0, 0);
                 } elseif ($validated['durasi'] === 'mingguan') {
-                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDays(7)->toDateString();
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(7)->setTime(14, 0, 0);
                 } else {
-                    $validated['tanggal_keluar'] = \Carbon\Carbon::parse($validated['tanggal_masuk'])->addDay()->toDateString();
+                    $tglKeluarObj = $tglMasukObj->copy()->addDay()->setTime(14, 0, 0);
                 }
+            } else {
+                $tglKeluarObj = \Carbon\Carbon::parse($validated['tanggal_keluar'])->setTime(14, 0, 0);
             }
+
+            $validated['tanggal_masuk'] = $tglMasukObj->toDateTimeString();
+            $validated['tanggal_keluar'] = $tglKeluarObj->toDateTimeString();
 
             $validated['status'] = 'aktif';
             $this->penghuniKamarService->create($validated);
@@ -247,12 +258,12 @@ class AdminKosController extends Controller
         return redirect()->back()->with('success', 'Penghuni berhasil di-checkout.');
     }
 
-    public function kosongkanKamar(int $kamarId)
+    public function kosongkanKamar(string|int $kamarId)
     {
-        $kamar = Kamar::find($kamarId);
+        $kamar = Kamar::where('kode_kamar', $kamarId)->orWhere('id', is_numeric($kamarId) ? (int)$kamarId : 0)->firstOrFail();
         $kodeKamar = $kamar->kode_kamar ?? '-';
 
-        $penghuniKamarList = PenghuniKamar::where('kamar_id', $kamarId)
+        $penghuniKamarList = PenghuniKamar::where('kamar_id', $kamar->id)
             ->where('status', 'aktif')
             ->get();
 
@@ -260,23 +271,22 @@ class AdminKosController extends Controller
             $this->penghuniKamarService->checkout($pk->id);
         }
 
-        $this->kamarService->updateStatus($kamarId, 'kosong');
+        $this->kamarService->updateStatus($kamar->id, 'kosong');
         $this->logAktivitasService->log('kosongkan_kamar', "Mengosongkan seluruh penghuni pada Kamar {$kodeKamar}");
 
         return redirect()->back()->with('success', 'Kamar berhasil dikosongkan.');
     }
 
-    public function updateKos(Request $request, int $id)
+    public function updateKos(Request $request, string|int $id)
     {
-        $kos = \App\Models\Kos::findOrFail($id);
+        $kos = \App\Models\Kos::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
 
         $validated = $request->validate([
             'mitra_id' => 'required|exists:users,id',
             'nama' => 'required|string|max:100',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
             'alamat' => 'nullable|string',
-            'latitude' => 'nullable|numeric',
-            'longitude' => 'nullable|numeric',
+            'link_gmaps' => 'nullable|string',
             'deskripsi' => 'nullable|string',
             'no_rekening' => 'nullable|string|max:50',
             'bank' => 'nullable|string|max:50',
@@ -290,14 +300,16 @@ class AdminKosController extends Controller
             $validated['foto'] = $request->file('foto')->store('images/kos', 'public');
         }
 
-        $this->kosService->update($id, $validated);
+        $this->kosService->update($kos->id, $validated);
         $this->logAktivitasService->log('update_kos', "Memperbarui data kos: {$validated['nama']}");
 
         return redirect()->back()->with('success', 'Data kos berhasil diperbarui.');
     }
 
-    public function updateKamar(Request $request, int $id)
+    public function updateKamar(Request $request, string|int $id)
     {
+        $kamar = Kamar::where('kode_kamar', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
+
         if ($request->has('harga_per_bulan')) {
             $request->merge(['harga_per_bulan' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_bulan'))]);
         }
@@ -322,8 +334,7 @@ class AdminKosController extends Controller
             'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
-        $existingKamar = $this->kamarService->getById($id);
-        $fotoPaths = $existingKamar->foto ?? [];
+        $fotoPaths = $kamar->foto ?? [];
 
         if ($request->hasFile('foto')) {
             foreach ($request->file('foto') as $file) {
@@ -334,22 +345,25 @@ class AdminKosController extends Controller
         }
 
         $validated['foto'] = array_values($fotoPaths);
-        $activeCount = \App\Models\PenghuniKamar::where('kamar_id', $id)->where('status', 'aktif')->count();
+        $activeCount = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count();
         if ($validated['tipe'] === 'berbagi') {
             $validated['kapasitas'] = $activeCount >= 3 ? 3 : 2;
         } else {
             $validated['kapasitas'] = 1;
         }
 
-        $this->kamarService->update($id, $validated);
+        $this->kamarService->update($kamar->id, $validated);
         $this->logAktivitasService->log('update_kamar', "Memperbarui data Kamar {$validated['kode_kamar']}");
 
         return redirect()->back()->with('success', 'Data kamar berhasil diperbarui.');
     }
 
-    public function showKamar(int $id)
+    public function showKamar(string|int $id)
     {
-        $kamar = \App\Models\Kamar::with(['kos.mitra', 'penghuniKamar.penghuni'])->findOrFail($id);
+        $kamar = \App\Models\Kamar::with(['kos.mitra', 'penghuniKamar.penghuni'])
+            ->where('kode_kamar', $id)
+            ->orWhere('id', is_numeric($id) ? (int)$id : 0)
+            ->firstOrFail();
 
         return view('admin.kamar.show', [
             'kamar' => $kamar,
@@ -357,9 +371,9 @@ class AdminKosController extends Controller
         ]);
     }
 
-    public function deleteFotoKamar(Request $request, int $id)
+    public function deleteFotoKamar(Request $request, string|int $id)
     {
-        $kamar = \App\Models\Kamar::findOrFail($id);
+        $kamar = \App\Models\Kamar::where('kode_kamar', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         $index = (int)$request->input('index');
         $fotos = $kamar->foto ?? [];
 
@@ -370,5 +384,18 @@ class AdminKosController extends Controller
         }
 
         return redirect()->back()->with('success', 'Foto kamar berhasil dihapus.');
+    }
+
+    public function toggleLock(string|int $id)
+    {
+        $kos = $this->kosService->toggleLock($id);
+        if (!$kos) {
+            return redirect()->back()->with('error', 'Kos tidak ditemukan.');
+        }
+
+        $statusText = $kos->is_locked ? 'dikunci (Mitra tidak bisa mengedit kamar)' : 'dibuka (Mitra dapat mengedit kamar)';
+        $this->logAktivitasService->log('toggle_lock_kos', "Akses edit kamar untuk Kos {$kos->nama} telah {$statusText}");
+
+        return redirect()->back()->with('success', "Akses edit kamar untuk Kos '{$kos->nama}' berhasil {$statusText}.");
     }
 }

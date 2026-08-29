@@ -7,8 +7,8 @@ $activePenghunis = $kamar->penghuniKamar ? $kamar->penghuniKamar->where('status'
 $isTerisi = $kamar->status === 'terisi' || $activePenghunis->isNotEmpty();
 $todayDate = \Carbon\Carbon::now()->startOfDay();
 
-$hasExpiredPenghuni = $activePenghunis->contains(function($pk) use ($todayDate) {
-    return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+$hasExpiredPenghuni = $activePenghunis->contains(function($pk) {
+    return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
 });
 $fotos = is_array($kamar->foto) ? array_values($kamar->foto) : [];
 $fotoUrls = array_map(function($f) {
@@ -147,7 +147,7 @@ $fotoUrls = array_map(function($f) {
                 <img src="{{ $thumbUrl }}" alt="Thumb {{ $index + 1 }}" class="w-full h-full object-cover">
                 
                 @if(Auth::user() && Auth::user()->hasAnyRole(['admin', 'superadmin']))
-                <form action="{{ route($p . 'kamar.foto.delete', $kamar->id) }}" method="POST" onsubmit="return confirm('Hapus foto ini?')" class="absolute top-0.5 right-0.5 z-20">
+                <form action="{{ route($p . 'kamar.foto.delete', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" onsubmit="return confirm('Hapus foto ini?')" class="absolute top-0.5 right-0.5 z-20">
                     @csrf
                     @method('DELETE')
                     <input type="hidden" name="index" value="{{ $index }}">
@@ -219,14 +219,40 @@ $fotoUrls = array_map(function($f) {
             <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Detail Perabotan &amp; Fasilitas</h3>
         </div>
 
+        @php
+        $getFacilityIcon = function($name) {
+            $lower = strtolower($name);
+            if (str_contains($lower, 'kasur') || str_contains($lower, 'bed') || str_contains($lower, 'matras')) return '🛏️';
+            if (str_contains($lower, 'lemari') || str_contains($lower, 'wardrobe') || str_contains($lower, 'kabinet')) return '🗄️';
+            if (str_contains($lower, 'meja') || str_contains($lower, 'kursi') || str_contains($lower, 'desk')) return '🪑';
+            if (str_contains($lower, 'kipas') || str_contains($lower, 'fan')) return '🪭';
+            if (str_contains($lower, 'mandi') || str_contains($lower, 'toilet') || str_contains($lower, 'wc')) return '🚿';
+            if (str_contains($lower, 'ac') || str_contains($lower, 'pendingin')) return '❄️';
+            if (str_contains($lower, 'wifi') || str_contains($lower, 'internet')) return '📶';
+            if (str_contains($lower, 'dapur') || str_contains($lower, 'masak')) return '🍳';
+            if (str_contains($lower, 'tv') || str_contains($lower, 'televisi')) return '📺';
+            return '📦';
+        };
+        $detailsList = array_filter(array_map('trim', explode(',', $kamar->detail ?? '')));
+        @endphp
         <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 text-xs">
-            @if(!empty($kamar->detail))
-            <p class="text-gray-800 dark:text-gray-200 leading-relaxed font-semibold whitespace-pre-line">{{ $kamar->detail }}</p>
-            @else
+            @if(empty($kamar->detail) || strtolower(trim($kamar->detail)) === 'kosong')
             <div class="text-center py-1">
-                <span class="px-2.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-[11px] font-mono font-bold rounded-lg inline-block">
+                <span class="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-400 text-[11px] italic font-semibold rounded-lg inline-block">
                     Kosong (Tanpa Perabotan)
                 </span>
+            </div>
+            @else
+            <div class="flex flex-wrap items-center gap-1.5">
+                @foreach($detailsList as $item)
+                    @php
+                    $icon = $getFacilityIcon($item);
+                    @endphp
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/70 dark:border-amber-800/50 rounded-lg text-xs font-bold">
+                        <span>{{ $icon }}</span>
+                        <span>{{ $item }}</span>
+                    </span>
+                @endforeach
             </div>
             @endif
         </div>
@@ -286,18 +312,20 @@ $fotoUrls = array_map(function($f) {
             $penghuniUser = $pk->penghuni;
             $tglMasuk = $pk->tanggal_masuk ? \Carbon\Carbon::parse($pk->tanggal_masuk)->format('d M Y') : '-';
             $tglKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
-            $isExpiredPenghuni = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->startOfDay()->lessThanOrEqualTo($todayDate);
+            $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
+            $isExpiredPenghuni = $targetKeluar && $targetKeluar->isPast();
+            $overdueDays = $isExpiredPenghuni ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
             @endphp
             <div class="p-3 rounded-xl border {{ $isExpiredPenghuni ? 'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/50' : 'bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50' }} grid grid-cols-[1fr_auto] items-center gap-2 text-xs">
                 <div class="min-w-0">
                     <div class="grid grid-flow-col auto-cols-max items-center gap-1.5">
                         <span class="font-bold text-gray-900 dark:text-white text-xs truncate">{{ $penghuniUser->nama ?? 'Penghuni' }}</span>
                         <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase {{ $isExpiredPenghuni ? 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' }}">
-                            {{ $isExpiredPenghuni ? 'Masa Aktif Habis' : 'Aktif' }}
+                            {{ $isExpiredPenghuni ? "Terlewat {$overdueDays} Hari" : 'Aktif' }}
                         </span>
                     </div>
                     <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
-                        Sewa {{ ucfirst($pk->durasi) }} · s/d {{ $tglKeluar }}
+                        Sewa {{ ucfirst($pk->durasi) }} · s/d {{ $tglKeluar }} (Batas Checkout 14.00 WIB)
                     </p>
                 </div>
 
