@@ -43,7 +43,7 @@ class AdminPenggunaController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:6',
+            'password' => 'required|min:6|confirmed',
             'no_hp' => 'nullable|string|max:20',
             'role' => 'required|' . $allowedRoles,
         ]);
@@ -55,9 +55,9 @@ class AdminPenggunaController extends Controller
         return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil dibuat.');
     }
 
-    public function edit(int $id)
+    public function edit(string|int $id)
     {
-        $user = $this->userService->getUserById($id);
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         
         // Admin biasa tidak bisa mengedit akun Admin
         if ($user->role === 'admin' && Auth::user()->role !== 'super_admin') {
@@ -68,9 +68,9 @@ class AdminPenggunaController extends Controller
         return view($view, compact('user'));
     }
 
-    public function update(Request $request, int $id)
+    public function update(Request $request, string|int $id)
     {
-        $user = User::findOrFail($id);
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
 
         if ($user->role === 'admin' && Auth::user()->role !== 'super_admin') {
             return redirect()->back()->with('error', 'Akses ditolak. Pengelolaan akun Admin hanya dapat dilakukan oleh Super Admin.');
@@ -78,20 +78,20 @@ class AdminPenggunaController extends Controller
 
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email,' . $id,
-            'password' => 'nullable|min:6',
+            'email' => 'required|email|unique:users,email,' . $user->id,
+            'password' => 'nullable|min:6|confirmed',
             'no_hp' => 'nullable|string|max:20',
             'is_active' => 'boolean',
         ]);
 
-        $this->userService->updateUser($id, $validated);
+        $this->userService->updateUser($user->id, $validated);
         $this->logAktivitasService->log('update_pengguna', "Memperbarui data akun pengguna: {$validated['nama']}");
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil diupdate.');
     }
 
-    public function toggleActive(int $id)
+    public function toggleActive(string|int $id)
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
@@ -99,21 +99,21 @@ class AdminPenggunaController extends Controller
             return redirect()->back()->with('error', 'Akses ditolak. Aksi penonaktifan pengguna hanya dapat dilakukan oleh Super Admin.');
         }
 
-        $user = User::findOrFail($id);
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         $wasActive = $user->is_active;
 
-        $this->userService->toggleActive($id);
+        $this->userService->toggleActive($user->id);
 
         if ($wasActive) {
-            $this->logAktivitasService->log('toggle_pengguna', "Super Admin menonaktifkan akun {$user->role}: {$user->nama} & menghapus seluruh data log aktivitasnya.");
-            return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil dinonaktifkan. Seluruh data log aktivitas pengguna ini di database telah dihapus.");
+            $this->logAktivitasService->log('toggle_pengguna', "Super Admin menonaktifkan akun {$user->role}: {$user->nama} (Akses login ditutup).");
+            return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil dinonaktifkan. Pengguna ini tidak dapat melakukan login ke sistem.");
         } else {
             $this->logAktivitasService->log('toggle_pengguna', "Super Admin mengaktifkan kembali akun {$user->role}: {$user->nama}");
             return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil diaktifkan kembali.");
         }
     }
 
-    public function destroy(int $id)
+    public function destroy(string|int $id)
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
@@ -121,14 +121,14 @@ class AdminPenggunaController extends Controller
             return redirect()->back()->with('error', 'Akses ditolak. Aksi hapus pengguna hanya dapat dilakukan oleh Super Admin.');
         }
 
-        $user = User::findOrFail($id);
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         $nama = $user->nama;
         $role = $user->role;
 
-        $this->userService->deleteUser($id);
-        $this->logAktivitasService->log('hapus_pengguna', "Super Admin menghapus permanen akun {$role}: {$nama}");
+        $this->userService->deleteUser($user->id);
+        $this->logAktivitasService->log('hapus_pengguna', "Super Admin menghapus permanen akun {$role}: {$nama} beserta seluruh log aktivitas terkait.");
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
-        return redirect()->route($prefix . 'pengguna.index')->with('success', "Akun {$role} {$nama} berhasil dihapus permanen dari sistem.");
+        return redirect()->route($prefix . 'pengguna.index')->with('success', "Akun {$role} {$nama} dan seluruh data log aktivitasnya berhasil dihapus permanen dari sistem.");
     }
 }
