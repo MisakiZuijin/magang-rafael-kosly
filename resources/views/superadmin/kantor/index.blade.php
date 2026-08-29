@@ -48,9 +48,12 @@
                         <h3 class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ $kan->nama }}</h3>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $kan->alamat ?? 'Alamat belum diatur' }}</p>
 
-                        <div class="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-gray-400 font-mono">
-                            <span>📍 Lat: {{ $kan->latitude }}</span>
-                            <span>Lng: {{ $kan->longitude }}</span>
+                        <div class="flex flex-wrap items-center gap-3 mt-1 text-[11px] text-gray-500 dark:text-gray-400">
+                            @if($kan->link_gmaps)
+                            <a href="{{ $kan->link_gmaps }}" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold">
+                                <span>📍 Link Google Maps</span>
+                            </a>
+                            @endif
                             @if($kan->no_telp)
                             <span>📞 {{ $kan->no_telp }}</span>
                             @endif
@@ -68,14 +71,14 @@
                     Edit Kantor
                 </button>
 
-                <form action="{{ route('superadmin.kantor.toggle', $kan->id) }}" method="POST" class="flex-1">
+                <form action="{{ route('superadmin.kantor.toggle', $kan->slug ?? $kan->id) }}" method="POST" class="flex-1">
                     @csrf
                     <x-btn type="submit" size="sm" variant="{{ $kan->is_active ? 'danger' : 'primary' }}" class="w-full !min-h-[34px] !py-1 text-xs">
                         {{ $kan->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                     </x-btn>
                 </form>
 
-                <form action="{{ route('superadmin.kantor.destroy', $kan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data kantor ini?')" class="flex-shrink-0">
+                <form action="{{ route('superadmin.kantor.destroy', $kan->slug ?? $kan->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data kantor ini?')" class="flex-shrink-0">
                     @csrf
                     @method('DELETE')
                     <button type="submit" class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all" title="Hapus Kantor">
@@ -110,15 +113,9 @@
                     <textarea name="alamat" rows="3" placeholder="Tuliskan jalan, nomor, dan kota..." class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500"></textarea>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Latitude</label>
-                        <input type="text" inputmode="decimal" name="latitude" required placeholder="-7.250445" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Longitude</label>
-                        <input type="text" inputmode="decimal" name="longitude" required placeholder="112.768845" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Link Google Maps</label>
+                    <input type="text" name="link_gmaps" placeholder="https://maps.google.com/..." class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500">
                 </div>
 
                 <div>
@@ -142,7 +139,7 @@
                 <button @click="modalEdit = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
             </div>
 
-            <form :action="`{{ url('/superadmin/kantor') }}/${editKantor.id}`" method="POST" class="space-y-3.5">
+            <form :action="`{{ url('/superadmin/kantor') }}/${editKantor.slug || editKantor.id}`" method="POST" class="space-y-3.5">
                 @csrf
                 @method('PUT')
 
@@ -156,15 +153,9 @@
                     <textarea name="alamat" x-model="editKantor.alamat" rows="3" class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500"></textarea>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Latitude</label>
-                        <input type="text" inputmode="decimal" name="latitude" x-model="editKantor.latitude" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Longitude</label>
-                        <input type="text" inputmode="decimal" name="longitude" x-model="editKantor.longitude" required class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 font-mono [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
-                    </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Link Google Maps</label>
+                    <input type="text" name="link_gmaps" x-model="editKantor.link_gmaps" placeholder="https://maps.google.com/..." class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500">
                 </div>
 
                 <div>

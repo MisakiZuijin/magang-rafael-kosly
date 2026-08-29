@@ -194,9 +194,10 @@
             <div class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
                 @foreach($data['penghuni_aktif']->take(5) as $pk)
                 @php
-                $isExpired = $pk->tanggal_keluar && $pk->tanggal_keluar < now();
-                    $daysLeft=$pk->tanggal_keluar ? round(now()->diffInDays($pk->tanggal_keluar, false)) : null;
-                    @endphp
+                $tglKeluarTarget = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
+                $isExpired = $tglKeluarTarget && $tglKeluarTarget->isPast();
+                $daysLeft = $tglKeluarTarget ? round(now()->diffInDays($tglKeluarTarget, false)) : null;
+                @endphp
                     <div class="p-2.5 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
                         <div class="min-w-0">
                             <p class="text-xs font-bold text-gray-900 dark:text-white truncate">{{ $pk->penghuni->nama ?? '-' }}</p>

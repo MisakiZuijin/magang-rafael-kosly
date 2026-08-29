@@ -49,33 +49,39 @@ class SuperAdminDashboardController extends Controller
         return redirect()->route('superadmin.pengguna.index')->with('success', 'Admin berhasil dibuat.');
     }
 
-    public function adminUpdate(Request $request, int $id)
+    public function adminUpdate(Request $request, string|int $id)
     {
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
+
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email,' . $id,
+            'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:6',
             'no_hp' => 'nullable|string|max:20',
         ]);
 
-        $this->userService->updateUser($id, array_filter($validated));
-        $this->logAktivitasService->log('update_admin', "Super Admin memperbarui data Admin ID: {$id}");
+        $this->userService->updateUser($user->id, array_filter($validated));
+        $this->logAktivitasService->log('update_admin', "Super Admin memperbarui data Admin: {$user->nama}");
 
         return redirect()->route('superadmin.pengguna.index')->with('success', 'Data admin berhasil diupdate.');
     }
 
-    public function adminToggle(int $id)
+    public function adminToggle(string|int $id)
     {
-        $user = User::find($id);
-        $this->userService->toggleActive($id);
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
+        $this->userService->toggleActive($user->id);
         $this->logAktivitasService->log('toggle_admin', "Super Admin mengubah status aktif Admin: " . ($user->nama ?? $id));
 
         return redirect()->back()->with('success', 'Status admin berhasil diubah.');
     }
 
-    public function adminDestroy(int $id)
+    public function adminDestroy(string|int $id)
     {
-        $user = User::where('role', 'admin')->findOrFail($id);
+        $user = User::where('role', 'admin')
+            ->where(function($q) use ($id) {
+                $q->where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0);
+            })
+            ->firstOrFail();
         $nama = $user->nama;
         $user->delete();
         $this->logAktivitasService->log('hapus_admin', "Super Admin menghapus akun Admin: {$nama}");
@@ -98,8 +104,7 @@ class SuperAdminDashboardController extends Controller
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
             'alamat' => 'nullable|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'link_gmaps' => 'nullable|string',
             'no_telp' => 'nullable|string|max:30',
         ]);
 
@@ -109,15 +114,14 @@ class SuperAdminDashboardController extends Controller
         return redirect()->route('superadmin.kantor.index')->with('success', 'Lokasi kantor baru berhasil ditambahkan.');
     }
 
-    public function kantorUpdate(Request $request, int $id)
+    public function kantorUpdate(Request $request, string|int $id)
     {
-        $kantor = Kantor::findOrFail($id);
+        $kantor = Kantor::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
 
         $validated = $request->validate([
             'nama' => 'required|string|max:100',
             'alamat' => 'nullable|string',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
+            'link_gmaps' => 'nullable|string',
             'no_telp' => 'nullable|string|max:30',
         ]);
 
@@ -127,18 +131,18 @@ class SuperAdminDashboardController extends Controller
         return redirect()->route('superadmin.kantor.index')->with('success', 'Data lokasi kantor berhasil diupdate.');
     }
 
-    public function kantorToggle(int $id)
+    public function kantorToggle(string|int $id)
     {
-        $kantor = Kantor::findOrFail($id);
+        $kantor = Kantor::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         $kantor->update(['is_active' => !$kantor->is_active]);
         $this->logAktivitasService->log('toggle_kantor', "Mengubah status aktif kantor: {$kantor->nama}");
 
         return redirect()->back()->with('success', 'Status kantor berhasil diubah.');
     }
 
-    public function kantorDestroy(int $id)
+    public function kantorDestroy(string|int $id)
     {
-        $kantor = Kantor::findOrFail($id);
+        $kantor = Kantor::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         $nama = $kantor->nama;
         $kantor->delete();
         $this->logAktivitasService->log('hapus_kantor', "Menghapus lokasi kantor: {$nama}");
