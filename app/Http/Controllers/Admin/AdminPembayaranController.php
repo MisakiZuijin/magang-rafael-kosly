@@ -59,20 +59,18 @@ class AdminPembayaranController extends Controller
                 $tglVerif = $pembayaran->tanggal_verifikasi ? $pembayaran->tanggal_verifikasi->format('d-m-Y H:i') : date('d-m-Y H:i');
                 $waMessage = "Halo *{$penghuniNama}*,\n\n"
                     . "Pembayaran sewa kos Anda telah *BERHASIL DIVERIFIKASI* oleh admin.\n\n"
-                    . "📋 *RINCIAN NOTA PEMBAYARAN:*\n"
+                    . "📋 *RINCIAN PEMBAYARAN:*\n"
                     . "• Kos: *{$kosNama}*\n"
                     . "• Kamar: *{$kodeKamar}*\n"
                     . "• Nominal: *Rp {$nominal}*\n"
                     . "• Waktu Verifikasi: *{$tglVerif}*\n"
                     . "• Status: *LUNAS / TERVERIFIKASI*\n\n"
-                    . "📄 *Unduh & Cetak Bukti Nota Resmi Anda:*\n"
-                    . "{$notaUrl}\n\n"
                     . "Terima kasih telah melakukan pembayaran!";
 
                 try {
                     app(\App\Services\WhatsAppService::class)->sendDirect(
                         $penghuni->no_hp,
-                        'BUKTI NOTA PEMBAYARAN KOSLY',
+                        'NOTIFIKASI PEMBAYARAN KOSLY',
                         $waMessage
                     );
                 } catch (\Throwable $e) {
@@ -120,7 +118,7 @@ class AdminPembayaranController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', 'Pembayaran berhasil diverifikasi. Bukti nota resmi telah dikirim ke penghuni.');
+        return redirect()->back()->with('success', 'Pembayaran berhasil diverifikasi.');
     }
 
     public function nota(string|int $id)

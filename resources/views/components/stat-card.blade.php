@@ -9,11 +9,11 @@ $colorStyles = [
 'red' => 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
 ];
 $borderStyles = [
-'emerald' => 'border-emerald-200 dark:border-emerald-600',
-'blue' => 'border-blue-200 dark:border-blue-600',
-'amber' => 'border-amber-200 dark:border-amber-600',
-'purple' => 'border-purple-200 dark:border-purple-600',
-'red' => 'border-red-200 dark:border-red-600',
+'emerald' => 'border-emerald-200 dark:border-emerald-900',
+'blue' => 'border-blue-200 dark:border-blue-900',
+'amber' => 'border-amber-200 dark:border-amber-900',
+'purple' => 'border-purple-200 dark:border-purple-900',
+'red' => 'border-red-200 dark:border-red-900',
 ];
 $iconStyle = $colorStyles[$color] ?? $colorStyles['emerald'];
 $borderClass = $borderStyles[$color] ?? $borderStyles['emerald'];

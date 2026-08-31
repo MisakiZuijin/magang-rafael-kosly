@@ -125,7 +125,7 @@
                 </div>
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3.5 border-t border-gray-100 dark:border-gray-800 text-xs">
+            <div class="grid grid-cols-1 sm:items-center gap-3 pt-3.5 border-t border-gray-100 dark:border-gray-800 text-xs">
                 <div class="flex items-center gap-1.5 text-gray-500 dark:text-gray-400 font-mono text-xs">
                     <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -358,12 +358,12 @@
                 <form :action="verifyUrl" method="POST" class="flex-1">
                     @csrf
                     <x-btn type="submit" variant="primary" size="sm" class="w-full !min-h-[42px] text-xs font-bold shadow-xs">
-                        ✓ Konfirmasi Verifikasi
+                        Verifikasi
                     </x-btn>
                 </form>
 
                 <x-btn type="button" variant="danger" size="sm" @click="showRejectReason = true" class="flex-1 !min-h-[42px] text-xs font-bold shadow-xs">
-                    ✕ Tolak Pembayaran
+                    Tolak
                 </x-btn>
 
                 <x-btn type="button" variant="secondary" size="sm" @click="showReviewModal = false" class="sm:flex-none sm:px-4 !min-h-[42px] text-xs font-bold">
