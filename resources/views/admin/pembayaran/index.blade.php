@@ -116,10 +116,10 @@
                     </span>
                     @if($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
                     @php
-                    $kapasitasKamar = $p->penghuniKamar->kamar->kapasitas ?? 2;
+                    $badgeInfo = $p->getTarifBadgeInfo();
                     @endphp
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $kapasitasKamar >= 3 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : ($p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
-                        {{ $kapasitasKamar >= 3 ? 'Tarif 3 Orang' : ($p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang') }}
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $badgeInfo['class'] }}">
+                        {{ $badgeInfo['text'] }}
                     </span>
                     @endif
                 </div>
@@ -164,7 +164,8 @@
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
         $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar');
         $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang|Tarif 3 Orang|Tarif 1 Kamar) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
-        $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : ($p->tanggal_verifikasi ? $p->tanggal_verifikasi->format('d M Y') : '-');
+        $tanggalTransferFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : '-';
+        $waktuVerifFormatted = $p->tanggal_verifikasi ? $p->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : ($p->updated_at ? $p->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : '-');
         $buktiUrl = $p->bukti_transfer_url ? asset('storage/' . $p->bukti_transfer_url) : '';
         @endphp
 
@@ -193,41 +194,46 @@
                     </span>
                     @elseif($p->penghuniKamar && $p->penghuniKamar->kamar && $p->penghuniKamar->kamar->tipe === 'berbagi')
                     @php
-                    $kapasitasKamar = $p->penghuniKamar->kamar->kapasitas ?? 2;
+                    $badgeInfo = $p->getTarifBadgeInfo();
                     @endphp
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $kapasitasKamar >= 3 ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300' : ($p->porsi_bayar == 50 ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
-                        {{ $kapasitasKamar >= 3 ? 'Tarif 3 Orang' : ($p->porsi_bayar == 50 ? 'Tarif 1 Orang' : 'Tarif 2 Orang') }}
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $badgeInfo['class'] }}">
+                        {{ $badgeInfo['text'] }}
                     </span>
                     @endif
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-6 items-center gap-3 pt-3.5 border-t border-gray-100 dark:border-gray-800 text-xs">
-                <div class="grid col-span-3">
+                <div class="col-span-6 space-y-1">
                     @if($isCoveredByRoommate)
-                    <span class="text-blue-600 dark:text-blue-400 font-mono text-xs font-medium items-center gap-1.5">
-                        <span>👤 Dibayar oleh: <strong>{{ $uploaderName }}</strong> ({{ $tanggalFormatted }})</span>
-                    </span>
-                    @else
-                    <span class="grid grid-cols-1 sm:grid-cols-7 text-left text-gray-500 dark:text-gray-400 font-mono text-xs items-center gap-1.5">
-                        <svg class="col-span-1 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <p class="text-blue-600 dark:text-blue-400 font-mono text-xs font-medium flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <span>Wakil: <strong>{{ $uploaderName }}</strong></span>
+                    </p>
+                    @endif
+                    <p class="text-emerald-700 dark:text-emerald-400 font-mono text-xs font-semibold flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Diverifikasi: <strong>{{ $waktuVerifFormatted }}</strong></span>
+                    </p>
+                    <p class="text-gray-400 dark:text-gray-500 font-mono text-[11px] flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span class="col-span-6">Tgl: {{ $tanggalFormatted }}</span>
-                    </span>
-                    @endif
+                        <span>Tgl Transfer: {{ $tanggalTransferFormatted }}</span>
+                    </p>
                 </div>
 
-                <div class="grid col-span-3">
+                <div class="col-span-6 grid grid-cols-1 items-center gap-3">
                     @if($buktiUrl)
-                    <button type="button" @click="selectedPenghuni = '{{ addslashes($penghuniNama) }}'; selectedBuktiUrl = '{{ $buktiUrl }}'; openFullscreen();" class="items-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 font-bold bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all">
-                        <span>🔍 Bukti Transfer</span>
+                    <button type="button" @click="selectedPenghuni = '{{ addslashes($penghuniNama) }}'; selectedBuktiUrl = '{{ $buktiUrl }}'; openFullscreen();" class="items-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 font-bold bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shadow-2xs">
+                        <span class="text-center">🔍 Bukti Transfer</span>
                     </button>
                     @endif
-                </div>
-
-                <div class="grid col-start-2 col-span-4">
-                    <a href="{{ route('pembayaran.nota', $p->kode_invoice ?? $p->id) }}" class="items-center text-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-xl border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all shadow-2xs">
+                    <a href="{{ route('pembayaran.nota', $p->kode_invoice ?? $p->id) }}" class="items-center text-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all shadow-2xs">
                         <span>📄 Nota Pembayaran</span>
                     </a>
                 </div>
@@ -245,7 +251,8 @@
         $penghuniNama = $p->penghuniKamar->penghuni->nama ?? 'Anak Kos';
         $kosKamar = ($p->penghuniKamar->kamar->kode_kamar ?? '-') . ' · ' . ($p->penghuniKamar->kamar->kos->nama ?? '-');
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
-        $tanggalFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : '-';
+        $waktuTolakFormatted = $p->tanggal_verifikasi ? $p->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : ($p->updated_at ? $p->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : '-');
+        $alasanTolak = $p->catatan_verifikasi ?: ($p->catatan ?: 'Bukti pembayaran ditolak oleh admin.');
         @endphp
 
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-5 border border-red-100 dark:border-red-900/40 shadow-sm space-y-3.5">
@@ -262,17 +269,20 @@
                         <span>{{ $kosKamar }}</span>
                     </p>
                 </div>
-                <span class="font-bold font-mono text-red-600 dark:text-red-400 text-base sm:text-lg">
-                    {{ $jumlahFormatted }}
-                </span>
+                <div class="sm:text-right">
+                    <span class="font-bold font-mono text-red-600 dark:text-red-400 text-base sm:text-lg block">
+                        {{ $jumlahFormatted }}
+                    </span>
+                </div>
             </div>
 
-            @if($p->catatan)
-            <div class="p-3.5 bg-red-50/80 dark:bg-red-950/30 rounded-xl text-xs text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/50 leading-relaxed">
-                <span class="font-bold block mb-0.5">Alasan Penolakan:</span>
-                <p>{{ $p->catatan }}</p>
+            <div class="p-3.5 bg-red-50/80 dark:bg-red-950/30 rounded-xl text-xs text-red-700 dark:text-red-300 border border-red-100 dark:border-red-900/50 leading-relaxed space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold block">Alasan Penolakan:</span>
+                    <span class="text-[10px] font-mono text-red-500">Waktu: {{ $waktuTolakFormatted }}</span>
+                </div>
+                <p>{{ $alasanTolak }}</p>
             </div>
-            @endif
         </div>
         @empty
         <x-empty-state message="Belum ada transaksi pembayaran yang ditolak." />

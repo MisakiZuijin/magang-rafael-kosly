@@ -423,6 +423,18 @@ return [
                             <span>✏️</span>
                             <span>Edit</span>
                         </button>
+
+                        {{-- Tombol Hapus Kos --}}
+                        <form action="{{ route($p . 'kos.destroy', $kos->slug ?? $kos->id) }}" method="POST" class="inline-flex m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Kos {{ addslashes($kos->nama) }}? Seluruh kamar dan data di dalamnya juga akan terhapus.')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                class="px-2.5 py-1 text-[10px] font-bold text-red-700 dark:text-red-300 bg-red-100 hover:bg-red-200 dark:hover:bg-red-800/50 dark:bg-red-900/40 dark:hover:bg-red-900/60 rounded-lg transition-all inline-flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-2xs"
+                                title="Hapus Kos">
+                                <span>🗑️</span>
+                                <span>Hapus</span>
+                            </button>
+                        </form>
                     </div>
                 </div>
 
@@ -478,16 +490,25 @@ return [
                                 </x-badge>
                             </div>
 
-                            <div class="grid grid-cols-2 items-center gap-2">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 items-center gap-1.5">
                                 <a href="{{ route($p . 'kamar.show', $kamar->kode_kamar ?? $kamar->id) }}"
-                                    class="px-1.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 hover:bg-emerald-200 dark:hover:bg-emerald-800/50 dark:bg-emerald-900/50 rounded-md transition-all gap-0.5 active:scale-95">
-                                    <span class="text-center">Detail</span>
+                                    class="col-span-1 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 hover:bg-emerald-200 dark:hover:bg-emerald-800/50 dark:bg-emerald-900/50 rounded-md transition-all active:scale-95">
+                                    <span>Detail</span>
                                 </a>
                                 <button type="button"
                                     @click="openEditKamarModal(@js($kamar))"
-                                    class="px-1.5 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100/90 hover:bg-blue-200 dark:hover:bg-blue-800/50 dark:bg-blue-900/50 rounded-md transition-all gap-0.5 active:scale-95">
-                                    <span class="text-center">Edit</span>
+                                    class="col-span-1 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100/90 hover:bg-blue-200 dark:hover:bg-blue-800/50 dark:bg-blue-900/50 rounded-md transition-all active:scale-95 cursor-pointer">
+                                    <span>Edit</span>
                                 </button>
+                                <form action="{{ route($p . 'kamar.destroy', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Kamar {{ addslashes($kamar->kode_kamar) }}?')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                        class="px-2 py-0.5 text-[10px] font-bold text-red-700 dark:text-red-300 bg-red-100 hover:bg-red-200 dark:hover:bg-red-800/50 dark:bg-red-900/40 dark:hover:bg-red-900/60 rounded-md transition-all active:scale-95 cursor-pointer"
+                                        title="Hapus Kamar">
+                                        <span>Hapus</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
 

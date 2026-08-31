@@ -58,16 +58,22 @@ class PembayaranService
             : 1;
         if ($activePenghuniCount < 1) $activePenghuniCount = 1;
 
-        // Cek jika teman sekamar sudah membayar setengah (50%), maka porsi bayar wajib 50%
+        // Cek jika teman sekamar sudah membayar setengah (50%) pada tagihan pending saat ini:
         if ($isBerbagi && $activePenghuniCount <= 2) {
+            $currentPeriodeMulai = $pembayaran->periode_mulai;
             $roommateHas50 = Pembayaran::whereHas('penghuniKamar', function ($q) use ($kamar, $pembayaran) {
                 $q->where('kamar_id', $kamar->id)
                   ->where('status', 'aktif')
                   ->where('id', '!=', $pembayaran->penghuni_kamar_id);
             })
-            ->whereIn('status', ['pending', 'terverifikasi'])
+            ->where('status', 'pending')
             ->whereNotNull('bukti_transfer_url')
             ->where('porsi_bayar', 50)
+            ->where(function($q) use ($currentPeriodeMulai) {
+                if ($currentPeriodeMulai) {
+                    $q->where('periode_mulai', $currentPeriodeMulai);
+                }
+            })
             ->exists();
 
             if ($roommateHas50) {
@@ -139,13 +145,20 @@ class PembayaranService
         $uploaderName = $uploaderUser->nama ?? 'Penghuni Kamar';
         $uploadTimeStr = now()->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB';
 
+        $activeRoomPenghuniCount = $isBerbagi
+            ? \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count()
+            : 1;
+        $tarifLabel = ($isBerbagi && $activeRoomPenghuniCount >= 3)
+            ? 'Tarif 3 Orang'
+            : ($porsiBayar == 50 ? 'Tarif 1 Orang' : ($isBerbagi ? 'Tarif 2 Orang' : 'Tarif Standar'));
+
         $updateData = [
             'bukti_transfer_url' => $buktiUrl,
             'tanggal_bayar' => now(),
             'status' => 'pending',
             'porsi_bayar' => $porsiBayar,
             'jumlah' => $jumlahBiaya,
-            'catatan_verifikasi' => "Menunggu verifikasi admin (Diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
+            'catatan_verifikasi' => "Menunggu verifikasi admin ({$tarifLabel} diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
         ];
 
         // Hanya perbarui skema biaya & periode jika ini adalah pembayaran perpanjangan sewa
@@ -191,7 +204,7 @@ class PembayaranService
                         'status' => 'pending',
                         'porsi_bayar' => 100,
                         'jumlah' => $jumlahBiaya,
-                        'catatan_verifikasi' => "Menunggu verifikasi admin (Pelunasan 1 kamar diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
+                        'catatan_verifikasi' => "Menunggu verifikasi admin (Pelunasan 1 kamar {$tarifLabel} diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
                     ];
 
                     if ($hasPreviousVerified) {
@@ -289,6 +302,9 @@ class PembayaranService
                     ->where('id', '!=', $pk->id)
                     ->get();
 
+                $totalOccupants = $roommatePks->count() + 1;
+                $labelTarif = ($totalOccupants >= 3 || str_contains($pembayaran->catatan_verifikasi ?? '', '3 Orang')) ? 'Tarif 3 Orang' : 'Tarif 2 Orang';
+
                 foreach ($roommatePks as $roommatePk) {
                     $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
                         ->where('status', 'pending')
@@ -304,7 +320,7 @@ class PembayaranService
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 1 Kamar oleh {$uploaderName})",
+                            'catatan_verifikasi' => "Lunas (Dibayar {$labelTarif} oleh {$uploaderName})",
                         ]);
                     } else {
                         Pembayaran::create([
@@ -319,7 +335,7 @@ class PembayaranService
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar Tarif 1 Kamar oleh {$uploaderName})",
+                            'catatan_verifikasi' => "Lunas (Dibayar {$labelTarif} oleh {$uploaderName})",
                         ]);
                     }
 
@@ -333,6 +349,25 @@ class PembayaranService
                     }
                 }
             }
+        }
+
+        $verifTimeStr = now()->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB';
+
+        if ($kamar && $kamar->tipe === 'berbagi') {
+            $roommateCount = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+                ->where('status', 'aktif')
+                ->where('id', '!=', $pk->id)
+                ->count();
+            $totalOccupants = $roommateCount + 1;
+            $labelTarif = ($totalOccupants >= 3 || str_contains($pembayaran->catatan_verifikasi ?? '', '3 Orang')) ? 'Tarif 3 Orang' : 'Tarif 2 Orang';
+
+            if ($pembayaran->porsi_bayar == 100) {
+                $data['catatan_verifikasi'] = "Lunas (Pelunasan 1 Kamar {$labelTarif} terverifikasi oleh Admin pada {$verifTimeStr})";
+            } else {
+                $data['catatan_verifikasi'] = "Lunas (Pembayaran Tarif 1 Orang terverifikasi oleh Admin pada {$verifTimeStr})";
+            }
+        } else {
+            $data['catatan_verifikasi'] = "Lunas (Pembayaran sewa terverifikasi oleh Admin pada {$verifTimeStr})";
         }
 
         $data['status'] = 'terverifikasi';
@@ -355,15 +390,18 @@ class PembayaranService
             'tanggal_verifikasi' => now(),
         ]);
 
+        $defaultMulai = $oldPembayaran->periode_mulai ?? now()->toDateString();
+        $defaultSelesai = $oldPembayaran->periode_selesai ?? now()->addDays(30)->toDateString();
+
         // 2. Buat pembayaran/tagihan baru secara otomatis untuk penghuni agar bisa kirim form bukti transfer baru
         Pembayaran::create([
             'penghuni_kamar_id' => $oldPembayaran->penghuni_kamar_id,
             'jumlah' => $oldPembayaran->jumlah,
             'porsi_bayar' => $oldPembayaran->porsi_bayar,
-            'tipe_perpanjangan' => $oldPembayaran->tipe_perpanjangan,
-            'jumlah_hari' => $oldPembayaran->jumlah_hari,
-            'periode_mulai' => $oldPembayaran->periode_mulai,
-            'periode_selesai' => $oldPembayaran->periode_selesai,
+            'tipe_perpanjangan' => $oldPembayaran->tipe_perpanjangan ?? 'bulanan',
+            'jumlah_hari' => $oldPembayaran->jumlah_hari ?? 30,
+            'periode_mulai' => $defaultMulai,
+            'periode_selesai' => $defaultSelesai,
             'status' => 'pending',
             'bukti_transfer_url' => null,
             'tanggal_bayar' => null,
@@ -394,10 +432,10 @@ class PembayaranService
                         'penghuni_kamar_id' => $rPk->id,
                         'jumlah' => $oldPembayaran->jumlah,
                         'porsi_bayar' => 100,
-                        'tipe_perpanjangan' => $oldPembayaran->tipe_perpanjangan,
-                        'jumlah_hari' => $oldPembayaran->jumlah_hari,
-                        'periode_mulai' => $oldPembayaran->periode_mulai,
-                        'periode_selesai' => $oldPembayaran->periode_selesai,
+                        'tipe_perpanjangan' => $oldPembayaran->tipe_perpanjangan ?? 'bulanan',
+                        'jumlah_hari' => $oldPembayaran->jumlah_hari ?? 30,
+                        'periode_mulai' => $defaultMulai,
+                        'periode_selesai' => $defaultSelesai,
                         'status' => 'pending',
                         'bukti_transfer_url' => null,
                         'tanggal_bayar' => null,
@@ -452,14 +490,24 @@ class PembayaranService
                     : 1;
                 if ($activePenghuniCount < 1) $activePenghuniCount = 1;
 
-                if ($isBerbagi && $penghuniKamar->durasi === 'bulanan') {
-                    $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / $activePenghuniCount);
+                if ($isBerbagi && $activePenghuniCount >= 3) {
+                    // Kamar berbagi 3 orang: Tagihan perpanjangan adalah 1 KAMAR FULL (100%), dibayar jadi 1 seperti pembayaran awal 3 orang
+                    if ($penghuniKamar->durasi === 'harian') {
+                        $jumlahBiaya = $hargaHarian;
+                    } elseif ($penghuniKamar->durasi === 'mingguan') {
+                        $jumlahBiaya = $hargaMingguan;
+                    } else {
+                        $jumlahBiaya = $kamar->harga_per_bulan ?? 0;
+                    }
+                    $defaultPorsi = 100;
+                } elseif ($isBerbagi && $penghuniKamar->durasi === 'bulanan') {
+                    $jumlahBiaya = round(($kamar->harga_per_bulan ?? 0) / 2);
                     $defaultPorsi = 50;
                 } elseif ($isBerbagi && $penghuniKamar->durasi === 'mingguan') {
-                    $jumlahBiaya = round($hargaMingguan / $activePenghuniCount);
+                    $jumlahBiaya = round($hargaMingguan / 2);
                     $defaultPorsi = 50;
                 } elseif ($isBerbagi && $penghuniKamar->durasi === 'harian') {
-                    $jumlahBiaya = round($hargaHarian / $activePenghuniCount);
+                    $jumlahBiaya = round($hargaHarian / 2);
                     $defaultPorsi = 50;
                 } elseif ($penghuniKamar->durasi === 'mingguan') {
                     $jumlahBiaya = $hargaMingguan;

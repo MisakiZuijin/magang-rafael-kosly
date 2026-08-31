@@ -398,4 +398,76 @@ class AdminKosController extends Controller
 
         return redirect()->back()->with('success', "Akses edit kamar untuk Kos '{$kos->nama}' berhasil {$statusText}.");
     }
+
+    public function destroyKos(string|int $id)
+    {
+        $kos = \App\Models\Kos::with('kamar.penghuniKamar')->where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
+
+        // Cek jika ada penghuni aktif di salah satu kamar kos ini
+        $hasActivePenghuni = \App\Models\PenghuniKamar::whereIn('kamar_id', $kos->kamar->pluck('id'))
+            ->where('status', 'aktif')
+            ->exists();
+
+        if ($hasActivePenghuni) {
+            return redirect()->back()->with('error', "Tidak dapat menghapus Kos '{$kos->nama}' karena masih terdapat penghuni aktif di dalamnya. Harap kosongkan seluruh kamar terlebih dahulu.");
+        }
+
+        // Hapus foto-foto kamar di storage
+        foreach ($kos->kamar as $k) {
+            if (!empty($k->foto) && is_array($k->foto)) {
+                foreach ($k->foto as $fotoPath) {
+                    if ($fotoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($fotoPath)) {
+                        \Illuminate\Support\Facades\Storage::disk('public')->delete($fotoPath);
+                    }
+                }
+            }
+        }
+
+        // Hapus foto kos di storage
+        if ($kos->foto && \Illuminate\Support\Facades\Storage::disk('public')->exists($kos->foto)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($kos->foto);
+        }
+
+        $namaKos = $kos->nama;
+        $this->kosService->delete($kos->id);
+        $this->logAktivitasService->log('hapus_kos', "Menghapus properti kos: {$namaKos}");
+
+        return redirect()->back()->with('success', "Kos '{$namaKos}' beserta seluruh kamarnya berhasil dihapus.");
+    }
+
+    public function destroyKamar(string|int $id)
+    {
+        $kamar = \App\Models\Kamar::with('kos', 'penghuniKamar')->where('kode_kamar', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
+
+        // Cek jika ada penghuni aktif di kamar ini
+        $hasActivePenghuni = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+            ->where('status', 'aktif')
+            ->exists();
+
+        if ($hasActivePenghuni) {
+            return redirect()->back()->with('error', "Tidak dapat menghapus Kamar {$kamar->kode_kamar} karena masih terdapat penghuni aktif. Harap kosongkan kamar terlebih dahulu.");
+        }
+
+        // Hapus foto kamar di storage
+        if (!empty($kamar->foto) && is_array($kamar->foto)) {
+            foreach ($kamar->foto as $fotoPath) {
+                if ($fotoPath && \Illuminate\Support\Facades\Storage::disk('public')->exists($fotoPath)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($fotoPath);
+                }
+            }
+        }
+
+        $kodeKamar = $kamar->kode_kamar;
+        $kosNama = $kamar->kos->nama ?? 'Kos';
+        $this->kamarService->delete($kamar->id);
+        $this->logAktivitasService->log('hapus_kamar', "Menghapus Kamar {$kodeKamar} pada {$kosNama}");
+
+        // Jika request datang dari halaman detail kamar show, redirect ke index kos
+        $p = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
+        if (request()->routeIs('*.kamar.show') || url()->previous() == route($p . 'kamar.show', $id) || url()->previous() == route($p . 'kamar.show', $kamar->kode_kamar)) {
+            return redirect()->route($p . 'kos.index')->with('success', "Kamar {$kodeKamar} berhasil dihapus.");
+        }
+
+        return redirect()->back()->with('success', "Kamar {$kodeKamar} berhasil dihapus.");
+    }
 }

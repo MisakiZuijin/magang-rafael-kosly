@@ -594,8 +594,9 @@ $riwayat = $pembayarans->whereIn('status', ['terverifikasi', 'ditolak']);
     @foreach($riwayat as $p)
     @php
     $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar');
-    $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
-    $tglTampil = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : ($p->tanggal_verifikasi ? $p->tanggal_verifikasi->format('d M Y') : null);
+    $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang|Tarif 3 Orang|Tarif 1 Kamar) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
+    $tglTampil = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : null;
+    $waktuVerifTolak = $p->tanggal_verifikasi ? $p->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : ($p->updated_at ? $p->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : null);
     @endphp
     <div class="grid grid-cols-1 sm:grid-cols-6 gap-2 bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
         <div class="col-span-5 flex items-center gap-3">
@@ -616,30 +617,41 @@ $riwayat = $pembayarans->whereIn('status', ['terverifikasi', 'ditolak']);
                     Rp {{ number_format($p->jumlah, 0, ',', '.') }}
                     @if($isCoveredByRoommate)
                     <span class="text-[10px] font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded ml-1">Dibayar oleh {{ $uploaderName }}</span>
-                    @elseif($p->porsi_bayar == 50 && $isKamarBerbagi)
-                    <span class="text-[10px] font-semibold text-purple-600 bg-purple-50 dark:bg-purple-950/40 px-1.5 py-0.5 rounded ml-1">Tarif 1 Orang</span>
-                    @elseif($p->porsi_bayar == 100 && $isKamarBerbagi)
+                    @elseif($isKamarBerbagi)
                     @php
-                    $histKapasitas = $p->penghuniKamar->kamar->kapasitas ?? 2;
+                    $badgeInfo = $p->getTarifBadgeInfo();
                     @endphp
-                    <span class="text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded ml-1">{{ $histKapasitas >= 3 ? 'Pelunasan Kamar 3 Orang' : 'Tarif 2 Orang' }}</span>
+                    <span class="text-[10px] font-semibold {{ $badgeInfo['class'] }} px-1.5 py-0.5 rounded ml-1">{{ $badgeInfo['text'] }}</span>
                     @endif
                 </p>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Periode: {{ $p->periode_mulai ? $p->periode_mulai->format('d M Y') : '-' }} s/d {{ $p->periode_selesai ? $p->periode_selesai->format('d M Y') : '-' }}</p>
 
                 @if($isCoveredByRoommate)
                 <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">
-                    👤 Pembayaran diwakilkan oleh <strong>{{ $uploaderName }}</strong> {{ $tglTampil ? "({$tglTampil})" : '' }}
+                    👤 Pembayaran diwakilkan oleh <strong>{{ $uploaderName }}</strong> {{ $waktuVerifTolak ? "(Diverifikasi: {$waktuVerifTolak})" : '' }}
                 </p>
                 @else
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    📅 Tanggal Bayar: {{ $tglTampil ?: '-' }}
-                </p>
-                @if($p->catatan_verifikasi)
-                <p class="text-xs {{ $p->status === 'ditolak' ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400 font-medium' }} mt-0.5">
-                    {{ $p->catatan_verifikasi }}
-                </p>
-                @endif
+                <div class="space-y-0.5 mt-1 text-xs">
+                    @if($p->status === 'terverifikasi')
+                    <p class="text-emerald-700 dark:text-emerald-400 font-medium">
+                        ✓ Diverifikasi pada: <strong>{{ $waktuVerifTolak ?: '-' }}</strong>
+                    </p>
+                    @if($tglTampil)
+                    <p class="text-gray-400 dark:text-gray-500 font-mono text-[11px]">
+                        📅 Tanggal Bayar: {{ $tglTampil }}
+                    </p>
+                    @endif
+                    @else
+                    <p class="text-red-600 dark:text-red-400 font-medium">
+                        ✕ Ditolak pada: <strong>{{ $waktuVerifTolak ?: '-' }}</strong>
+                    </p>
+                    @endif
+                    @if($p->catatan_verifikasi)
+                    <p class="text-xs {{ $p->status === 'ditolak' ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400 font-medium' }}">
+                        {{ $p->catatan_verifikasi }}
+                    </p>
+                    @endif
+                </div>
                 @endif
             </div>
         </div>

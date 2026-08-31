@@ -115,6 +115,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
         <div class="grid grid-cols-1 sm:grid-cols-6 pt-4 border-t border-gray-200 dark:border-gray-800 gap-4">
             <div class="col-span-6 space-y-1 text-xs text-gray-500 dark:text-gray-400">
                 <p>Status Verifikasi: <span class="font-bold text-emerald-600 dark:text-emerald-400">LUNAS / TERVERIFIKASI</span></p>
+                <p>Waktu Verifikasi: <strong class="text-gray-800 dark:text-gray-200">{{ $pembayaran->tanggal_verifikasi ? $pembayaran->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : '-' }}</strong></p>
                 <p>Petugas Verifikasi: <strong class="text-gray-800 dark:text-gray-200">{{ $pembayaran->diverifikasiOleh->nama ?? 'Admin Kosly' }}</strong></p>
             </div>
 

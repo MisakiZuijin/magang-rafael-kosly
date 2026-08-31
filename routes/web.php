@@ -105,7 +105,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kos/{kos}/toggle-lock', [AdminKosController::class, 'toggleLock'])->name('kos.toggle-lock');
         Route::get('/kamar/{kamar}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{kamar}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{kamar}', [AdminKosController::class, 'destroyKamar'])->name('kamar.destroy');
         Route::delete('/kamar/{kamar}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
+        Route::delete('/kos/{kos}', [AdminKosController::class, 'destroyKos'])->name('kos.destroy');
 
         // Pengumuman
         Route::get('/pengumuman', [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
@@ -182,7 +184,9 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kos/{kos}/toggle-lock', [AdminKosController::class, 'toggleLock'])->name('kos.toggle-lock');
         Route::get('/kamar/{kamar}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{kamar}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
+        Route::delete('/kamar/{kamar}', [AdminKosController::class, 'destroyKamar'])->name('kamar.destroy');
         Route::delete('/kamar/{kamar}/foto', [AdminKosController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
+        Route::delete('/kos/{kos}', [AdminKosController::class, 'destroyKos'])->name('kos.destroy');
 
         Route::get('/pengumuman', [AdminPengumumanController::class, 'index'])->name('pengumuman.index');
         Route::get('/pengumuman/create', [AdminPengumumanController::class, 'create'])->name('pengumuman.create');

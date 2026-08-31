@@ -181,14 +181,14 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                 <x-btn href="{{ request()->is('superadmin*') ? route('superadmin.pengguna.edit', $m->slug ?? $m->id) : route('admin.pengguna.edit', $m->slug ?? $m->id) }}" size="sm" variant="secondary" class="flex-1 !min-h-[36px] !py-1 text-xs">
                     Edit
                 </x-btn>
-                @if($isSuperAdmin)
                 <button type="button"
-                    @click="confirmToggle({{ $m->id }}, '{{ addslashes($m->nama) }}', '{{ addslashes($m->email) }}', {{ $m->is_active ? 'true' : 'false' }}, '{{ route('superadmin.pengguna.toggle', $m->slug ?? $m->id) }}')"
+                    @click="confirmToggle({{ $m->id }}, '{{ addslashes($m->nama) }}', '{{ addslashes($m->email) }}', {{ $m->is_active ? 'true' : 'false' }}, '{{ request()->is('superadmin*') ? route('superadmin.pengguna.toggle', $m->slug ?? $m->id) : route('admin.pengguna.toggle', $m->slug ?? $m->id) }}')"
                     class="flex-1 min-h-[36px] py-1 px-3 text-xs font-bold rounded-xl text-white transition-all active:scale-95 {{ $m->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700' }}">
                     {{ $m->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                 </button>
+                @if($isSuperAdmin)
                 <button type="button"
-                    @click="confirmDelete({{ $m->id }}, '{{ addslashes($m->nama) }}', '{{ addslashes($m->email) }}', 'Mitra', '{{ route('superadmin.pengguna.destroy', $m->slug ?? $m->id) }}')"
+                    @click="confirmDelete({{ $m->id }}, '{{ addslashes($m->nama) }}', '{{ addslashes($m->email) }}', 'Mitra', '{{ request()->is('superadmin*') ? route('superadmin.pengguna.destroy', $m->slug ?? $m->id) : route('admin.pengguna.destroy', $m->slug ?? $m->id) }}')"
                     class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
                     🗑️ Hapus
                 </button>
@@ -227,14 +227,14 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                 <x-btn href="{{ request()->is('superadmin*') ? route('superadmin.pengguna.edit', $p->slug ?? $p->id) : route('admin.pengguna.edit', $p->slug ?? $p->id) }}" size="sm" variant="secondary" class="flex-1 !min-h-[36px] !py-1 text-xs">
                     Edit
                 </x-btn>
-                @if($isSuperAdmin)
                 <button type="button"
-                    @click="confirmToggle({{ $p->id }}, '{{ addslashes($p->nama) }}', '{{ addslashes($p->email) }}', {{ $p->is_active ? 'true' : 'false' }}, '{{ route('superadmin.pengguna.toggle', $p->slug ?? $p->id) }}')"
+                    @click="confirmToggle({{ $p->id }}, '{{ addslashes($p->nama) }}', '{{ addslashes($p->email) }}', {{ $p->is_active ? 'true' : 'false' }}, '{{ request()->is('superadmin*') ? route('superadmin.pengguna.toggle', $p->slug ?? $p->id) : route('admin.pengguna.toggle', $p->slug ?? $p->id) }}')"
                     class="flex-1 min-h-[36px] py-1 px-3 text-xs font-bold rounded-xl text-white transition-all active:scale-95 {{ $p->is_active ? 'bg-red-600 hover:bg-red-700' : 'bg-emerald-600 hover:bg-emerald-700' }}">
                     {{ $p->is_active ? 'Nonaktifkan' : 'Aktifkan' }}
                 </button>
+                @if($isSuperAdmin)
                 <button type="button"
-                    @click="confirmDelete({{ $p->id }}, '{{ addslashes($p->nama) }}', '{{ addslashes($p->email) }}', 'Anak Kos', '{{ route('superadmin.pengguna.destroy', $p->slug ?? $p->id) }}')"
+                    @click="confirmDelete({{ $p->id }}, '{{ addslashes($p->nama) }}', '{{ addslashes($p->email) }}', 'Anak Kos', '{{ request()->is('superadmin*') ? route('superadmin.pengguna.destroy', $p->slug ?? $p->id) : route('admin.pengguna.destroy', $p->slug ?? $p->id) }}')"
                     class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
                     🗑️ Hapus
                 </button>
@@ -246,8 +246,7 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
         @endforelse
     </div>
 
-    {{-- Modal Konfirmasi Status Pengguna (Khusus Super Admin) --}}
-    @if($isSuperAdmin)
+    {{-- Modal Konfirmasi Status Pengguna --}}
     <x-modal show="showToggleModal" title="Konfirmasi Status Akun Pengguna">
         <div class="space-y-4">
             <div class="p-3.5 rounded-2xl border text-xs space-y-1.5"
@@ -273,6 +272,7 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
         </div>
     </x-modal>
 
+    @if($isSuperAdmin)
     {{-- Modal Hapus Pengguna Permanen (Khusus Super Admin) --}}
     <x-modal show="showDeleteModal" title="Hapus Akun Pengguna Permanen">
         <div class="space-y-4">

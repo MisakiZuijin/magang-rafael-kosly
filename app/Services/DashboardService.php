@@ -41,15 +41,14 @@ class DashboardService
             ->count();
 
         if ($penghuniKamar->durasi === 'harian') {
-            $baseCost = ($kamar->harga_per_hari ?? 0) > 0 ? $kamar->harga_per_hari : round(($kamar->harga_per_bulan ?? 0) / 30);
+            $totalBiaya = ($kamar->harga_per_hari ?? 0) > 0 ? (float) $kamar->harga_per_hari : (float) ($kamar->harga_per_bulan ?? 0);
         } elseif ($penghuniKamar->durasi === 'mingguan') {
-            $baseCost = ($kamar->harga_per_minggu ?? 0) > 0 ? $kamar->harga_per_minggu : round(($kamar->harga_per_bulan ?? 0) / 4);
+            $totalBiaya = ($kamar->harga_per_minggu ?? 0) > 0 ? (float) $kamar->harga_per_minggu : (float) ($kamar->harga_per_bulan ?? 0);
         } else {
-            $baseCost = $kamar->harga_per_bulan ?? 0;
+            $totalBiaya = (float) ($kamar->harga_per_bulan ?? 0);
         }
 
         $isBerbagi = ($kamar->tipe === 'berbagi');
-        $totalBiaya = $isBerbagi ? round($baseCost / 2) : $baseCost;
 
         $tglMasuk = $penghuniKamar->tanggal_masuk ? \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk) : null;
         $tglKeluar = $penghuniKamar->tanggal_keluar ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar) : null;

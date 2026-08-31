@@ -70,4 +70,74 @@ class Pembayaran extends Model
     {
         return $this->belongsTo(User::class, 'diverifikasi_oleh');
     }
+
+    /**
+     * Menghasilkan teks badge tarif yang terisolasi dan permanen untuk transaksi ini.
+     * Mencegah mutasi label tarif saat ada transaksi baru di kamar lain atau perubahan kapasitas kamar.
+     */
+    public function getTarifBadgeInfo(): array
+    {
+        $kamar = $this->penghuniKamar->kamar ?? null;
+        if (!$kamar || $kamar->tipe !== 'berbagi') {
+            return [
+                'text' => 'Tarif Standar',
+                'class' => 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+            ];
+        }
+
+        // 1. Jika bayar separuh (50%)
+        if ((int)$this->porsi_bayar === 50 || str_contains($this->catatan_verifikasi ?? '', 'Tarif 1 Orang') || str_contains($this->catatan_verifikasi ?? '', '50%')) {
+            return [
+                'text' => 'Tarif 1 Orang',
+                'class' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+            ];
+        }
+
+        // 2. Cek apakah catatan verifikasi memiliki rekaman spesifik tarif
+        $catatan = $this->catatan_verifikasi ?? '';
+        if (str_contains($catatan, 'Tarif 3 Orang') || str_contains($catatan, '3 Orang') || str_contains($catatan, '3 Penghuni')) {
+            return [
+                'text' => 'Tarif 3 Orang',
+                'class' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+            ];
+        }
+        if (str_contains($catatan, 'Tarif 2 Orang') || str_contains($catatan, '2 Orang')) {
+            return [
+                'text' => 'Tarif 2 Orang',
+                'class' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+            ];
+        }
+
+        // 3. Hitung jumlah transaksi pembayaran yang bersamaan dalam 1 kamar pada siklus/periode transaksi ini
+        $kamarId = $this->penghuniKamar->kamar_id ?? null;
+        if ($kamarId) {
+            $roommatePaymentsCount = static::whereHas('penghuniKamar', function($q) use ($kamarId) {
+                $q->where('kamar_id', $kamarId);
+            })
+            ->where('porsi_bayar', 100)
+            ->where(function($q) {
+                if ($this->periode_mulai && $this->periode_selesai) {
+                    $q->where('periode_mulai', $this->periode_mulai)
+                      ->where('periode_selesai', $this->periode_selesai);
+                } elseif ($this->tanggal_bayar) {
+                    $q->whereDate('tanggal_bayar', $this->tanggal_bayar);
+                } elseif ($this->created_at) {
+                    $q->whereDate('created_at', $this->created_at);
+                }
+            })
+            ->count();
+
+            if ($roommatePaymentsCount >= 3) {
+                return [
+                    'text' => 'Tarif 3 Orang',
+                    'class' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+                ];
+            }
+        }
+
+        return [
+            'text' => 'Tarif 2 Orang',
+            'class' => 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+        ];
+    }
 }
