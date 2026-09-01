@@ -9,8 +9,8 @@
 
     <!-- Tengah: Logo -->
     <div class="absolute left-1/2 transform -translate-x-1/2 flex items-center gap-2">
-        <img src="{{ asset('images/logo.png') }}" alt="Kosly Logo" class="w-8 h-8 object-contain">
-        <span class="font-['Cassandra'] font-bold text-lg tracking-tight dark:text-white">Kosly</span>
+        <img src="{{ $appLogo }}" alt="{{ $appName }} Logo" class="w-8 h-8 object-contain">
+        <span class="font-['Cassandra'] font-bold text-lg tracking-tight dark:text-white">{{ $appName }}</span>
     </div>
 
     <!-- Kanan: Notif + Profile Flowbite Icons -->

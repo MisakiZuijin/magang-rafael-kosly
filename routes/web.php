@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\AdminLaporanController;
 use App\Http\Controllers\Admin\AdminWhatsAppController;
 use App\Http\Controllers\SuperAdmin\SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\SuperAdminPencairanController;
+use App\Http\Controllers\SuperAdmin\SuperAdminPengaturanController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -167,6 +168,10 @@ Route::middleware(['auth'])->group(function () {
         // Pencairan Biaya Pendapatan Per Kos
         Route::get('/pencairan', [SuperAdminPencairanController::class, 'index'])->name('pencairan.index');
         Route::post('/pencairan/proses', [SuperAdminPencairanController::class, 'proses'])->name('pencairan.proses');
+
+        // Pengaturan Web (Nama, Logo, Favicon)
+        Route::get('/pengaturan', [SuperAdminPengaturanController::class, 'index'])->name('pengaturan.index');
+        Route::post('/pengaturan', [SuperAdminPengaturanController::class, 'update'])->name('pengaturan.update');
 
         // Super Admin bisa akses semua route Admin
         Route::get('/pengguna', [AdminPenggunaController::class, 'index'])->name('pengguna.index');

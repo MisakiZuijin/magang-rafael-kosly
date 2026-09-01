@@ -13,6 +13,7 @@ $iconPengumuman = 'M11 16v-5.5A3.5 3.5 0 0 1 14.5 7H18v9h-3.5a3.5 3.5 0 0 1-3.5-
 $iconLaporan = 'M3 15v4m6-6v6m6-10v10m6-16v16';
 $iconPencairan = 'M12 6v13m0-13 4 4m-4-4-4 4';
 $iconWAGateway = 'M16 12H4m12 0-4 4m4-4-4-4';
+$iconPengaturan = 'M21 13v-2a1 1 0 0 0-1-1h-.76a7.12 7.12 0 0 0-.62-1.5l.54-.54a1 1 0 0 0 0-1.41l-1.42-1.42a1 1 0 0 0-1.41 0l-.54.54a7.12 7.12 0 0 0-1.5-.62V4a1 1 0 0 0-1-1h-2a1 1 0 0 0-1 1v.76a7.12 7.12 0 0 0-1.5.62l-.54-.54a1 1 0 0 0-1.41 0L5.97 6.26a1 1 0 0 0 0 1.41l.54.54a7.12 7.12 0 0 0-.62 1.5H5a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h.76a7.12 7.12 0 0 0 .62 1.5l-.54.54a1 1 0 0 0 0 1.41l1.42 1.42a1 1 0 0 0 1.41 0l.54-.54a7.12 7.12 0 0 0 1.5.62V20a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-.76a7.12 7.12 0 0 0 1.5-.62l.54.54a1 1 0 0 0 1.41 0l1.42-1.42a1 1 0 0 0 0-1.41l-.54-.54a7.12 7.12 0 0 0 .62-1.5H20a1 1 0 0 0 1-1ZM12 15a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z';
 
 // Sidebar Penghuni
 if (in_array($role, ['penghuni'])) {
@@ -45,6 +46,9 @@ if (in_array($role, ['admin', 'super_admin'])) {
         $menus[] = ['icon' => $iconPencairan, 'label' => 'Pencairan Biaya', 'route' => 'superadmin.pencairan.index'];
     }
     $menus[] = ['icon' => $iconWAGateway, 'label' => 'WA Gateway', 'route' => $p . 'whatsapp.index'];
+    if ($role === 'super_admin') {
+        $menus[] = ['icon' => $iconPengaturan, 'label' => 'Pengaturan Web', 'route' => 'superadmin.pengaturan.index'];
+    }
 }
 @endphp
 

@@ -47,8 +47,8 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 border-b border-gray-200 dark:border-gray-800 gap-4">
             <div class="space-y-1">
                 <div class="flex items-center gap-2">
-                    <img src="{{ asset('images/logo.png') }}" alt="Kosly Logo" class="w-8 h-8 object-contain">
-                    <span class="font-['Cassandra'] font-bold text-xl tracking-tight text-emerald-600 dark:text-emerald-400">Kosly</span>
+                    <img src="{{ $appLogo }}" alt="{{ $appName }} Logo" class="w-8 h-8 object-contain">
+                    <span class="font-['Cassandra'] font-bold text-xl tracking-tight text-emerald-600 dark:text-emerald-400">{{ $appName }}</span>
                 </div>
                 <p class="text-xs text-gray-500 dark:text-gray-400">Aplikasi Pengelolaan & Pendaftaran Kos Digital</p>
             </div>
@@ -116,7 +116,9 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
             <div class="col-span-6 space-y-1 text-xs text-gray-500 dark:text-gray-400">
                 <p>Status Verifikasi: <span class="font-bold text-emerald-600 dark:text-emerald-400">LUNAS / TERVERIFIKASI</span></p>
                 <p>Waktu Verifikasi: <strong class="text-gray-800 dark:text-gray-200">{{ $pembayaran->tanggal_verifikasi ? $pembayaran->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : '-' }}</strong></p>
-                <p>Petugas Verifikasi: <strong class="text-gray-800 dark:text-gray-200">{{ $pembayaran->diverifikasiOleh->nama ?? 'Admin Kosly' }}</strong></p>
+                @if(in_array($userRole, ['admin', 'super_admin', 'superadmin']))
+                <p>Petugas Verifikasi: <strong class="text-gray-800 dark:text-gray-200">{{ $pembayaran->diverifikasiOleh->nama ?? 'Admin ' . $appName }}</strong></p>
+                @endif
             </div>
 
             <div class="grid col-span-6 grid-cols-1 sm:grid-cols-2 p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl items-center min-w-[200px] space-y-0.5">
@@ -129,7 +131,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
 
         {{-- Footer Note --}}
         <div class="pt-6 border-t border-gray-100 dark:border-gray-800/60 text-center text-[10px] text-gray-400 italic">
-            Nota ini diterbitkan secara otomatis oleh sistem Kosly App dan berlaku sebagai bukti pembayaran yang sah.
+            Nota ini diterbitkan secara otomatis oleh sistem {{ $appName }} App dan berlaku sebagai bukti pembayaran yang sah.
         </div>
     </div>
 </div>
