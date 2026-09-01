@@ -96,6 +96,9 @@ class PenghuniDashboardController extends Controller
         $roommatePendingJumlah = 0;
         $onlyHalfOption = false;
         $roommateHalfName = '';
+        $roommateHalfTipe = 'bulanan';
+        $roommateHalfDays = 30;
+        $roommateHalfJumlah = 0;
 
         if ($isKamarBerbagi) {
             $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
@@ -163,9 +166,24 @@ class PenghuniDashboardController extends Controller
                         ->latest()
                         ->first();
 
+                    if (!$rHalf) {
+                        $rHalf = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                            ->where('status', 'terverifikasi')
+                            ->where('porsi_bayar', 50)
+                            ->where(function ($q) use ($penghuniKamar) {
+                                $q->where('periode_mulai', $penghuniKamar->tanggal_masuk)
+                                  ->orWhereDate('tanggal_verifikasi', now()->toDateString());
+                            })
+                            ->latest()
+                            ->first();
+                    }
+
                     if ($rHalf) {
                         $onlyHalfOption = true;
                         $roommateHalfName = $rPk->penghuni->nama ?? 'Teman Sekamar';
+                        $roommateHalfTipe = $rHalf->tipe_perpanjangan ?? ($rHalf->jumlah_hari == 1 || ($rHalf->jumlah_hari > 0 && $rHalf->jumlah_hari != 7 && $rHalf->jumlah_hari != 30) ? 'harian' : ($rHalf->jumlah_hari == 7 ? 'mingguan' : 'bulanan'));
+                        $roommateHalfDays = (int) ($rHalf->jumlah_hari ?: ($roommateHalfTipe === 'harian' ? 1 : ($roommateHalfTipe === 'mingguan' ? 7 : 30)));
+                        $roommateHalfJumlah = (float) $rHalf->jumlah;
                         break;
                     }
                 }
@@ -184,7 +202,10 @@ class PenghuniDashboardController extends Controller
             'roommatePendingBuktiUrl',
             'roommatePendingJumlah',
             'onlyHalfOption',
-            'roommateHalfName'
+            'roommateHalfName',
+            'roommateHalfTipe',
+            'roommateHalfDays',
+            'roommateHalfJumlah'
         ));
     }
 

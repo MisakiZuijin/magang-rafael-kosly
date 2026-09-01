@@ -225,17 +225,26 @@ class PembayaranService
                         Pembayaran::create($syncData);
                     }
                 } else {
-                    // KASUS 2: BAYAR SETENGAH (50%) -> Tagihan teman sekamar disesuaikan menjadi 50%
+                    // KASUS 2: BAYAR SETENGAH (50%) -> Tagihan teman sekamar disesuaikan menjadi 50% dengan durasi dan jumlah hari yang sama persis
                     $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
                         ->where('status', 'pending')
                         ->whereNull('bukti_transfer_url')
                         ->first();
                     if ($roommatePending) {
                         $targetAmount = round($fullBiaya / 2);
-                        $roommatePending->update([
+                        $syncData50 = [
                             'jumlah' => $targetAmount,
                             'porsi_bayar' => 50,
-                        ]);
+                            'tipe_perpanjangan' => $tipePerpanjangan,
+                            'jumlah_hari' => $jumlahHari,
+                        ];
+
+                        if ($hasPreviousVerified) {
+                            $syncData50['periode_mulai'] = $updateData['periode_mulai'] ?? null;
+                            $syncData50['periode_selesai'] = $updateData['periode_selesai'] ?? null;
+                        }
+
+                        $roommatePending->update($syncData50);
                     }
                 }
             }
