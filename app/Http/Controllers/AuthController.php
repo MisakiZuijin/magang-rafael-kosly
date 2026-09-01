@@ -14,6 +14,10 @@ class AuthController extends Controller
 
     public function showLogin()
     {
+        if (Auth::check()) {
+            return redirect()->route('dashboard');
+        }
+
         return view('auth.login');
     }
 
@@ -32,8 +36,18 @@ class AuthController extends Controller
             ])->onlyInput('email');
         }
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        $remember = $request->boolean('remember');
+
+        if (Auth::attempt($credentials, $remember)) {
             $request->session()->regenerate();
+
+            if ($remember) {
+                \Illuminate\Support\Facades\Cookie::queue('remembered_email', $credentials['email'], 60 * 24 * 365);
+            } else {
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget('remembered_email'));
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(Auth::getRecallerName()));
+                \App\Models\User::where('id', Auth::id())->update(['remember_token' => null]);
+            }
 
             $this->logService->log('login', 'User melakukan login', Auth::id());
 
@@ -47,9 +61,15 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        $this->logService->log('logout', 'User melakukan logout', Auth::id());
+        $userId = Auth::id();
+        if ($userId) {
+            $this->logService->log('logout', 'User melakukan logout', $userId);
+            \App\Models\User::where('id', $userId)->update(['remember_token' => null]);
+        }
 
-        Auth::logout();
+        \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(Auth::getRecallerName()));
+
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

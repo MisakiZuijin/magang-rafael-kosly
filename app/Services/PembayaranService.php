@@ -306,37 +306,61 @@ class PembayaranService
                 $labelTarif = ($totalOccupants >= 3 || str_contains($pembayaran->catatan_verifikasi ?? '', '3 Orang')) ? 'Tarif 3 Orang' : 'Tarif 2 Orang';
 
                 foreach ($roommatePks as $roommatePk) {
-                    $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
-                        ->where('status', 'pending')
-                        ->first();
-
                     $paymentDate = $pembayaran->tanggal_bayar ?? now();
 
-                    if ($roommatePending) {
-                        $roommatePending->update([
+                    // 1. Cek apakah teman sekamar SUDAH memiliki pembayaran terverifikasi untuk periode ini (cegah duplikat!)
+                    $existingVerified = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
+                        ->where('status', 'terverifikasi')
+                        ->where('periode_mulai', $pembayaran->periode_mulai)
+                        ->first();
+
+                    if ($existingVerified) {
+                        $existingVerified->update([
                             'jumlah' => $fullAmount,
-                            'status' => 'terverifikasi',
                             'porsi_bayar' => 100,
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
                             'catatan_verifikasi' => "Lunas (Dibayar {$labelTarif} oleh {$uploaderName})",
                         ]);
+
+                        // Hapus jika ada duplikat berlebih untuk periode yang sama
+                        Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
+                            ->where('status', 'terverifikasi')
+                            ->where('periode_mulai', $pembayaran->periode_mulai)
+                            ->where('id', '!=', $existingVerified->id)
+                            ->delete();
                     } else {
-                        Pembayaran::create([
-                            'penghuni_kamar_id' => $roommatePk->id,
-                            'jumlah' => $fullAmount,
-                            'porsi_bayar' => 100,
-                            'tipe_perpanjangan' => $pembayaran->tipe_perpanjangan,
-                            'jumlah_hari' => $daysToAdd,
-                            'periode_mulai' => $pembayaran->periode_mulai,
-                            'periode_selesai' => $pembayaran->periode_selesai,
-                            'status' => 'terverifikasi',
-                            'tanggal_bayar' => $paymentDate,
-                            'tanggal_verifikasi' => now(),
-                            'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
-                            'catatan_verifikasi' => "Lunas (Dibayar {$labelTarif} oleh {$uploaderName})",
-                        ]);
+                        $roommatePending = Pembayaran::where('penghuni_kamar_id', $roommatePk->id)
+                            ->where('status', 'pending')
+                            ->first();
+
+                        if ($roommatePending) {
+                            $roommatePending->update([
+                                'jumlah' => $fullAmount,
+                                'status' => 'terverifikasi',
+                                'porsi_bayar' => 100,
+                                'tanggal_bayar' => $paymentDate,
+                                'tanggal_verifikasi' => now(),
+                                'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
+                                'catatan_verifikasi' => "Lunas (Dibayar {$labelTarif} oleh {$uploaderName})",
+                            ]);
+                        } else {
+                            Pembayaran::create([
+                                'penghuni_kamar_id' => $roommatePk->id,
+                                'jumlah' => $fullAmount,
+                                'porsi_bayar' => 100,
+                                'tipe_perpanjangan' => $pembayaran->tipe_perpanjangan,
+                                'jumlah_hari' => $daysToAdd,
+                                'periode_mulai' => $pembayaran->periode_mulai,
+                                'periode_selesai' => $pembayaran->periode_selesai,
+                                'status' => 'terverifikasi',
+                                'tanggal_bayar' => $paymentDate,
+                                'tanggal_verifikasi' => now(),
+                                'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
+                                'catatan_verifikasi' => "Lunas (Dibayar {$labelTarif} oleh {$uploaderName})",
+                            ]);
+                        }
                     }
 
                     // Perbarui juga tanggal_keluar teman sekamar jika perpanjangan sewa!
@@ -532,6 +556,33 @@ class PembayaranService
                     'periode_selesai' => $tanggalKeluar->copy()->addDays($daysForBilling)->toDateString(),
                     'status' => 'pending',
                 ]);
+
+                // Jika kamar berbagi, pastikan seluruh teman sekamar aktif juga mendapatkan tagihan perpanjangan
+                if ($isBerbagi) {
+                    $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+                        ->where('status', 'aktif')
+                        ->where('id', '!=', $penghuniKamar->id)
+                        ->get();
+
+                    foreach ($roommatePks as $rPk) {
+                        $rPending = Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                            ->where('status', 'pending')
+                            ->first();
+
+                        if (!$rPending) {
+                            Pembayaran::create([
+                                'penghuni_kamar_id' => $rPk->id,
+                                'jumlah' => $jumlahBiaya,
+                                'porsi_bayar' => $defaultPorsi,
+                                'tipe_perpanjangan' => $rPk->durasi ?? ($penghuniKamar->durasi ?? 'bulanan'),
+                                'jumlah_hari' => $daysForBilling,
+                                'periode_mulai' => $tanggalKeluar->toDateString(),
+                                'periode_selesai' => $tanggalKeluar->copy()->addDays($daysForBilling)->toDateString(),
+                                'status' => 'pending',
+                            ]);
+                        }
+                    }
+                }
 
                 // Kirim notifikasi otomatis ke penghuni
                 \App\Models\Notifikasi::create([

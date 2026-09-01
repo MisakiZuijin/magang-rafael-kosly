@@ -84,9 +84,8 @@ class PenghuniDashboardController extends Controller
             ? \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count()
             : 1;
 
-        $myPendingWithProof = $pembayarans->where('status', 'pending')
-            ->filter(fn($item) => !empty($item->bukti_transfer_url))
-            ->first();
+        $myPending = $pembayarans->where('status', 'pending')->first();
+        $myPendingWithProof = $myPending && !empty($myPending->bukti_transfer_url);
 
         $roommateFullPaid = false;
         $roommateName = '';
@@ -105,24 +104,9 @@ class PenghuniDashboardController extends Controller
                 ->with('penghuni')
                 ->get();
 
-            // 1. Cek apakah ada pelunasan penuh terverifikasi dari teman sekamar
+            // 1. Cek apakah ada pembayaran FULL (100%) yang diunggah oleh teman sekamar dan sedang PENDING
+            // PENTING: Jika ada teman sekamar yang sudah upload bukti full, tampilkan info bahwa sedang menunggu verifikasi admin
             if (!$myPendingWithProof) {
-                $coveredPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
-                    ->where('status', 'terverifikasi')
-                    ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar%oleh%')
-                    ->latest()
-                    ->first();
-
-                if ($coveredPayment) {
-                    $roommateFullPaid = true;
-                    $catatan = $coveredPayment->catatan_verifikasi;
-                    $roommateName = trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif (?:1 Kamar|2 Orang)) oleh (.+)\)$/', '$1', $catatan));
-                }
-            }
-
-            // 2. Cek apakah ada pembayaran FULL (100%) yang diunggah oleh teman sekamar dan sedang PENDING
-            // PENTING: Hanya berlaku bagi teman sekamar yang BELUM mengunggah bukti pembayaran sendiri!
-            if (!$myPendingWithProof && !$roommateFullPaid) {
                 foreach ($roommatePks as $rPk) {
                     $rPendingFull = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
                         ->where('status', 'pending')
@@ -152,11 +136,27 @@ class PenghuniDashboardController extends Controller
                 }
             }
 
+            // 2. Cek apakah pelunasan penuh terverifikasi dari teman sekamar HANYA jika TIDAK ADA tagihan pending baru!
+            // Jika ada tagihan pending baru (misal tagihan perpanjangan sewa), seluruh teman sekamar bisa melihat form dan membayarnya!
+            if (!$myPending && !$myPendingWithProof && !$roommateFullPending) {
+                $coveredPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
+                    ->where('status', 'terverifikasi')
+                    ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar%oleh%')
+                    ->latest()
+                    ->first();
+
+                if ($coveredPayment) {
+                    $roommateFullPaid = true;
+                    $catatan = $coveredPayment->catatan_verifikasi;
+                    $roommateName = trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif (?:1 Kamar|2 Orang|3 Orang)) oleh (.+)\)$/', '$1', $catatan));
+                }
+            }
+
             // 3. Cek apakah ada teman sekamar yang membayar SETENGAH (50%) di kamar isi 2 orang
             if ($activePenghuniCount <= 2 && !$roommateFullPaid && !$roommateFullPending && !$myPendingWithProof) {
                 foreach ($roommatePks as $rPk) {
                     $rHalf = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
-                        ->whereIn('status', ['pending', 'terverifikasi'])
+                        ->where('status', 'pending')
                         ->whereNotNull('bukti_transfer_url')
                         ->where('bukti_transfer_url', '!=', '')
                         ->where('porsi_bayar', 50)
