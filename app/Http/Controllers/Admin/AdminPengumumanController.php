@@ -58,14 +58,19 @@ class AdminPengumumanController extends Controller
 
     public function store(Request $request)
     {
+        $channel = $request->input('channel', 'web');
+        $targetRule = in_array($channel, ['whatsapp', 'keduanya']) ? 'required|in:kos,kamar' : 'required|in:kos,kamar,semua';
+
         $validated = $request->validate([
             'judul' => 'required|string|max:200',
             'isi' => 'required|string',
             'tipe' => 'required|in:pembayaran,aturan,info',
             'channel' => 'required|in:web,whatsapp,keduanya',
-            'target_tipe' => 'required|in:kos,kamar,semua',
+            'target_tipe' => $targetRule,
             'target_ids' => 'nullable|array',
             'target_ids.*' => 'integer',
+        ], [
+            'target_tipe.in' => 'Untuk pengiriman via WhatsApp atau Keduanya, sasaran pengumuman harus dipilih Per Kos atau Per Kamar demi keamanan nomor WhatsApp.',
         ]);
 
         $pengumuman = $this->pengumumanService->create([
@@ -166,15 +171,27 @@ class AdminPengumumanController extends Controller
             $this->notifikasiService->sendBulk($userIds, $judul, $pesan, 'web');
         }
 
-        // 2. WhatsApp Notification (Personal PM & WA Group Kamar)
+        // 2. WhatsApp Notification (Personal PM & WA Group Kamar) dengan Rate Limiting (Jeda 1 Menit per 5 Pesan)
         if (in_array($channel, ['whatsapp', 'keduanya'])) {
-            $this->whatsAppService->sendBulk($userIds, $judul, $pesan);
+            $waItems = [];
+            $users = \App\Models\User::whereIn('id', $userIds)->get();
 
-            // Kirim langsung ke Grup WhatsApp Kamar jika wa_group_id diisi
+            // Kumpulkan target nomor WhatsApp pribadi anak kos
+            foreach ($users as $user) {
+                $noHp = $user->no_hp ?? '-';
+                if (!empty($noHp) && $noHp !== '-') {
+                    $waItems[] = [
+                        'target' => $noHp,
+                        'judul' => $judul,
+                        'pesan' => $pesan,
+                        'user_id' => $user->id,
+                    ];
+                }
+            }
+
+            // Kumpulkan target Grup WhatsApp Kamar jika ada
             $targetedKamars = collect();
-            if ($validated['target_tipe'] === 'semua') {
-                $targetedKamars = \App\Models\Kamar::with('kos')->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
-            } elseif ($validated['target_tipe'] === 'kos') {
+            if ($validated['target_tipe'] === 'kos') {
                 $targetedKamars = \App\Models\Kamar::with('kos')->whereIn('kos_id', $validated['target_ids'] ?? [])
                     ->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
             } elseif ($validated['target_tipe'] === 'kamar') {
@@ -184,7 +201,17 @@ class AdminPengumumanController extends Controller
 
             foreach ($targetedKamars as $kamarItem) {
                 $kosNama = $kamarItem->kos->nama ?? 'Kos';
-                $this->whatsAppService->sendDirect($kamarItem->wa_group_id, "PENGUMUMAN KAMAR {$kamarItem->kode_kamar} ({$kosNama}) - " . $judul, $pesan);
+                $waItems[] = [
+                    'target' => $kamarItem->wa_group_id,
+                    'judul' => "PENGUMUMAN KAMAR {$kamarItem->kode_kamar} ({$kosNama}) - " . $judul,
+                    'pesan' => $pesan,
+                    'user_id' => null,
+                ];
+            }
+
+            // Eksekusi pengiriman dengan batch jeda 60 detik per 5 pesan
+            if (!empty($waItems)) {
+                $this->whatsAppService->sendPengumumanWithThrottle($waItems);
             }
         }
     }

@@ -22,6 +22,9 @@ return new class extends Migration
             $table->enum('status', ['kosong', 'terisi'])->default('kosong');
             $table->string('wa_group_id')->nullable();
             $table->string('link_grup_wa')->nullable();
+            $table->datetime('notif_jatuh_tempo_sent_at')->nullable();
+            $table->datetime('notif_h7_sent_at')->nullable();
+            $table->datetime('notif_h3_sent_at')->nullable();
             $table->timestamps();
         });
     }

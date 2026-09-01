@@ -535,17 +535,16 @@ $menunggu = $pembayarans->where('status', 'pending');
                 <div class="space-y-3">
                     {{-- Status Menunggu Verifikasi --}}
                     @php
-                    $kamarKapasitas = $p->penghuniKamar->kamar->kapasitas ?? 1;
                     if ($isKamarBerbagi) {
-                    if ($activeCount >= 3 || $kamarKapasitas >= 3) {
-                    $porsiText = 'Pelunasan Kamar 3 Orang';
-                    } elseif ($p->porsi_bayar == 50) {
-                    $porsiText = 'Tarif 1 Orang (50%)';
+                        if ($activeCount >= 3) {
+                            $porsiText = 'Pelunasan Kamar 3 Orang';
+                        } elseif ($p->porsi_bayar == 50) {
+                            $porsiText = 'Tarif 1 Orang (50%)';
+                        } else {
+                            $porsiText = 'Pelunasan 1 Kamar (2 Penghuni)';
+                        }
                     } else {
-                    $porsiText = 'Tarif 1 Kamar Penuh (100%)';
-                    }
-                    } else {
-                    $porsiText = 'Kamar Standar';
+                        $porsiText = 'Kamar Standar';
                     }
                     @endphp
 

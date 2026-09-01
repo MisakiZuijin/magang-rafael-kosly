@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kamar;
+use App\Models\Kos;
 use App\Models\LogAktivitas;
 use App\Models\Pembayaran;
+use App\Models\Setting;
 use App\Services\KamarService;
 use App\Services\KosService;
 use App\Services\LogAktivitasService;
@@ -83,6 +85,9 @@ class AdminLaporanController extends Controller
             ->latest()
             ->get();
 
+        // Query data kos untuk rekapitulasi pendapatan per kos
+        $kosList = Kos::with('mitra')->get();
+
         // Query data okupansi kamar kos
         $kamars = Kamar::with(['kos.mitra', 'penghuniKamar' => function($q) {
                 $q->where('status', 'aktif')->with('penghuni');
@@ -90,9 +95,10 @@ class AdminLaporanController extends Controller
             ->get();
 
         $currentUser = Auth::user();
-        $fileName = "Laporan_Kosly_" . str_replace('-', '', $start) . "_" . str_replace('-', '', $end) . ".xls";
+        $appName = Setting::appName();
+        $fileName = "Laporan_" . str_replace(' ', '_', $appName) . "_" . str_replace('-', '', $start) . "_" . str_replace('-', '', $end) . ".xls";
 
-        return response()->streamDownload(function() use ($pembayarans, $logs, $kamars, $start, $end, $currentUser) {
+        return response()->streamDownload(function() use ($pembayarans, $logs, $kamars, $kosList, $start, $end, $currentUser, $appName) {
             $e = function($str) {
                 return htmlspecialchars((string)$str, ENT_QUOTES, 'UTF-8');
             };
@@ -129,6 +135,17 @@ class AdminLaporanController extends Controller
             echo '  <Style ss:ID="CurrencyStyle">' . "\r\n";
             echo '   <NumberFormat ss:Format="&#34;Rp&#34;\ #,##0"/>' . "\r\n";
             echo '  </Style>' . "\r\n";
+            echo '  <Style ss:ID="TotalRow">' . "\r\n";
+            echo '   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#065F46"/>' . "\r\n";
+            echo '   <Interior ss:Color="#D1FAE5" ss:Pattern="Solid"/>' . "\r\n";
+            echo '   <Alignment ss:Vertical="Center"/>' . "\r\n";
+            echo '  </Style>' . "\r\n";
+            echo '  <Style ss:ID="TotalCurrency">' . "\r\n";
+            echo '   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#065F46"/>' . "\r\n";
+            echo '   <Interior ss:Color="#D1FAE5" ss:Pattern="Solid"/>' . "\r\n";
+            echo '   <NumberFormat ss:Format="&#34;Rp&#34;\ #,##0"/>' . "\r\n";
+            echo '   <Alignment ss:Vertical="Center"/>' . "\r\n";
+            echo '  </Style>' . "\r\n";
             echo '  <Style ss:ID="BadgeSuccess">' . "\r\n";
             echo '   <Font ss:FontName="Calibri" ss:Size="10" ss:Bold="1" ss:Color="#065F46"/>' . "\r\n";
             echo '   <Interior ss:Color="#D1FAE5" ss:Pattern="Solid"/>' . "\r\n";
@@ -147,7 +164,7 @@ class AdminLaporanController extends Controller
             echo '   <Column ss:Width="220"/>' . "\r\n";
             echo '   <Column ss:Width="300"/>' . "\r\n";
 
-            echo '   <Row ss:Height="30"><Cell ss:StyleID="TitleStyle"><Data ss:Type="String">LAPORAN KEUANGAN &amp; AKTIVITAS - KOSLY APP</Data></Cell></Row>' . "\r\n";
+            echo '   <Row ss:Height="30"><Cell ss:StyleID="TitleStyle"><Data ss:Type="String">LAPORAN KEUANGAN &amp; AKTIVITAS - ' . $e(strtoupper($appName)) . ' APP</Data></Cell></Row>' . "\r\n";
             echo '   <Row><Cell ss:StyleID="BoldText"><Data ss:Type="String">Periode Laporan</Data></Cell><Cell><Data ss:Type="String">' . $e($start . ' s/d ' . $end) . '</Data></Cell></Row>' . "\r\n";
             echo '   <Row><Cell ss:StyleID="BoldText"><Data ss:Type="String">Tanggal Di-export</Data></Cell><Cell><Data ss:Type="String">' . date('d-m-Y H:i:s') . '</Data></Cell></Row>' . "\r\n";
             echo '   <Row><Cell ss:StyleID="BoldText"><Data ss:Type="String">Di-export Oleh</Data></Cell><Cell><Data ss:Type="String">' . $e(($currentUser->nama ?? 'User') . ' (' . strtoupper($currentUser->role ?? '-') . ')') . '</Data></Cell></Row>' . "\r\n";
@@ -166,7 +183,89 @@ class AdminLaporanController extends Controller
             echo '  </Table>' . "\r\n";
             echo ' </Worksheet>' . "\r\n";
 
-            // ================= SHEET 2: TRANSAKSI PEMBAYARAN =================
+            // ================= SHEET 2: PENDAPATAN PER KOS =================
+            echo ' <Worksheet ss:Name="Pendapatan Per Kos">' . "\r\n";
+            echo '  <Table ss:ExpandedColumnCount="6" x:FullColumns="1" x:FullRows="1">' . "\r\n";
+            echo '   <Column ss:Width="40"/>' . "\r\n";
+            echo '   <Column ss:Width="200"/>' . "\r\n";
+            echo '   <Column ss:Width="180"/>' . "\r\n";
+            echo '   <Column ss:Width="110"/>' . "\r\n";
+            echo '   <Column ss:Width="140"/>' . "\r\n";
+            echo '   <Column ss:Width="180"/>' . "\r\n";
+
+            echo '   <Row ss:Height="28"><Cell ss:MergeAcross="5" ss:StyleID="TitleStyle"><Data ss:Type="String">REKAPITULASI PENDAPATAN PER KOS &amp; TOTAL KESELURUHAN</Data></Cell></Row>' . "\r\n";
+            echo '   <Row><Cell ss:MergeAcross="5" ss:StyleID="BoldText"><Data ss:Type="String">Periode Laporan: ' . $e($start . ' s/d ' . $end) . '</Data></Cell></Row>' . "\r\n";
+            echo '   <Row><Cell><Data ss:Type="String"></Data></Cell></Row>' . "\r\n";
+
+            echo '   <Row ss:Height="26" ss:StyleID="HeaderStyle">' . "\r\n";
+            echo '    <Cell><Data ss:Type="String">No</Data></Cell>' . "\r\n";
+            echo '    <Cell><Data ss:Type="String">Nama Kos</Data></Cell>' . "\r\n";
+            echo '    <Cell><Data ss:Type="String">Mitra / Pemilik</Data></Cell>' . "\r\n";
+            echo '    <Cell><Data ss:Type="String">Total Kamar</Data></Cell>' . "\r\n";
+            echo '    <Cell><Data ss:Type="String">Jumlah Transaksi</Data></Cell>' . "\r\n";
+            echo '    <Cell><Data ss:Type="String">Total Pendapatan (Rp)</Data></Cell>' . "\r\n";
+            echo '   </Row>' . "\r\n";
+
+            $noKos = 1;
+            $grandTotalNominal = 0;
+            $grandTotalTransaksi = 0;
+
+            foreach ($kosList as $kos) {
+                $kosPembayarans = $pembayarans->filter(function($pb) use ($kos) {
+                    return ($pb->penghuniKamar->kamar->kos_id ?? null) === $kos->id;
+                });
+                $kosKamars = $kamars->filter(function($km) use ($kos) {
+                    return $km->kos_id === $kos->id;
+                });
+
+                $jmlKamar = $kosKamars->count();
+                $jmlTrx = $kosPembayarans->count();
+                $totalTrxNominal = $kosPembayarans->sum('jumlah');
+
+                $grandTotalNominal += $totalTrxNominal;
+                $grandTotalTransaksi += $jmlTrx;
+
+                echo '   <Row>' . "\r\n";
+                echo '    <Cell><Data ss:Type="Number">' . $noKos++ . '</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="String">' . $e($kos->nama) . '</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="String">' . $e($kos->mitra->nama ?? '-') . '</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="Number">' . $jmlKamar . '</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="Number">' . $jmlTrx . '</Data></Cell>' . "\r\n";
+                echo '    <Cell ss:StyleID="CurrencyStyle"><Data ss:Type="Number">' . $totalTrxNominal . '</Data></Cell>' . "\r\n";
+                echo '   </Row>' . "\r\n";
+            }
+
+            // Cek jika ada transaksi yang kos-nya tidak ditemukan / terhapus
+            $unmatched = $pembayarans->filter(function($pb) use ($kosList) {
+                $kId = $pb->penghuniKamar->kamar->kos_id ?? null;
+                return !$kId || !$kosList->contains('id', $kId);
+            });
+            if ($unmatched->count() > 0) {
+                $unmatchedNominal = $unmatched->sum('jumlah');
+                $grandTotalNominal += $unmatchedNominal;
+                $grandTotalTransaksi += $unmatched->count();
+
+                echo '   <Row>' . "\r\n";
+                echo '    <Cell><Data ss:Type="Number">' . $noKos++ . '</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="String">Lainnya / Kos Tidak Terdaftar</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="String">-</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="Number">0</Data></Cell>' . "\r\n";
+                echo '    <Cell><Data ss:Type="Number">' . $unmatched->count() . '</Data></Cell>' . "\r\n";
+                echo '    <Cell ss:StyleID="CurrencyStyle"><Data ss:Type="Number">' . $unmatchedNominal . '</Data></Cell>' . "\r\n";
+                echo '   </Row>' . "\r\n";
+            }
+
+            // Baris Total Keseluruhan
+            echo '   <Row ss:Height="24" ss:StyleID="TotalRow">' . "\r\n";
+            echo '    <Cell ss:MergeAcross="3" ss:StyleID="TotalRow"><Data ss:Type="String">TOTAL PENDAPATAN KESELURUHAN</Data></Cell>' . "\r\n";
+            echo '    <Cell ss:StyleID="TotalRow"><Data ss:Type="Number">' . $grandTotalTransaksi . '</Data></Cell>' . "\r\n";
+            echo '    <Cell ss:StyleID="TotalCurrency"><Data ss:Type="Number">' . $grandTotalNominal . '</Data></Cell>' . "\r\n";
+            echo '   </Row>' . "\r\n";
+
+            echo '  </Table>' . "\r\n";
+            echo ' </Worksheet>' . "\r\n";
+
+            // ================= SHEET 3: TRANSAKSI PEMBAYARAN =================
             echo ' <Worksheet ss:Name="Transaksi Pembayaran">' . "\r\n";
             echo '  <Table ss:ExpandedColumnCount="10" x:FullColumns="1" x:FullRows="1">' . "\r\n";
             echo '   <Column ss:Width="40"/>' . "\r\n";

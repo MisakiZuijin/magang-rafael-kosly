@@ -24,8 +24,8 @@ class PenghuniDashboardController extends Controller
 
     public function index()
     {
-        // Real-time check and notify overdue leases (1x per lease)
-        $this->penghuniKamarService->periksaDanKirimNotifikasiJatuhTempo();
+        // Real-time check and notify overdue leases (H-7 and Jatuh Tempo)
+        $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
 
         /** @var User $user */
         $user = Auth::user();
@@ -190,10 +190,14 @@ class PenghuniDashboardController extends Controller
             }
         }
 
+        $activeCount = $activePenghuniCount;
+
         return view('penghuni.pembayaran', compact(
             'pembayarans',
             'rekening',
             'isKamarBerbagi',
+            'activePenghuniCount',
+            'activeCount',
             'roommateFullPaid',
             'roommateName',
             'roommateFullPending',

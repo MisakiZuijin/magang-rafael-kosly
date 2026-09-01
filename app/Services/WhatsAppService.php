@@ -150,4 +150,51 @@ class WhatsAppService
             }
         }
     }
+
+    /**
+     * Kirim pengumuman WhatsApp dengan pembatasan laju (rate limiting / batching):
+     * Setiap 5 pesan WhatsApp terkirim diberi jeda 1 menit (60 detik) agar nomor tidak terblokir/banned.
+     *
+     * @param array $items Array asosiatif berisi ['target' => string, 'judul' => string, 'pesan' => string, 'user_id' => int|null]
+     * @return int Jumlah pesan yang berhasil diproses
+     */
+    public function sendPengumumanWithThrottle(array $items): int
+    {
+        @set_time_limit(0); // Menghindari script timeout karena jeda pengiriman
+        $sentCount = 0;
+        $total = count($items);
+
+        foreach ($items as $index => $item) {
+            $target = $item['target'] ?? null;
+            $judul = $item['judul'] ?? 'PENGUMUMAN';
+            $pesan = $item['pesan'] ?? '';
+            $userId = $item['user_id'] ?? null;
+
+            if (empty($target) || $target === '-') {
+                continue;
+            }
+
+            // Catat log notifikasi WA jika ada user_id terkait
+            if ($userId) {
+                \App\Models\Notifikasi::create([
+                    'user_id' => $userId,
+                    'judul' => '[WhatsApp] ' . $judul,
+                    'pesan' => $pesan,
+                    'channel' => 'whatsapp',
+                    'status' => 'terkirim',
+                ]);
+            }
+
+            $this->sendDirect($target, $judul, $pesan);
+            $sentCount++;
+
+            // Jika kelipatan 5 pesan dan masih ada pesan tersisa yang harus dikirim, jeda 1 menit (60 detik)
+            if ($sentCount > 0 && $sentCount % 5 === 0 && ($index + 1) < $total) {
+                Log::info("Rate limit Pengumuman WhatsApp: memberi jeda 60 detik setelah {$sentCount} pesan terkirim.");
+                sleep(60);
+            }
+        }
+
+        return $sentCount;
+    }
 }

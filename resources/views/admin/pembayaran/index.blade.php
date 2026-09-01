@@ -2,12 +2,33 @@
 
 @section('title', 'Verifikasi Pembayaran')
 
+@php
+$kosListVerif = $terverifikasi->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? null)->filter()->unique()->values();
+$kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? null)->filter()->unique()->values();
+@endphp
+
 @section('content')
 <div class="space-y-5" x-data="{ 
     tab: 'pending', 
     showReviewModal: false,
     showRejectReason: false,
     showImageFullscreen: false,
+    searchVerif: '',
+    filterKosVerif: '',
+    searchTolak: '',
+    filterKosTolak: '',
+    matchVerif(text, kosNama) {
+        const s = this.searchVerif.toLowerCase().trim();
+        const matchesSearch = !s || text.toLowerCase().includes(s);
+        const matchesKos = !this.filterKosVerif || kosNama === this.filterKosVerif;
+        return matchesSearch && matchesKos;
+    },
+    matchTolak(text, kosNama) {
+        const s = this.searchTolak.toLowerCase().trim();
+        const matchesSearch = !s || text.toLowerCase().includes(s);
+        const matchesKos = !this.filterKosTolak || kosNama === this.filterKosTolak;
+        return matchesSearch && matchesKos;
+    },
     zoomLevel: 1,
     panX: 0,
     panY: 0,
@@ -157,19 +178,60 @@
 
     {{-- Tab Terverifikasi --}}
     <div x-show="tab === 'terverifikasi'" class="space-y-4" x-transition x-cloak>
+        @if($terverifikasi->count() > 0)
+        {{-- Search & Filter Toolbar Verifikasi --}}
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2">
+            <div class="flex flex-col sm:flex-row gap-2">
+                {{-- Search Bar --}}
+                <div class="relative flex-1">
+                    <input type="text" x-model="searchVerif" placeholder="Cari nama penghuni, kos, kamar, nominal, invoice..."
+                        class="w-full pl-9 pr-8 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <button type="button" x-show="searchVerif" @click="searchVerif = ''" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs font-bold" style="display: none;">✕</button>
+                </div>
+
+                {{-- Filter Kos Dropdown --}}
+                @if($kosListVerif->count() > 0)
+                <div class="w-full sm:w-44">
+                    <select x-model="filterKosVerif" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none">
+                        <option value="">Semua Kos ({{ $kosListVerif->count() }})</option>
+                        @foreach($kosListVerif as $kNama)
+                        <option value="{{ $kNama }}">{{ $kNama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+            </div>
+
+            {{-- Reset Filter Button if active --}}
+            <div x-show="searchVerif || filterKosVerif" class="flex items-center justify-between pt-1 text-[11px] text-gray-500 dark:text-gray-400" style="display: none;">
+                <span>Menampilkan hasil pencarian / filter</span>
+                <button type="button" @click="searchVerif = ''; filterKosVerif = '';" class="text-emerald-600 dark:text-emerald-400 font-bold hover:underline">
+                    Reset Filter
+                </button>
+            </div>
+        </div>
+        @endif
+
         @forelse($terverifikasi as $p)
         @php
         $penghuniNama = $p->penghuniKamar->penghuni->nama ?? 'Anak Kos';
-        $kosKamar = ($p->penghuniKamar->kamar->kode_kamar ?? '-') . ' · ' . ($p->penghuniKamar->kamar->kos->nama ?? '-');
+        $kosPureNama = $p->penghuniKamar->kamar->kos->nama ?? '';
+        $kamarKode = $p->penghuniKamar->kamar->kode_kamar ?? '-';
+        $kosKamar = $kamarKode . ' · ' . ($kosPureNama ?: '-');
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
         $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar');
         $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang|Tarif 3 Orang|Tarif 1 Kamar) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
         $tanggalTransferFormatted = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : '-';
         $waktuVerifFormatted = $p->tanggal_verifikasi ? $p->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : ($p->updated_at ? $p->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : '-');
         $buktiUrl = $p->bukti_transfer_url ? asset('storage/' . $p->bukti_transfer_url) : '';
+        $invoiceKode = $p->kode_invoice ?? '';
+        $searchString = strtolower($penghuniNama . ' ' . $kosPureNama . ' ' . $kamarKode . ' ' . $p->jumlah . ' ' . $tanggalTransferFormatted . ' ' . $waktuVerifFormatted . ' ' . ($uploaderName ?? '') . ' ' . $invoiceKode);
         @endphp
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-5 border border-emerald-100 dark:border-emerald-900/40 shadow-sm space-y-4">
+        <div x-show="matchVerif('{{ addslashes($searchString) }}', '{{ addslashes($kosPureNama) }}')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-5 border border-emerald-100 dark:border-emerald-900/40 shadow-sm space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div class="space-y-1">
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200/70 dark:border-emerald-900/50 uppercase tracking-wider">
@@ -246,16 +308,57 @@
 
     {{-- Tab Ditolak --}}
     <div x-show="tab === 'ditolak'" class="space-y-4" x-transition x-cloak>
+        @if($ditolak->count() > 0)
+        {{-- Search & Filter Toolbar Ditolak --}}
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-3 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2">
+            <div class="flex flex-col sm:flex-row gap-2">
+                {{-- Search Bar --}}
+                <div class="relative flex-1">
+                    <input type="text" x-model="searchTolak" placeholder="Cari nama penghuni, kos, kamar, alasan penolakan..."
+                        class="w-full pl-9 pr-8 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none">
+                    <svg class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <button type="button" x-show="searchTolak" @click="searchTolak = ''" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs font-bold" style="display: none;">✕</button>
+                </div>
+
+                {{-- Filter Kos Dropdown --}}
+                @if($kosListTolak->count() > 0)
+                <div class="w-full sm:w-44">
+                    <select x-model="filterKosTolak" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500/20 focus:border-red-500 outline-none">
+                        <option value="">Semua Kos ({{ $kosListTolak->count() }})</option>
+                        @foreach($kosListTolak as $kNama)
+                        <option value="{{ $kNama }}">{{ $kNama }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endif
+            </div>
+
+            {{-- Reset Filter Button if active --}}
+            <div x-show="searchTolak || filterKosTolak" class="flex items-center justify-between pt-1 text-[11px] text-gray-500 dark:text-gray-400" style="display: none;">
+                <span>Menampilkan hasil pencarian / filter</span>
+                <button type="button" @click="searchTolak = ''; filterKosTolak = '';" class="text-red-600 dark:text-red-400 font-bold hover:underline">
+                    Reset Filter
+                </button>
+            </div>
+        </div>
+        @endif
+
         @forelse($ditolak as $p)
         @php
         $penghuniNama = $p->penghuniKamar->penghuni->nama ?? 'Anak Kos';
-        $kosKamar = ($p->penghuniKamar->kamar->kode_kamar ?? '-') . ' · ' . ($p->penghuniKamar->kamar->kos->nama ?? '-');
+        $kosPureNama = $p->penghuniKamar->kamar->kos->nama ?? '';
+        $kamarKode = $p->penghuniKamar->kamar->kode_kamar ?? '-';
+        $kosKamar = $kamarKode . ' · ' . ($kosPureNama ?: '-');
         $jumlahFormatted = 'Rp ' . number_format($p->jumlah, 0, ',', '.');
         $waktuTolakFormatted = $p->tanggal_verifikasi ? $p->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : ($p->updated_at ? $p->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : '-');
         $alasanTolak = $p->catatan_verifikasi ?: ($p->catatan ?: 'Bukti pembayaran ditolak oleh admin.');
+        $invoiceKode = $p->kode_invoice ?? '';
+        $searchString = strtolower($penghuniNama . ' ' . $kosPureNama . ' ' . $kamarKode . ' ' . $p->jumlah . ' ' . $waktuTolakFormatted . ' ' . $alasanTolak . ' ' . $invoiceKode);
         @endphp
 
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-5 border border-red-100 dark:border-red-900/40 shadow-sm space-y-3.5">
+        <div x-show="matchTolak('{{ addslashes($searchString) }}', '{{ addslashes($kosPureNama) }}')" class="bg-white dark:bg-gray-900 rounded-2xl p-4 sm:p-5 border border-red-100 dark:border-red-900/40 shadow-sm space-y-3.5">
             <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div class="space-y-1">
                     <span class="inline-flex items-center gap-1 px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border border-red-200/70 dark:border-red-900/50 uppercase tracking-wider">

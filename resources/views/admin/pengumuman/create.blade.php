@@ -31,11 +31,19 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
 
 @section('content')
 <div class="space-y-4" x-data="{ 
+    channel: 'web',
     kategoriTipe: 'pembayaran', 
     targetTipe: '{{ $initTargetTipe }}', 
+    searchKos: '',
+    searchKamar: '',
+    onChannelChange() {
+        if ((this.channel === 'whatsapp' || this.channel === 'keduanya') && this.targetTipe === 'semua') {
+            this.targetTipe = 'kos';
+        }
+    },
     onKategoriChange() {
         if (this.kategoriTipe === 'aturan' && this.targetTipe === 'kamar') {
-            this.targetTipe = 'semua';
+            this.targetTipe = (this.channel === 'whatsapp' || this.channel === 'keduanya') ? 'kos' : 'semua';
         }
     }
 }">
@@ -64,14 +72,14 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Saluran Media Pengiriman</label>
                 <div class="grid grid-cols-3 gap-2">
                     <label class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input type="radio" name="channel" value="web" checked class="sr-only peer">
+                        <input type="radio" name="channel" value="web" x-model="channel" @change="onChannelChange()" class="sr-only peer">
                         <span class="text-xs font-bold text-gray-700 dark:text-gray-300 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400 flex items-center gap-1">
                             🌐 Web App
                         </span>
                     </label>
 
                     <label class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input type="radio" name="channel" value="whatsapp" class="sr-only peer">
+                        <input type="radio" name="channel" value="whatsapp" x-model="channel" @change="onChannelChange()" class="sr-only peer">
                         <span class="[&>svg]:h-4 [&>svg]:w-4 text-xs font-bold text-gray-700 dark:text-gray-300 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400 flex items-center gap-1">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -85,7 +93,7 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
                     </label>
 
                     <label class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input type="radio" name="channel" value="keduanya" class="sr-only peer">
+                        <input type="radio" name="channel" value="keduanya" x-model="channel" @change="onChannelChange()" class="sr-only peer">
                         <span class="text-xs font-bold text-gray-700 dark:text-gray-300 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400 flex items-center gap-1">
                             🔔 Keduanya
                         </span>
@@ -112,8 +120,9 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
             {{-- Target Penerima --}}
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Target Sasaran Penerima</label>
-                <div class="grid gap-2 mb-2" :class="kategoriTipe === 'aturan' ? 'grid-cols-2' : 'grid-cols-3'">
-                    <label class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
+                <div class="grid gap-2 mb-2" :class="(channel !== 'web' || kategoriTipe === 'aturan') ? 'grid-cols-2' : 'grid-cols-3'">
+                    {{-- Opsi Semua User HANYA muncul jika channel adalah Web App --}}
+                    <label x-show="channel === 'web'" x-transition class="p-2.5 rounded-xl border border-gray-200 dark:border-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800">
                         <input type="radio" name="target_tipe" value="semua" x-model="targetTipe" class="sr-only peer">
                         <span class="text-xs font-bold text-gray-700 dark:text-gray-300 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400">Semua User</span>
                     </label>
@@ -128,17 +137,37 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
                         <span class="text-xs font-bold text-gray-700 dark:text-gray-300 peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400">Per Kamar</span>
                     </label>
                 </div>
-                <p x-show="kategoriTipe === 'aturan'" class="text-[11px] text-amber-600 dark:text-amber-400 italic">
+                <p x-show="channel === 'whatsapp' || channel === 'keduanya'" class="text-[11px] text-amber-600 dark:text-amber-400 italic">
+                    * Pengiriman via WhatsApp / Keduanya dibatasi per Kos atau per Kamar untuk menjaga keamanan akun WhatsApp.
+                </p>
+                <p x-show="channel === 'web' && kategoriTipe === 'aturan'" class="text-[11px] text-amber-600 dark:text-amber-400 italic">
                     * Pengumuman Aturan Kos Baru berlaku untuk tingkat gedung kos atau seluruh pengguna.
                 </p>
             </div>
 
             {{-- Target List Kos --}}
             <div x-show="targetTipe === 'kos'" x-transition class="space-y-2">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pilih Kos Target</label>
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pilih Kos Target</label>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Total: {{ $kosList->count() }} Kos</span>
+                </div>
+
+                {{-- Search Bar Kos --}}
+                <div class="relative">
+                    <input type="text" x-model="searchKos" placeholder="Cari nama kos atau nama pemilik..."
+                        class="w-full pl-8 pr-7 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none">
+                    <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <button type="button" x-show="searchKos" @click="searchKos = ''" class="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs font-bold" style="display: none;">✕</button>
+                </div>
+
                 <div class="max-h-44 overflow-y-auto space-y-1.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                     @foreach($kosList as $k)
-                    <label class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
+                    @php
+                    $searchKosKey = strtolower($k->nama . ' ' . ($k->mitra->nama ?? ''));
+                    @endphp
+                    <label x-show="!searchKos || '{{ addslashes($searchKosKey) }}'.includes(searchKos.toLowerCase().trim())" class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
                         <input type="checkbox" name="target_ids[]" value="{{ $k->id }}" class="rounded text-emerald-600 focus:ring-emerald-500">
                         <span>{{ $k->nama }} (Mitra: {{ $k->mitra->nama ?? '-' }})</span>
                     </label>
@@ -151,13 +180,28 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
             $allKamars = \App\Models\Kamar::with('kos')->get();
             @endphp
             <div x-show="targetTipe === 'kamar' && kategoriTipe !== 'aturan'" x-transition class="space-y-2">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pilih Kode Kamar Target</label>
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Pilih Kode Kamar Target</label>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400">Total: {{ $allKamars->count() }} Kamar</span>
+                </div>
+
+                {{-- Search Bar Kamar --}}
+                <div class="relative">
+                    <input type="text" x-model="searchKamar" placeholder="Cari kode kamar atau nama kos..."
+                        class="w-full pl-8 pr-7 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none">
+                    <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <button type="button" x-show="searchKamar" @click="searchKamar = ''" class="absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xs font-bold" style="display: none;">✕</button>
+                </div>
+
                 <div class="max-h-44 overflow-y-auto space-y-1.5 p-2 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
                     @foreach($allKamars as $km)
                     @php
                     $isChecked = in_array($km->id, $selectedKamarIds ?? []);
+                    $searchKamarKey = strtolower($km->kode_kamar . ' ' . ($km->kos->nama ?? ''));
                     @endphp
-                    <label class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
+                    <label x-show="!searchKamar || '{{ addslashes($searchKamarKey) }}'.includes(searchKamar.toLowerCase().trim())" class="flex items-center gap-2 text-xs font-medium text-gray-800 dark:text-gray-200 p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg cursor-pointer">
                         <input type="checkbox" name="target_ids[]" value="{{ $km->id }}" {{ $isChecked ? 'checked' : '' }} class="rounded text-emerald-600 focus:ring-emerald-500">
                         <span>Kamar {{ $km->kode_kamar }} · {{ $km->kos->nama ?? '-' }}</span>
                     </label>

@@ -24,6 +24,9 @@ class Kamar extends Model
         'status',
         'wa_group_id',
         'link_grup_wa',
+        'notif_jatuh_tempo_sent_at',
+        'notif_h7_sent_at',
+        'notif_h3_sent_at',
     ];
 
     protected function casts(): array
@@ -34,6 +37,9 @@ class Kamar extends Model
             'harga_per_minggu' => 'integer',
             'harga_per_bulan' => 'integer',
             'kapasitas' => 'integer',
+            'notif_jatuh_tempo_sent_at' => 'datetime',
+            'notif_h7_sent_at' => 'datetime',
+            'notif_h3_sent_at' => 'datetime',
             'created_at' => 'datetime',
         ];
     }

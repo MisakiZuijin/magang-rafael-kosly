@@ -192,7 +192,7 @@
                     }" x-init="start()" :class="isOverdue ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50' : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 dark:border-emerald-800/50'" class="p-3 rounded-xl border flex flex-col justify-center transition-colors">
             <div class="grid grid-cols-1 gap-2 items-center mb-1">
                 <p class="text-[11px] font-bold uppercase tracking-wider" :class="isOverdue ? 'text-red-700 dark:text-red-300' : 'text-emerald-600 dark:text-emerald-400'">Sisa Waktu Masa Sewa</p>
-                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-lg" :class="isOverdue ? 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-200' : 'bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'">
+                <span class="text-[10px] text-center w-max font-semibold px-2 py-0.5 rounded-lg" :class="isOverdue ? 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-200' : 'bg-emerald-100/60 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400'">
                     Batas Checkout: {{ $targetKeluar->locale('id')->isoFormat('D MMMM Y') }} · Pukul 14.00 WIB
                 </span>
             </div>

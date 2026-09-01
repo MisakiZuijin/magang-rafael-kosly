@@ -108,30 +108,44 @@ class Pembayaran extends Model
             ];
         }
 
-        // 3. Hitung jumlah transaksi pembayaran yang bersamaan dalam 1 kamar pada siklus/periode transaksi ini
+        // 3. Hitung jumlah penghuni aktif di kamar ini atau transaksi pembayaran bersamaan
         $kamarId = $this->penghuniKamar->kamar_id ?? null;
         if ($kamarId) {
-            $roommatePaymentsCount = static::whereHas('penghuniKamar', function($q) use ($kamarId) {
-                $q->where('kamar_id', $kamarId);
-            })
-            ->where('porsi_bayar', 100)
-            ->where(function($q) {
-                if ($this->periode_mulai && $this->periode_selesai) {
-                    $q->where('periode_mulai', $this->periode_mulai)
-                      ->where('periode_selesai', $this->periode_selesai);
-                } elseif ($this->tanggal_bayar) {
-                    $q->whereDate('tanggal_bayar', $this->tanggal_bayar);
-                } elseif ($this->created_at) {
-                    $q->whereDate('created_at', $this->created_at);
-                }
-            })
-            ->count();
+            $activeCount = \App\Models\PenghuniKamar::where('kamar_id', $kamarId)
+                ->where('status', 'aktif')
+                ->count();
 
-            if ($roommatePaymentsCount >= 3) {
+            if ($activeCount >= 3) {
                 return [
                     'text' => 'Tarif 3 Orang',
                     'class' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
                 ];
+            }
+
+            // Jika status terverifikasi, cek juga apakah pada transaksi historis ada 3 penghuni
+            if ($this->status === 'terverifikasi') {
+                $roommatePaymentsCount = static::whereHas('penghuniKamar', function($q) use ($kamarId) {
+                    $q->where('kamar_id', $kamarId);
+                })
+                ->where('porsi_bayar', 100)
+                ->where(function($q) {
+                    if ($this->periode_mulai && $this->periode_selesai) {
+                        $q->where('periode_mulai', $this->periode_mulai)
+                          ->where('periode_selesai', $this->periode_selesai);
+                    } elseif ($this->tanggal_bayar) {
+                        $q->whereDate('tanggal_bayar', $this->tanggal_bayar);
+                    } elseif ($this->created_at) {
+                        $q->whereDate('created_at', $this->created_at);
+                    }
+                })
+                ->count();
+
+                if ($roommatePaymentsCount >= 3) {
+                    return [
+                        'text' => 'Tarif 3 Orang',
+                        'class' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+                    ];
+                }
             }
         }
 
