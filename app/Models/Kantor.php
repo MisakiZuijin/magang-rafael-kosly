@@ -4,12 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasGmapsQuery;
 
 class Kantor extends Model
 {
-    use HasFactory;
+    use HasFactory, HasGmapsQuery;
 
     protected $table = 'kantor';
+
+    protected $appends = [
+        'gmaps_query',
+    ];
 
     protected $fillable = [
         'nama',

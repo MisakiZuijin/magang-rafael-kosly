@@ -32,12 +32,12 @@ class KosService
         return $this->repository->getByMitra($mitraId);
     }
 
-    public function getById(int $id): ?Kos
+    public function getById(int|string $id): ?Kos
     {
-        return $this->repository->findById($id);
+        return is_numeric($id) ? $this->repository->findById((int)$id) : $this->repository->findBySlug((string)$id);
     }
 
-    public function getDetail(int $id): ?Kos
+    public function getDetail(int|string $id): ?Kos
     {
         return $this->repository->findWithKamar($id);
     }
@@ -47,14 +47,22 @@ class KosService
         return $this->repository->create($data);
     }
 
-    public function update(int $id, array $data): Kos
+    public function update(int|string $id, array $data): Kos
     {
-        return $this->repository->update($id, $data);
+        if (!is_numeric($id)) {
+            $kos = $this->repository->findBySlug((string)$id);
+            $id = $kos ? $kos->id : (int)$id;
+        }
+        return $this->repository->update((int)$id, $data);
     }
 
-    public function delete(int $id): bool
+    public function delete(int|string $id): bool
     {
-        return $this->repository->delete($id);
+        if (!is_numeric($id)) {
+            $kos = $this->repository->findBySlug((string)$id);
+            $id = $kos ? $kos->id : (int)$id;
+        }
+        return $this->repository->delete((int)$id);
     }
 
     public function getAllLocations(): Collection
@@ -62,7 +70,7 @@ class KosService
         return $this->repository->getAllLocations();
     }
 
-    public function toggleLock(int $id): ?Kos
+    public function toggleLock(int|string $id): ?Kos
     {
         return $this->repository->toggleLock($id);
     }

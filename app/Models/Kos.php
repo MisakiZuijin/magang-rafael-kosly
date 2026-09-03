@@ -4,12 +4,17 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasGmapsQuery;
 
 class Kos extends Model
 {
-    use HasFactory;
+    use HasFactory, HasGmapsQuery;
 
     protected $table = 'kos';
+
+    protected $appends = [
+        'gmaps_query',
+    ];
 
     protected $fillable = [
         'mitra_id',

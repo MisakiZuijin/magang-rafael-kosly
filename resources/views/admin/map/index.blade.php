@@ -54,29 +54,60 @@
     
     extractQuery(item) {
         if (!item) return '';
-        if (item.link_gmaps) {
-            const matchQ = item.link_gmaps.match(/[?&]q=([^&]+)/);
-            if (matchQ) return decodeURIComponent(matchQ[1]);
-            const matchAt = item.link_gmaps.match(/@(-?\d+\.\d+,-?\d+\.\d+)/);
+        if (item.gmaps_query && typeof item.gmaps_query === 'string' && item.gmaps_query.trim() !== '') {
+            return item.gmaps_query.trim();
+        }
+        if (item.link_gmaps && typeof item.link_gmaps === 'string' && item.link_gmaps.trim() !== '' && item.link_gmaps !== '-') {
+            const raw = item.link_gmaps.trim();
+
+            const matchPin = raw.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+            if (matchPin) return `${matchPin[1]},${matchPin[2]}`;
+
+            const matchQ = raw.match(/[?&]q=(?:loc:)?(-?\d+\.\d+,-?\d+\.\d+)/);
+            if (matchQ) return matchQ[1];
+
+            const matchPlace = raw.match(/\/place\/([^\/@?]+)/);
+            if (matchPlace) return decodeURIComponent(matchPlace[1].replace(/\+/g, ' '));
+
+            const matchAt = raw.match(/@(-?\d+\.\d+,-?\d+\.\d+)/);
             if (matchAt) return matchAt[1];
         }
         return item.alamat || item.nama || '';
     },
 
     get routeUrl() {
-        if (!this.selectedOffice || !this.selectedKos) return '#';
-        const origin = this.extractQuery(this.selectedOffice);
+        if (!this.selectedKos) return '#';
         const destination = this.extractQuery(this.selectedKos);
-        if (!origin || !destination) return '#';
-        return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+        const origin = this.selectedOffice ? this.extractQuery(this.selectedOffice) : '';
+
+        if (!destination) return '#';
+
+        if (origin) {
+            return `https://www.google.com/maps/dir/?api=1&origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`;
+        }
+        
+        if (this.selectedKos.link_gmaps && this.selectedKos.link_gmaps.trim() !== '' && this.selectedKos.link_gmaps !== '-') {
+            return this.selectedKos.link_gmaps.trim();
+        }
+        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
     },
 
     get officeUrl() {
-        return this.selectedOffice?.link_gmaps || (this.selectedOffice ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(this.extractQuery(this.selectedOffice))}` : '#');
+        if (!this.selectedOffice) return '#';
+        if (this.selectedOffice.link_gmaps && this.selectedOffice.link_gmaps.trim() !== '' && this.selectedOffice.link_gmaps !== '-') {
+            return this.selectedOffice.link_gmaps.trim();
+        }
+        const query = this.extractQuery(this.selectedOffice);
+        return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : '#';
     },
 
     get kosUrl() {
-        return this.selectedKos?.link_gmaps || (this.selectedKos ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(this.extractQuery(this.selectedKos))}` : '#');
+        if (!this.selectedKos) return '#';
+        if (this.selectedKos.link_gmaps && this.selectedKos.link_gmaps.trim() !== '' && this.selectedKos.link_gmaps !== '-') {
+            return this.selectedKos.link_gmaps.trim();
+        }
+        const query = this.extractQuery(this.selectedKos);
+        return query ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}` : '#';
     }
 }">
     {{-- Header --}}
@@ -211,11 +242,21 @@
                         <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">🏢 Titik Asal (Kantor)</span>
                         <p class="font-bold text-gray-900 dark:text-white truncate" x-text="selectedOffice ? selectedOffice.nama : '-'"></p>
                         <p class="text-[11px] text-gray-500 truncate" x-text="selectedOffice ? (selectedOffice.alamat || 'Alamat tidak tersedia') : ''"></p>
+                        <template x-if="selectedOffice && selectedOffice.link_gmaps">
+                            <a :href="selectedOffice.link_gmaps" target="_blank" class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 pt-0.5">
+                                <span>📍 Lihat Titik Asal di Maps</span>
+                            </a>
+                        </template>
                     </div>
                     <div class="p-2 bg-white/80 dark:bg-gray-900/80 rounded-lg border border-emerald-100 dark:border-emerald-900/30 space-y-0.5">
                         <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">🏡 Titik Tujuan (Kos)</span>
                         <p class="font-bold text-gray-900 dark:text-white truncate" x-text="selectedKos ? selectedKos.nama : '-'"></p>
                         <p class="text-[11px] text-gray-500 truncate" x-text="selectedKos ? (selectedKos.alamat || 'Alamat tidak tersedia') : ''"></p>
+                        <template x-if="selectedKos && selectedKos.link_gmaps">
+                            <a :href="selectedKos.link_gmaps" target="_blank" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 pt-0.5">
+                                <span>📍 Lihat Titik Kos di Maps</span>
+                            </a>
+                        </template>
                     </div>
                 </div>
 
