@@ -1310,10 +1310,10 @@ return [
     $allKamars = \App\Models\Kamar::with('kos')->get();
     @endphp
     <x-modal show="modalPenghuni" title="Daftarkan Penghuni ke Kamar">
-        <form action="{{ route($p . 'penghuni.daftar') }}" method="POST" class="space-y-3" x-data="{ durasiSewa: 'bulanan' }">
+        <form action="{{ route($p . 'penghuni.daftar') }}" method="POST" class="space-y-3.5" x-data="{ durasiSewa: 'bulanan' }">
             @csrf
 
-            {{-- Pilih Kamar (Kamar Terisi Ditandai Disabled) --}}
+            {{-- 1. Pilih Kamar --}}
             <div x-data="{
             open: false,
             search: '',
@@ -1361,17 +1361,25 @@ return [
                 this.open = false;
             }
         }" class="relative">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Pilih Kode Kamar Kos (Hanya Kamar Kosong) <span class="text-red-500">*</span></label>
-                <input type="text"
-                    x-model="search"
-                    @focus="open = true"
-                    @click.away="open = false"
-                    @input="open = true; selectedId = ''; selectedKamarIdForPenghuni = ''"
-                    placeholder="Ketik kode kamar (misal: A01) atau nama kos..."
-                    required
-                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
-                <input type="hidden" name="kamar_id" :value="selectedId" required>
+                <div class="flex items-center justify-between mb-1">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                        Pilih Kamar Kos <span class="text-red-500">*</span>
+                    </label>
+                    <span class="text-[10px] text-gray-400 dark:text-gray-500 italic">Khusus Kamar Kosong</span>
+                </div>
+                <div class="relative">
+                    <input type="text"
+                        x-model="search"
+                        @focus="open = true"
+                        @click.away="open = false"
+                        @input="open = true; selectedId = ''; selectedKamarIdForPenghuni = ''"
+                        placeholder="Ketik kode kamar (misal: A01) atau nama kos..."
+                        required
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                    <input type="hidden" name="kamar_id" :value="selectedId" required>
+                </div>
 
+                {{-- Dropdown Hasil Pencarian Kamar --}}
                 <div x-show="open && filtered.length > 0" x-transition class="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 p-1 space-y-1">
                     <template x-for="item in filtered" :key="item.id">
                         <div @click="select(item)"
@@ -1387,18 +1395,16 @@ return [
                         </div>
                     </template>
                 </div>
-            </div>
 
-            {{-- Info Jenis Kamar Terpilih --}}
-            <div class="p-2.5 rounded-xl border text-xs flex items-center justify-between"
-                :class="selectedKamarTipe === 'berbagi' ? 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300' : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'">
-                <div>
-                    <span class="font-bold uppercase tracking-wider">Jenis Kamar:</span>
-                    <span x-text="selectedKamarTipe === 'berbagi' ? 'BERBAGI (Wajib 2 Orang)' : 'STANDAR (1 Orang)'" class="font-bold ml-1"></span>
+                {{-- Badge Tipe Kamar Terpilih --}}
+                <div class="mt-1.5 px-2.5 py-1 rounded-lg border text-[11px] flex items-center justify-between font-medium"
+                    :class="selectedKamarTipe === 'berbagi' ? 'bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300' : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300'">
+                    <span class="font-bold uppercase tracking-wider text-[10px]" x-text="selectedKamarTipe === 'berbagi' ? '👥 TIPE BERBAGI' : '👤 TIPE STANDAR'"></span>
+                    <span x-text="selectedKamarTipe === 'berbagi' ? 'Wajib minimal 2 orang (maks 3)' : 'Kapasitas 1 orang'"></span>
                 </div>
             </div>
 
-            {{-- Penghuni 1 (Wajib) --}}
+            {{-- 2. Penghuni 1 (Wajib) --}}
             <div x-data="{
             open: false,
             search: '',
@@ -1419,16 +1425,19 @@ return [
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
                     Pilih Penghuni 1 <span class="text-red-500">*</span>
                 </label>
-                <input type="text"
-                    x-model="search"
-                    @focus="open = true"
-                    @click.away="open = false"
-                    @input="open = true; selectedId = ''"
-                    placeholder="Ketik nama atau no. hp anak kos..."
-                    required
-                    class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
-                <input type="hidden" name="penghuni_id" :value="selectedId" required>
+                <div class="relative">
+                    <input type="text"
+                        x-model="search"
+                        @focus="open = true"
+                        @click.away="open = false"
+                        @input="open = true; selectedId = ''"
+                        placeholder="Ketik nama atau no. hp anak kos..."
+                        required
+                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                    <input type="hidden" name="penghuni_id" :value="selectedId" required>
+                </div>
 
+                {{-- Dropdown Hasil Pencarian Penghuni 1 --}}
                 <div x-show="open && filtered.length > 0" x-transition class="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl shadow-xl z-50 p-1 space-y-1">
                     <template x-for="item in filtered" :key="item.id">
                         <div @click="select(item)"
@@ -1444,8 +1453,13 @@ return [
                 </div>
             </div>
 
-            {{-- Penghuni 2 (Wajib Jika Tipe Berbagi) --}}
-            <div x-show="selectedKamarTipe === 'berbagi'" x-transition class="space-y-1">
+            {{-- 3. Rekan Sekamar (Khusus Kamar Tipe Berbagi) --}}
+            <div x-show="selectedKamarTipe === 'berbagi'" x-transition class="p-3 bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200/80 dark:border-purple-800/50 rounded-2xl space-y-3">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-purple-800 dark:text-purple-300">
+                    <span>👥 Rekan Sekamar Berbagi</span>
+                </div>
+
+                {{-- Penghuni 2 (Wajib Jika Tipe Berbagi) --}}
                 <div x-data="{
                 open: false,
                 search: '',
@@ -1463,18 +1477,20 @@ return [
                     this.open = false;
                 }
             }" class="relative">
-                    <label class="block text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
-                        Pilih Penghuni 2 <span class="text-red-500">* (Wajib - Minimal 2 Orang)</span>
+                    <label class="block text-xs font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider mb-1">
+                        Pilih Penghuni 2 <span class="text-red-500">* (Wajib)</span>
                     </label>
-                    <input type="text"
-                        x-model="search"
-                        @focus="open = true"
-                        @click.away="open = false"
-                        @input="open = true; selectedId = ''"
-                        placeholder="Ketik nama atau no. hp anak kos ke-2..."
-                        :required="selectedKamarTipe === 'berbagi'"
-                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
-                    <input type="hidden" name="penghuni_id_2" :value="selectedId" :required="selectedKamarTipe === 'berbagi'">
+                    <div class="relative">
+                        <input type="text"
+                            x-model="search"
+                            @focus="open = true"
+                            @click.away="open = false"
+                            @input="open = true; selectedId = ''"
+                            placeholder="Ketik nama atau no. hp anak kos ke-2..."
+                            :required="selectedKamarTipe === 'berbagi'"
+                            class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+                        <input type="hidden" name="penghuni_id_2" :value="selectedId" :required="selectedKamarTipe === 'berbagi'">
+                    </div>
 
                     <div x-show="open && filtered.length > 0" x-transition class="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 rounded-xl shadow-xl z-50 p-1 space-y-1">
                         <template x-for="item in filtered" :key="item.id">
@@ -1490,10 +1506,8 @@ return [
                         </template>
                     </div>
                 </div>
-            </div>
 
-            {{-- Penghuni 3 (Opsional - Maksimal 3 Orang) --}}
-            <div x-show="selectedKamarTipe === 'berbagi'" x-transition class="space-y-1">
+                {{-- Penghuni 3 (Opsional) --}}
                 <div x-data="{
                 open: false,
                 search: '',
@@ -1511,17 +1525,19 @@ return [
                     this.open = false;
                 }
             }" class="relative">
-                    <label class="block text-xs font-bold text-purple-700 dark:text-purple-300 uppercase tracking-wider mb-1">
-                        Pilih Penghuni 3 <span class="text-gray-500 dark:text-gray-400 font-normal">(Opsional - Maksimal 3 Orang)</span>
+                    <label class="block text-xs font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider mb-1">
+                        Pilih Penghuni 3 <span class="text-gray-500 dark:text-gray-400 font-normal">(Opsional - Maks 3 Orang)</span>
                     </label>
-                    <input type="text"
-                        x-model="search"
-                        @focus="open = true"
-                        @click.away="open = false"
-                        @input="open = true; selectedId = ''"
-                        placeholder="Ketik nama atau no. hp anak kos ke-3..."
-                        class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
-                    <input type="hidden" name="penghuni_id_3" :value="selectedId">
+                    <div class="relative">
+                        <input type="text"
+                            x-model="search"
+                            @focus="open = true"
+                            @click.away="open = false"
+                            @input="open = true; selectedId = ''"
+                            placeholder="Ketik nama atau no. hp anak kos ke-3..."
+                            class="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all">
+                        <input type="hidden" name="penghuni_id_3" :value="selectedId">
+                    </div>
 
                     <div x-show="open && filtered.length > 0" x-transition class="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white dark:bg-gray-900 border border-purple-200 dark:border-purple-800 rounded-xl shadow-xl z-50 p-1 space-y-1">
                         <template x-for="item in filtered" :key="item.id">
@@ -1537,31 +1553,35 @@ return [
                         </template>
                     </div>
                 </div>
-                <p class="text-[10px] text-purple-600 dark:text-purple-400 italic mt-0.5">Kamar tipe berbagi wajib diisi minimal 2 orang dan maksimal 3 orang.</p>
             </div>
 
-            <div class="grid grid-cols-2 gap-2">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Durasi Sewa</label>
-                    <select name="durasi" x-model="durasiSewa" required class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white truncate">
-                        <option value="bulanan">Bulanan (Auto 30 Hari)</option>
-                        <option value="mingguan">Mingguan (Auto 7 Hari)</option>
-                        <option value="harian">Harian (Tentukan Selesai)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Tanggal Masuk</label>
-                    <input type="date" name="tanggal_masuk" value="{{ date('Y-m-d') }}" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
-                </div>
+            {{-- 4. Durasi Sewa --}}
+            <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Durasi Sewa <span class="text-red-500">*</span></label>
+                <select name="durasi" x-model="durasiSewa" required class="w-full max-w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                    <option value="bulanan">Bulanan (Auto 30 Hari)</option>
+                    <option value="mingguan">Mingguan (Auto 7 Hari)</option>
+                    <option value="harian">Harian (Tentukan Selesai)</option>
+                </select>
             </div>
 
+            {{-- 5. Tanggal Masuk --}}
+            <div>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Tanggal Masuk <span class="text-red-500">*</span></label>
+                <input type="date" name="tanggal_masuk" value="{{ date('Y-m-d') }}" required class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+            </div>
+
+            {{-- 5. Tanggal Selesai (Khusus Harian) --}}
             <div x-show="durasiSewa === 'harian'" x-transition class="space-y-1">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Tanggal Selesai / Jatuh Tempo <span class="text-red-500">*</span></label>
-                <input type="date" name="tanggal_keluar" :required="durasiSewa === 'harian'" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
-                <p class="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 italic">* Tentukan tanggal selesai untuk sewa harian.</p>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
+                    Tanggal Selesai / Jatuh Tempo <span class="text-red-500">*</span>
+                </label>
+                <input type="date" name="tanggal_keluar" :required="durasiSewa === 'harian'" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all">
+                <p class="text-[10px] text-gray-400 dark:text-gray-500 italic">* Tentukan tanggal selesai untuk sewa harian.</p>
             </div>
 
-            <div class="pt-2 flex justify-end gap-2">
+            {{-- 6. Tombol Aksi --}}
+            <div class="pt-2.5 border-t border-gray-100 dark:border-gray-800 flex justify-end gap-2">
                 <x-btn type="button" variant="secondary" size="sm" @click="modalPenghuni = false">Batal</x-btn>
                 <x-btn type="submit" variant="primary" size="sm">Daftarkan Penghuni</x-btn>
             </div>
