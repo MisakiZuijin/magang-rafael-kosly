@@ -95,20 +95,24 @@ class AdminPenggunaController extends Controller
     {
         /** @var \App\Models\User $currentUser */
         $currentUser = Auth::user();
-        if ($currentUser->role !== 'super_admin') {
-            return redirect()->back()->with('error', 'Akses ditolak. Aksi penonaktifan pengguna hanya dapat dilakukan oleh Super Admin.');
+        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
+
+        // Admin biasa tidak diizinkan menonaktifkan akun Super Admin atau sesama Admin
+        if ($currentUser->role !== 'super_admin' && in_array($user->role, ['admin', 'super_admin'])) {
+            return redirect()->back()->with('error', 'Akses ditolak. Pengelolaan status akun Admin hanya dapat dilakukan oleh Super Admin.');
         }
 
-        $user = User::where('slug', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0)->firstOrFail();
         $wasActive = $user->is_active;
 
         $this->userService->toggleActive($user->id);
 
+        $actorRole = $currentUser->role === 'super_admin' ? 'Super Admin' : 'Admin';
+
         if ($wasActive) {
-            $this->logAktivitasService->log('toggle_pengguna', "Super Admin menonaktifkan akun {$user->role}: {$user->nama} (Akses login ditutup).");
+            $this->logAktivitasService->log('toggle_pengguna', "{$actorRole} menonaktifkan akun {$user->role}: {$user->nama} (Akses login ditutup).");
             return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil dinonaktifkan. Pengguna ini tidak dapat melakukan login ke sistem.");
         } else {
-            $this->logAktivitasService->log('toggle_pengguna', "Super Admin mengaktifkan kembali akun {$user->role}: {$user->nama}");
+            $this->logAktivitasService->log('toggle_pengguna', "{$actorRole} mengaktifkan kembali akun {$user->role}: {$user->nama}");
             return redirect()->back()->with('success', "Akun pengguna {$user->nama} berhasil diaktifkan kembali.");
         }
     }

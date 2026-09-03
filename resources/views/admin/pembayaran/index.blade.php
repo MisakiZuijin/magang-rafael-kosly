@@ -290,7 +290,7 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
                 </div>
 
                 <div class="col-span-6 grid grid-cols-1 items-center gap-3">
-                    @if($buktiUrl)
+                    @if($buktiUrl && !$isCoveredByRoommate)
                     <button type="button" @click="selectedPenghuni = '{{ addslashes($penghuniNama) }}'; selectedBuktiUrl = '{{ $buktiUrl }}'; openFullscreen();" class="items-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 font-bold bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shadow-2xs">
                         <span class="text-center">🔍 Bukti Transfer</span>
                     </button>

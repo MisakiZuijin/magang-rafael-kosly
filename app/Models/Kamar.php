@@ -25,6 +25,7 @@ class Kamar extends Model
         'wa_group_id',
         'link_grup_wa',
         'notif_jatuh_tempo_sent_at',
+        'notif_hplus3_sent_at',
         'notif_h7_sent_at',
         'notif_h3_sent_at',
     ];
@@ -38,6 +39,7 @@ class Kamar extends Model
             'harga_per_bulan' => 'integer',
             'kapasitas' => 'integer',
             'notif_jatuh_tempo_sent_at' => 'datetime',
+            'notif_hplus3_sent_at' => 'datetime',
             'notif_h7_sent_at' => 'datetime',
             'notif_h3_sent_at' => 'datetime',
             'created_at' => 'datetime',

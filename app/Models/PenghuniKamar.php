@@ -27,6 +27,7 @@ class PenghuniKamar extends Model
             if ($model->kamar_id) {
                 Kamar::where('id', $model->kamar_id)->update([
                     'notif_jatuh_tempo_sent_at' => null,
+                    'notif_hplus3_sent_at' => null,
                     'notif_h7_sent_at' => null,
                     'notif_h3_sent_at' => null,
                 ]);

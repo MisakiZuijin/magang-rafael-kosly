@@ -154,9 +154,9 @@ class AdminKosController extends Controller
             $tglMasukObj = \Carbon\Carbon::parse($validated['tanggal_masuk'])->setTime(0, 0, 0);
             if (empty($validated['tanggal_keluar'])) {
                 if ($validated['durasi'] === 'bulanan') {
-                    $tglKeluarObj = $tglMasukObj->copy()->addDays(30)->setTime(14, 0, 0);
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(29)->setTime(14, 0, 0);
                 } elseif ($validated['durasi'] === 'mingguan') {
-                    $tglKeluarObj = $tglMasukObj->copy()->addDays(7)->setTime(14, 0, 0);
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(6)->setTime(14, 0, 0);
                 } else {
                     $tglKeluarObj = $tglMasukObj->copy()->addDay()->setTime(14, 0, 0);
                 }
@@ -224,9 +224,9 @@ class AdminKosController extends Controller
             $tglMasukObj = \Carbon\Carbon::parse($validated['tanggal_masuk'])->setTime(0, 0, 0);
             if (empty($validated['tanggal_keluar'])) {
                 if ($validated['durasi'] === 'bulanan') {
-                    $tglKeluarObj = $tglMasukObj->copy()->addDays(30)->setTime(14, 0, 0);
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(29)->setTime(14, 0, 0);
                 } elseif ($validated['durasi'] === 'mingguan') {
-                    $tglKeluarObj = $tglMasukObj->copy()->addDays(7)->setTime(14, 0, 0);
+                    $tglKeluarObj = $tglMasukObj->copy()->addDays(6)->setTime(14, 0, 0);
                 } else {
                     $tglKeluarObj = $tglMasukObj->copy()->addDay()->setTime(14, 0, 0);
                 }

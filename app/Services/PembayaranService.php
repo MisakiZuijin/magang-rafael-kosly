@@ -272,8 +272,8 @@ class PembayaranService
             if (!$hasPreviousVerified) {
                 // PEMBAYARAN AWAL PENDAFTARAN: JANGAN UBAH tanggal_keluar ATAU periode_mulai / periode_selesai!
             } else {
-                // PEMBAYARAN PERPANJANGAN SEWA: Tambahkan durasi baru ke tanggal_keluar penghuni
-                $baseDate = $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->isFuture()
+                // PEMBAYARAN PERPANJANGAN SEWA: Tambahkan durasi baru dari hari akhir masa sewa (tanggal_keluar sebelumnya)
+                $baseDate = ($pk && $pk->tanggal_keluar)
                     ? \Carbon\Carbon::parse($pk->tanggal_keluar)
                     : \Carbon\Carbon::now();
 
@@ -327,6 +327,7 @@ class PembayaranService
                         $existingVerified->update([
                             'jumlah' => $fullAmount,
                             'porsi_bayar' => 100,
+                            'bukti_transfer_url' => $pembayaran->bukti_transfer_url,
                             'tanggal_bayar' => $paymentDate,
                             'tanggal_verifikasi' => now(),
                             'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
@@ -349,6 +350,7 @@ class PembayaranService
                                 'jumlah' => $fullAmount,
                                 'status' => 'terverifikasi',
                                 'porsi_bayar' => 100,
+                                'bukti_transfer_url' => $pembayaran->bukti_transfer_url,
                                 'tanggal_bayar' => $paymentDate,
                                 'tanggal_verifikasi' => now(),
                                 'diverifikasi_oleh' => $data['diverifikasi_oleh'] ?? null,
@@ -359,6 +361,7 @@ class PembayaranService
                                 'penghuni_kamar_id' => $roommatePk->id,
                                 'jumlah' => $fullAmount,
                                 'porsi_bayar' => 100,
+                                'bukti_transfer_url' => $pembayaran->bukti_transfer_url,
                                 'tipe_perpanjangan' => $pembayaran->tipe_perpanjangan,
                                 'jumlah_hari' => $daysToAdd,
                                 'periode_mulai' => $pembayaran->periode_mulai,

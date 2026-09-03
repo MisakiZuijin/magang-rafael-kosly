@@ -72,6 +72,31 @@ class Pembayaran extends Model
     }
 
     /**
+     * Dapatkan URL bukti transfer efektif (termasuk bukti transfer yang diunggah oleh rekan sekamar jika pembayaran diwakilkan).
+     */
+    public function getEffectiveBuktiTransferUrlAttribute(): ?string
+    {
+        if (!empty($this->bukti_transfer_url)) {
+            return $this->bukti_transfer_url;
+        }
+
+        if ($this->penghuniKamar && $this->penghuniKamar->kamar_id) {
+            $roommatePayment = static::whereHas('penghuniKamar', function ($q) {
+                $q->where('kamar_id', $this->penghuniKamar->kamar_id);
+            })
+            ->where('id', '!=', $this->id)
+            ->whereNotNull('bukti_transfer_url')
+            ->where('periode_mulai', $this->periode_mulai)
+            ->latest('tanggal_verifikasi')
+            ->first();
+
+            return $roommatePayment?->bukti_transfer_url;
+        }
+
+        return null;
+    }
+
+    /**
      * Menghasilkan teks badge tarif yang terisolasi dan permanen untuk transaksi ini.
      * Mencegah mutasi label tarif saat ada transaksi baru di kamar lain atau perubahan kapasitas kamar.
      */
