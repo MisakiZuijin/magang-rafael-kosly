@@ -412,11 +412,11 @@ $isKosLocked = $kamar->kos && $kamar->kos->is_locked;
 
             <div class="grid grid-cols-2 gap-2.5 items-end">
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate">Kode Kamar</label>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate">Kode Kamar <span class="text-red-500">*</span></label>
                     <input type="text" name="kode_kamar" value="{{ old('kode_kamar', $kamar->kode_kamar) }}" required class="w-full h-9 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate">Jenis Kamar</label>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate">Jenis Kamar <span class="text-red-500">*</span></label>
                     <select name="tipe" x-model="editTipe" @change="editKapasitas = (editTipe === 'berbagi' ? 2 : 1)" required class="w-full h-9 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-semibold text-gray-900 dark:text-white">
                         <option value="standar">Standar (1 Orang)</option>
                         <option value="berbagi">Berbagi (2 Orang)</option>
@@ -527,7 +527,7 @@ $isKosLocked = $kamar->kos && $kamar->kos->is_locked;
 
             <div class="grid grid-cols-3 gap-2 items-end">
                 <div>
-                    <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate" title="Harga per Bulan">Harga/Bulan</label>
+                    <label class="block text-[10px] sm:text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 whitespace-nowrap truncate" title="Harga per Bulan">Harga/Bulan <span class="text-red-500">*</span></label>
                     <input type="text"
                         x-model="displayHargaBulan"
                         @input="displayHargaBulan = formatRupiah($event.target.value); rawHargaBulan = parseDigits($event.target.value)"
@@ -564,12 +564,12 @@ $isKosLocked = $kamar->kos && $kamar->kos->is_locked;
 
             <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
                 <div>
-                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte)</label>
-                    <input type="text" name="wa_group_id" value="{{ old('wa_group_id', $kamar->wa_group_id) }}" placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte) <span class="text-red-500">*</span></label>
+                    <input type="text" name="wa_group_id" value="{{ old('wa_group_id', $kamar->wa_group_id) }}" required placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar</label>
-                    <input type="url" name="link_grup_wa" value="{{ old('link_grup_wa', $kamar->link_grup_wa) }}" placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar <span class="text-red-500">*</span></label>
+                    <input type="url" name="link_grup_wa" value="{{ old('link_grup_wa', $kamar->link_grup_wa) }}" required placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
                 </div>
             </div>
 

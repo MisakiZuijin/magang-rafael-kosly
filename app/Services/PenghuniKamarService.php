@@ -276,7 +276,7 @@ class PenghuniKamarService
 
         // Cari data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Khusus durasi sewa BULANAN (atau durasi >= 14 hari)
+        // 2. Khusus durasi sewa BULANAN atau durasi sewa harian >= 8 hari
         // 3. Tanggal keluar berada di rentang H-7 hingga H-4 (> 3 hari ke depan dan <= 7 hari ke depan)
         //    (Mencegah pengiriman ganda H-7 saat kamar sudah berada pada periode H-3)
         // 4. Kamar belum pernah dikirimkan notifikasi H-7 untuk periode ini (kamar.notif_h7_sent_at IS NULL)
@@ -284,7 +284,7 @@ class PenghuniKamarService
             ->where('status', 'aktif')
             ->where(function ($q) {
                 $q->where('durasi', 'bulanan')
-                  ->orWhereRaw('DATEDIFF(tanggal_keluar, tanggal_masuk) >= 14');
+                  ->orWhereRaw('DATEDIFF(tanggal_keluar, tanggal_masuk) >= 8');
             })
             ->whereNotNull('tanggal_keluar')
             ->where('tanggal_keluar', '>', $threeDaysAhead)
@@ -392,14 +392,14 @@ class PenghuniKamarService
 
         // Cari data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Khusus durasi sewa BULANAN dan MINGGUAN (atau sewa >= 3 hari)
+        // 2. Khusus durasi sewa BULANAN, MINGGUAN, atau durasi sewa harian >= 4 hari
         // 3. Tanggal keluar masih di masa depan (> now) tetapi <= 3 hari ke depan
         // 4. Kamar belum pernah dikirimkan notifikasi H-3 untuk periode ini (kamar.notif_h3_sent_at IS NULL)
         $h3List = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
             ->where('status', 'aktif')
             ->where(function ($q) {
                 $q->whereIn('durasi', ['bulanan', 'mingguan'])
-                  ->orWhereRaw('DATEDIFF(tanggal_keluar, tanggal_masuk) >= 3');
+                  ->orWhereRaw('DATEDIFF(tanggal_keluar, tanggal_masuk) >= 4');
             })
             ->whereNotNull('tanggal_keluar')
             ->where('tanggal_keluar', '>', $now)

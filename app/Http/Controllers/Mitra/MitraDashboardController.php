@@ -85,10 +85,10 @@ class MitraDashboardController extends Controller
             'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_minggu' => 'nullable|numeric',
-            'harga_per_bulan' => 'required|numeric',
+            'harga_per_bulan' => 'required|numeric|min:1',
             'kapasitas' => 'required|integer|min:1',
-            'wa_group_id' => 'nullable|string|max:100',
-            'link_grup_wa' => 'nullable|url|max:255',
+            'wa_group_id' => 'required|string|max:100',
+            'link_grup_wa' => 'required|url|max:255',
         ]);
 
         $fotoPaths = $kamar->foto ?? [];

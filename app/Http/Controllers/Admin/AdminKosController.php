@@ -39,12 +39,12 @@ class AdminKosController extends Controller
             'mitra_id' => 'required|exists:users,id',
             'nama' => 'required|string|max:100',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
-            'alamat' => 'nullable|string',
-            'link_gmaps' => 'nullable|string',
+            'alamat' => 'required|string',
+            'link_gmaps' => 'required|string',
             'deskripsi' => 'nullable|string',
-            'no_rekening' => 'nullable|string|max:50',
-            'bank' => 'nullable|string|max:50',
-            'nama_pemilik_rekening' => 'nullable|string|max:100',
+            'no_rekening' => 'required|string|max:50',
+            'bank' => 'required|string|max:50',
+            'nama_pemilik_rekening' => 'required|string|max:100',
         ]);
 
         if ($request->hasFile('foto')) {
@@ -77,10 +77,10 @@ class AdminKosController extends Controller
             'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_minggu' => 'nullable|numeric',
-            'harga_per_bulan' => 'required|numeric',
+            'harga_per_bulan' => 'required|numeric|min:1',
             'kapasitas' => 'required|integer|min:1',
-            'wa_group_id' => 'nullable|string|max:100',
-            'link_grup_wa' => 'nullable|url|max:255',
+            'wa_group_id' => 'required|string|max:100',
+            'link_grup_wa' => 'required|url|max:255',
         ]);
 
         $fotoPaths = [];
@@ -286,12 +286,12 @@ class AdminKosController extends Controller
             'mitra_id' => 'required|exists:users,id',
             'nama' => 'required|string|max:100',
             'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
-            'alamat' => 'nullable|string',
-            'link_gmaps' => 'nullable|string',
+            'alamat' => 'required|string',
+            'link_gmaps' => 'required|string',
             'deskripsi' => 'nullable|string',
-            'no_rekening' => 'nullable|string|max:50',
-            'bank' => 'nullable|string|max:50',
-            'nama_pemilik_rekening' => 'nullable|string|max:100',
+            'no_rekening' => 'required|string|max:50',
+            'bank' => 'required|string|max:50',
+            'nama_pemilik_rekening' => 'required|string|max:100',
         ]);
 
         if ($request->hasFile('foto')) {
@@ -329,10 +329,10 @@ class AdminKosController extends Controller
             'foto.*' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
             'harga_per_hari' => 'nullable|numeric',
             'harga_per_minggu' => 'nullable|numeric',
-            'harga_per_bulan' => 'required|numeric',
+            'harga_per_bulan' => 'required|numeric|min:1',
             'kapasitas' => 'required|integer|min:1',
-            'wa_group_id' => 'nullable|string|max:100',
-            'link_grup_wa' => 'nullable|url|max:255',
+            'wa_group_id' => 'required|string|max:100',
+            'link_grup_wa' => 'required|url|max:255',
         ]);
 
         $fotoPaths = $kamar->foto ?? [];

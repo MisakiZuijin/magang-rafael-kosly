@@ -171,32 +171,32 @@ class AdminPengumumanController extends Controller
             $this->notifikasiService->sendBulk($userIds, $judul, $pesan, 'web');
         }
 
-        // 2. WhatsApp Notification (Personal PM & WA Group Kamar) dengan Rate Limiting (Jeda 1 Menit per 5 Pesan)
+        // 2. WhatsApp Notification (Khusus ke ID Grup WhatsApp Kamar, tidak ke nomor pribadi) dengan Rate Limiting
         if (in_array($channel, ['whatsapp', 'keduanya'])) {
             $waItems = [];
-            $users = \App\Models\User::whereIn('id', $userIds)->get();
 
-            // Kumpulkan target nomor WhatsApp pribadi anak kos
-            foreach ($users as $user) {
-                $noHp = $user->no_hp ?? '-';
-                if (!empty($noHp) && $noHp !== '-') {
-                    $waItems[] = [
-                        'target' => $noHp,
-                        'judul' => $judul,
-                        'pesan' => $pesan,
-                        'user_id' => $user->id,
-                    ];
-                }
-            }
-
-            // Kumpulkan target Grup WhatsApp Kamar jika ada
+            // Kumpulkan target Grup WhatsApp Kamar sesuai target yang dipilih
             $targetedKamars = collect();
             if ($validated['target_tipe'] === 'kos') {
-                $targetedKamars = \App\Models\Kamar::with('kos')->whereIn('kos_id', $validated['target_ids'] ?? [])
-                    ->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
+                $targetedKamars = \App\Models\Kamar::with('kos')
+                    ->whereIn('kos_id', $validated['target_ids'] ?? [])
+                    ->whereNotNull('wa_group_id')
+                    ->where('wa_group_id', '!=', '')
+                    ->where('wa_group_id', '!=', '-')
+                    ->get();
             } elseif ($validated['target_tipe'] === 'kamar') {
-                $targetedKamars = \App\Models\Kamar::with('kos')->whereIn('id', $validated['target_ids'] ?? [])
-                    ->whereNotNull('wa_group_id')->where('wa_group_id', '!=', '')->get();
+                $targetedKamars = \App\Models\Kamar::with('kos')
+                    ->whereIn('id', $validated['target_ids'] ?? [])
+                    ->whereNotNull('wa_group_id')
+                    ->where('wa_group_id', '!=', '')
+                    ->where('wa_group_id', '!=', '-')
+                    ->get();
+            } elseif ($validated['target_tipe'] === 'semua') {
+                $targetedKamars = \App\Models\Kamar::with('kos')
+                    ->whereNotNull('wa_group_id')
+                    ->where('wa_group_id', '!=', '')
+                    ->where('wa_group_id', '!=', '-')
+                    ->get();
             }
 
             foreach ($targetedKamars as $kamarItem) {
@@ -209,7 +209,7 @@ class AdminPengumumanController extends Controller
                 ];
             }
 
-            // Eksekusi pengiriman dengan batch jeda 60 detik per 5 pesan
+            // Eksekusi pengiriman dengan batch jeda 60 detik per 5 pesan ke ID Grup Kamar
             if (!empty($waItems)) {
                 $this->whatsAppService->sendPengumumanWithThrottle($waItems);
             }
