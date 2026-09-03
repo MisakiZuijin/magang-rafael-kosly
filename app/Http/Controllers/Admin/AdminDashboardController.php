@@ -17,6 +17,7 @@ class AdminDashboardController extends Controller
 
     public function index()
     {
+        $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
         $data = $this->dashboardService->getAdminData();
         return view('admin.dashboard', compact('data'));
     }

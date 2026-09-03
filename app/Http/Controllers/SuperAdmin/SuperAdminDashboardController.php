@@ -7,6 +7,7 @@ use App\Models\Kantor;
 use App\Models\User;
 use App\Services\DashboardService;
 use App\Services\LogAktivitasService;
+use App\Services\PenghuniKamarService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
 
@@ -15,11 +16,13 @@ class SuperAdminDashboardController extends Controller
     public function __construct(
         protected DashboardService $dashboardService,
         protected UserService $userService,
-        protected LogAktivitasService $logAktivitasService
+        protected LogAktivitasService $logAktivitasService,
+        protected PenghuniKamarService $penghuniKamarService
     ) {}
 
     public function dashboard()
     {
+        $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
         $data = $this->dashboardService->getSuperAdminData();
         return view('superadmin.dashboard', compact('data'));
     }

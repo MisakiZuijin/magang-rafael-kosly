@@ -315,13 +315,17 @@ return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
             $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
             $isExpiredPenghuni = $targetKeluar && $targetKeluar->isPast();
             $overdueDays = $isExpiredPenghuni ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
+            $paymentStatus = $pk->getStatusPembayaranInfo();
             @endphp
             <div class="p-3 rounded-xl border {{ $isExpiredPenghuni ? 'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/50' : 'bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50' }} grid grid-cols-[1fr_auto] items-center gap-2 text-xs">
                 <div class="min-w-0">
-                    <div class="grid grid-flow-col auto-cols-max items-center gap-1.5">
+                    <div class="flex flex-wrap items-center gap-1.5">
                         <span class="font-bold text-gray-900 dark:text-white text-xs truncate">{{ $penghuniUser->nama ?? 'Penghuni' }}</span>
                         <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase {{ $isExpiredPenghuni ? 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' }}">
                             {{ $isExpiredPenghuni ? "Terlewat {$overdueDays} Hari" : 'Aktif' }}
+                        </span>
+                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase {{ $paymentStatus['badge_class'] }}">
+                            {{ $paymentStatus['label'] }}
                         </span>
                     </div>
                     <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">

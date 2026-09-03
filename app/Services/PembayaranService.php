@@ -498,6 +498,42 @@ class PembayaranService
             return null;
         }
 
+        // 1. Cek apakah penghuni ini sendiri SUDAH memiliki pembayaran awal yang terverifikasi
+        $hasVerifiedInitial = Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
+            ->where('status', 'terverifikasi')
+            ->exists();
+
+        if (!$hasVerifiedInitial) {
+            // Belum bayar biaya awal, jangan pernah generate tagihan perpanjangan!
+            return null;
+        }
+
+        $kamar = $penghuniKamar->kamar;
+        $isBerbagi = ($kamar && $kamar->tipe === 'berbagi');
+        $activePenghuniCount = $kamar
+            ? \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)->where('status', 'aktif')->count()
+            : 1;
+
+        // 2. Jika kamar berbagi (2 atau 3 orang):
+        // Cek apakah seluruh teman sekamar aktif SUDAH menyelesaikan pembayaran awal!
+        // Jika rekan sekamar belum bayar biaya awal, kamar belum aktif penuh dan jangan generate perpanjangan dulu!
+        if ($isBerbagi) {
+            $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
+                ->where('status', 'aktif')
+                ->where('id', '!=', $penghuniKamar->id)
+                ->get();
+
+            foreach ($roommatePks as $rPk) {
+                $rHasVerified = Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                    ->where('status', 'terverifikasi')
+                    ->exists();
+
+                if (!$rHasVerified) {
+                    return null;
+                }
+            }
+        }
+
         $tanggalKeluar = $penghuniKamar->tanggal_keluar
             ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)
             : \Carbon\Carbon::parse($penghuniKamar->tanggal_masuk)->addMonth();
@@ -505,8 +541,12 @@ class PembayaranService
         $today = \Carbon\Carbon::now()->startOfDay();
         $sisaHari = (int) $today->diffInDays($tanggalKeluar->startOfDay(), false);
 
-        // Jika sisa hari <= 7 hari
-        if ($sisaHari <= 7) {
+        // 3. Batas hari pemicu perpanjangan otomatis:
+        // Jika masa sewa sisa <= 7 hari (atau mendekati batas keluar untuk harian/mingguan), terbitkan tagihan perpanjangan
+        $triggerDays = 7;
+
+        // Jika sisa hari <= batas hari pemicu
+        if ($sisaHari <= $triggerDays) {
             // Cek apakah sudah ada pembayaran status pending yang belum diselesaikan
             $pendingBilling = Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
                 ->where('status', 'pending')

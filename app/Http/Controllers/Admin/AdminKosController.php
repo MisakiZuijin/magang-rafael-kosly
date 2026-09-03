@@ -25,6 +25,7 @@ class AdminKosController extends Controller
 
     public function index()
     {
+        $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
         $kosList = $this->kosService->getWithKamarCount();
         $mitras = $this->userService->getActiveByRole('mitra');
 
@@ -360,7 +361,9 @@ class AdminKosController extends Controller
 
     public function showKamar(string|int $id)
     {
-        $kamar = \App\Models\Kamar::with(['kos.mitra', 'penghuniKamar.penghuni'])
+        $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
+
+        $kamar = \App\Models\Kamar::with(['kos.mitra', 'penghuniKamar.penghuni', 'penghuniKamar.pembayaran'])
             ->where('kode_kamar', $id)
             ->orWhere('id', is_numeric($id) ? (int)$id : 0)
             ->firstOrFail();

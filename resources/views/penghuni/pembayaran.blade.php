@@ -92,7 +92,31 @@
 @else
 @php
 $menunggu = $pembayarans->where('status', 'pending');
+if (!empty($roommateUnpaidInitial) && !empty($myVerifiedInitial)) {
+    // Jika diri sendiri sudah bayar awal tapi rekan sekamar belum, sembunyikan tagihan perpanjangan/pembayaran ulang
+    $menunggu = collect();
+}
 @endphp
+
+@if(!empty($roommateUnpaidInitial) && !empty($myVerifiedInitial))
+<x-card class="mb-5 border-l-4 border-l-amber-500 bg-amber-50/50 dark:bg-amber-950/20">
+    <div class="space-y-2 py-1">
+        <div class="flex items-center gap-2">
+            <span class="relative flex h-2.5 w-2.5">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            <h3 class="text-sm font-bold text-amber-900 dark:text-amber-200">Pembayaran Awal Anda (50%) Terverifikasi</h3>
+        </div>
+        <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+            Pembayaran biaya awal bagian Anda sebesar 50% telah lunas dan diverifikasi oleh Admin. Saat ini sistem sedang menunggu rekan sekamar Anda (<strong>{{ $roommateUnpaidName }}</strong>) untuk menyelesaikan pembayaran bagiannya.
+        </p>
+        <p class="text-[11px] text-amber-700 dark:text-amber-400 font-medium">
+            💡 Kamar dan form perpanjangan sewa akan otomatis aktif setelah kedua penghuni menyelesaikan pembayaran awal masing-masing.
+        </p>
+    </div>
+</x-card>
+@endif
 
 @if($menunggu->isEmpty())
 <x-card class="mb-5">
@@ -121,7 +145,7 @@ $menunggu = $pembayarans->where('status', 'pending');
     : \Carbon\Carbon::parse($p->periode_selesai);
     $sisaHariRef = (int) \Carbon\Carbon::now()->startOfDay()->diffInDays($tanggalKeluarRef->startOfDay(), false);
 
-    $isExtensionMode = $hasPreviousVerified && ($sisaHariRef <= 7);
+    $isExtensionMode = $hasPreviousVerified;
 
         $isHarianAwal=($p->tipe_perpanjangan === 'harian') || ($p->penghuniKamar && $p->penghuniKamar->durasi === 'harian');
         $isMingguanAwal = ($p->tipe_perpanjangan === 'mingguan') || ($p->penghuniKamar && $p->penghuniKamar->durasi === 'mingguan');
@@ -235,18 +259,16 @@ $menunggu = $pembayarans->where('status', 'pending');
                     @if($isKamarBerbagi)
                     @if($activeCount <= 2)
                         @if($onlyHalfOption)
-                        <input type="hidden" name="porsi_bayar" value="50">
-                        <input type="hidden" name="tipe_perpanjangan" value="{{ $roommateHalfTipe }}">
-                        <input type="hidden" name="jumlah_hari" value="{{ $roommateHalfDays }}">
-                        <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800/60 space-y-1.5">
+                        <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800/60 space-y-1.5 mb-2">
                             <div class="flex items-center gap-1.5 text-xs font-bold text-purple-900 dark:text-purple-200">
-                                <span>👥 Skema Pembayaran: Tarif 1 Orang (50%)</span>
+                                <span>👥 Info: Teman Sekamar Memilih Tarif 1 Orang (50%)</span>
                             </div>
                             <p class="text-[11px] text-purple-700 dark:text-purple-300 leading-relaxed">
-                                Teman sekamar Anda (<strong>{{ $roommateHalfName }}</strong>) telah memilih dan membayar <strong>{{ $roommateHalfTipe === 'harian' ? "Sewa Harian ({$roommateHalfDays} Hari)" : ($roommateHalfTipe === 'mingguan' ? 'Sewa 1 Minggu (7 Hari)' : 'Sewa 1 Bulan (30 Hari)') }}</strong> sebesar <strong>Rp {{ number_format($roommateHalfJumlah, 0, ',', '.') }}</strong>. Pilihan durasi dan tagihan Anda disinkronkan sama persis.
+                                Teman sekamar Anda (<strong>{{ $roommateHalfName }}</strong>) telah mengunggah pembayaran <strong>{{ $roommateHalfTipe === 'harian' ? "Sewa Harian ({$roommateHalfDays} Hari)" : ($roommateHalfTipe === 'mingguan' ? 'Sewa 1 Minggu (7 Hari)' : 'Sewa 1 Bulan (30 Hari)') }}</strong> sebesar <strong>Rp {{ number_format($roommateHalfJumlah, 0, ',', '.') }}</strong>. Pilihan durasi Anda otomatis diselaraskan.
                             </p>
                         </div>
-                        @else
+                        @endif
+
                         {{-- Porsi Pembayaran Kamar Berbagi (2 Orang) --}}
                         <div class="space-y-2">
                             <label class="block text-[11px] font-bold text-purple-800 dark:text-purple-300 uppercase tracking-wider flex items-center gap-1">
@@ -274,23 +296,21 @@ $menunggu = $pembayarans->where('status', 'pending');
                                 </label>
                             </div>
                         </div>
-                        @endif
-                        @else
+                    @else
                         <input type="hidden" name="porsi_bayar" value="100">
                         <div class="p-3 bg-purple-50 dark:bg-purple-950/30 rounded-xl border border-purple-200 dark:border-purple-800/60 space-y-1">
                             <div class="flex items-center gap-1.5 text-xs font-bold text-purple-900 dark:text-purple-200">
-                                <span>👥 Pembayaran Kamar Berbagi (3 Penghuni - Pelunasan 1 Kamar)</span>
+                                <span>👥 Pembayaran Kamar Berbagi ({{ $activeCount }} Penghuni - Pelunasan 1 Kamar)</span>
                             </div>
                             <p class="text-[11px] text-purple-700 dark:text-purple-300">
-                                Pembayaran sewa kamar berbagi (3 orang) ditanggung penuh oleh 1 perwakilan kamar. Pembagian biaya dilakukan secara internal di antara Anda dan teman sekamar.
+                                Pembayaran sewa kamar berbagi ({{ $activeCount }} orang) ditanggung penuh oleh 1 perwakilan kamar. Pembagian biaya dilakukan secara internal di antara Anda dan teman sekamar.
                             </p>
                         </div>
-                        @endif
-                        @else
+                    @endif
+                    @else
                         <input type="hidden" name="porsi_bayar" value="100">
-                        @endif
+                    @endif
 
-                        @if(!$onlyHalfOption)
                         {{-- Opsi Tipe Perpanjangan --}}
                         <div class="space-y-2">
                             <label class="block text-[11px] font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
@@ -343,7 +363,6 @@ $menunggu = $pembayarans->where('status', 'pending');
                                 <span class="text-xs text-gray-500 font-semibold whitespace-nowrap">Hari</span>
                             </div>
                         </div>
-                        @endif
 
                         {{-- Ringkasan Biaya & Periode Hasil Perpanjangan --}}
                         <div class="p-3 bg-emerald-50 dark:bg-emerald-950/30 rounded-xl border border-emerald-100 dark:border-emerald-900/50 space-y-2">

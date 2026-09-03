@@ -55,6 +55,9 @@ class DashboardService
         $today = \Carbon\Carbon::now()->startOfDay();
         $isFuture = $tglMasuk && $tglMasuk->gt($today);
 
+        $penghuniKamar->loadMissing('pembayaran');
+        $statusPembayaran = $penghuniKamar->getStatusPembayaranInfo();
+
         return [
             'kos' => $kos,
             'kamar' => $kamar,
@@ -66,6 +69,8 @@ class DashboardService
             'tanggal_keluar' => $tglKeluar,
             'is_future' => $isFuture,
             'sisa_hari_masuk' => ($isFuture && $tglMasuk) ? (int) $today->diffInDays($tglMasuk, false) : 0,
+            'status_pembayaran' => $statusPembayaran,
+            'penghuni_kamar' => $penghuniKamar,
         ];
     }
 

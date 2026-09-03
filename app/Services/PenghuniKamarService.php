@@ -242,24 +242,52 @@ class PenghuniKamarService
     }
 
     /**
+     * Menggabungkan nama-nama penghuni kamar menjadi satu baris teks rapi:
+     * Contoh 1 orang: "Moriah Leffler"
+     * Contoh 2 orang: "Penghuni A & Penghuni B"
+     * Contoh 3 orang: "Penghuni A, Penghuni B & Penghuni C"
+     */
+    protected function formatCombinedNames(array $names): string
+    {
+        $filtered = array_values(array_unique(array_filter($names)));
+        if (empty($filtered)) {
+            return 'Penghuni';
+        }
+        if (count($filtered) === 1) {
+            return $filtered[0];
+        }
+        if (count($filtered) === 2) {
+            return $filtered[0] . ' & ' . $filtered[1];
+        }
+        $last = array_pop($filtered);
+        return implode(', ', $filtered) . ' & ' . $last;
+    }
+
+    /**
      * Memeriksa dan mengirimkan notifikasi H-7 (Khusus Masa Sewa BULANAN).
+     * Pesan WhatsApp dikirim 1x per kamar ke ID Grup WhatsApp Kamar dengan nama penghuni digabung.
      * Flag status tersimpan langsung pada tabel kamar (notif_h7_sent_at).
      */
     public function periksaDanKirimNotifikasiH7(): array
     {
         $now = now();
+        $threeDaysAhead = $now->copy()->addDays(3)->endOfDay();
         $sevenDaysAhead = $now->copy()->addDays(7)->endOfDay();
 
         // Cari data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Khusus durasi sewa BULANAN
-        // 3. Tanggal keluar masih di masa depan (> now) tetapi <= 7 hari ke depan
+        // 2. Khusus durasi sewa BULANAN (atau durasi >= 14 hari)
+        // 3. Tanggal keluar berada di rentang H-7 hingga H-4 (> 3 hari ke depan dan <= 7 hari ke depan)
+        //    (Mencegah pengiriman ganda H-7 saat kamar sudah berada pada periode H-3)
         // 4. Kamar belum pernah dikirimkan notifikasi H-7 untuk periode ini (kamar.notif_h7_sent_at IS NULL)
         $h7List = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
             ->where('status', 'aktif')
-            ->where('durasi', 'bulanan')
+            ->where(function ($q) {
+                $q->where('durasi', 'bulanan')
+                  ->orWhereRaw('DATEDIFF(tanggal_keluar, tanggal_masuk) >= 14');
+            })
             ->whereNotNull('tanggal_keluar')
-            ->where('tanggal_keluar', '>', $now)
+            ->where('tanggal_keluar', '>', $threeDaysAhead)
             ->where('tanggal_keluar', '<=', $sevenDaysAhead)
             ->whereHas('kamar', function ($q) {
                 $q->whereNull('notif_h7_sent_at');
@@ -270,32 +298,46 @@ class PenghuniKamarService
         $whatsAppService = app(\App\Services\WhatsAppService::class);
         $appName = Setting::appName();
 
-        foreach ($h7List as $pk) {
-            $penghuni = $pk->penghuni;
-            $kamar = $pk->kamar;
+        // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
+        $groupedByKamar = $h7List->groupBy('kamar_id');
+
+        foreach ($groupedByKamar as $kamarId => $pks) {
+            $firstPk = $pks->first();
+            $kamar = $firstPk->kamar ?? null;
             $kos = $kamar->kos ?? null;
 
-            if (!$penghuni || !$kamar) {
+            if (!$kamar) {
                 continue;
             }
 
-            $penghuniNama = $penghuni->nama ?? 'Penghuni';
             $kodeKamar = $kamar->kode_kamar ?? '-';
             $kosNama = $kos->nama ?? 'Kos';
-            $tglKeluarFormatted = $pk->tanggal_keluar ? $pk->tanggal_keluar->format('d/m/Y H:i') : '-';
-            $sisaHari = max(1, (int)$now->diffInDays(\Carbon\Carbon::parse($pk->tanggal_keluar), false));
+            $tglKeluarFormatted = $firstPk->tanggal_keluar ? $firstPk->tanggal_keluar->format('d/m/Y H:i') : '-';
+            $sisaHari = max(1, (int)$now->diffInDays(\Carbon\Carbon::parse($firstPk->tanggal_keluar), false));
 
-            // 1. Notifikasi Web ke Penghuni
-            \App\Models\Notifikasi::create([
-                'user_id' => $penghuni->id,
-                'judul' => "Masa Sewa Kamar Tersisa {$sisaHari} Hari Lagi (H-7)",
-                'pesan' => "Pemberitahuan: Masa sewa Kamar {$kodeKamar} di {$kosNama} akan berakhir pada {$tglKeluarFormatted} WIB (tersisa {$sisaHari} hari). Silakan lakukan pembayaran perpanjangan sewa melalui menu Pembayaran.",
-                'channel' => 'web',
-                'status' => 'terkirim',
-            ]);
+            // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
+            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get();
+            $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
+            $combinedNames = $this->formatCombinedNames($names);
 
-            // Pesan WhatsApp H-7
-            $waMessage = "Halo *{$penghuniNama}* / Rekan Kamar *{$kodeKamar}*,\n\n"
+            // 1. Notifikasi Web ke Seluruh Penghuni Kamar
+            foreach ($allRoomOccupants as $pk) {
+                if ($pk->penghuni) {
+                    \App\Models\Notifikasi::create([
+                        'user_id' => $pk->penghuni->id,
+                        'judul' => "Masa Sewa Kamar Tersisa {$sisaHari} Hari Lagi (H-7)",
+                        'pesan' => "Pemberitahuan: Masa sewa Kamar {$kodeKamar} di {$kosNama} akan berakhir pada {$tglKeluarFormatted} WIB (tersisa {$sisaHari} hari). Silakan lakukan pembayaran perpanjangan sewa melalui menu Pembayaran.",
+                        'channel' => 'web',
+                        'status' => 'terkirim',
+                    ]);
+                }
+            }
+
+            // 2. Pesan WhatsApp H-7 (Hanya nama aplikasi tanpa link web)
+            $waMessage = "Halo *{$combinedNames}* (Kamar *{$kodeKamar}*),\n\n"
                 . "⏳ *PEMBERITAHUAN SISA MASA SEWA KOS (H-7)*\n\n"
                 . "Kami menginformasikan bahwa masa sewa kamar kos Anda akan segera berakhir dalam *{$sisaHari} Hari ke depan*.\n\n"
                 . "📋 *RINCIAN SEWA KAMAR:*\n"
@@ -305,12 +347,12 @@ class PenghuniKamarService
                 . "• Sisa Waktu: *{$sisaHari} Hari*\n\n"
                 . "💡 *PANDUAN PERPANJANGAN SEWA:*\n"
                 . "1. Buka aplikasi *{$appName}*, masuk ke menu *Pembayaran*.\n"
-                . "2. Pilih skema perpanjangan sewa (Bulanan / Tarif 1 Orang).\n"
+                . "2. Pilih skema perpanjangan sewa kamar Anda.\n"
                 . "3. Lakukan transfer dan unggah bukti pembayaran agar segera diverifikasi oleh Admin.\n\n"
                 . "Jika Anda berencana selesai/checkout pada akhir periode ini, mohon konfirmasi kepada pihak pengelola.\n"
                 . "Terima kasih atas kerja sama Anda!";
 
-            // 2. Kirim ke Grup WhatsApp Kamar (jika ada)
+            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $whatsAppService->sendDirect(
@@ -321,37 +363,26 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-7 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-            }
 
-            // 3. Kirim ke Nomor WhatsApp Pribadi Penghuni
-            if (!empty($penghuni->no_hp) && $penghuni->no_hp !== '-') {
-                try {
-                    $whatsAppService->sendDirect(
-                        $penghuni->no_hp,
-                        "PENGINGAT MASA SEWA SEWA KOS (H-7)",
-                        $waMessage
-                    );
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-7 ke {$penghuni->no_hp}: " . $e->getMessage());
-                }
+                $kamar->update([
+                    'notif_h7_sent_at' => $now,
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} masuk H-7 namun wa_group_id kosong.");
             }
-
-            // 4. Update flag status notifikasi langsung pada tabel kamar
-            $kamar->update([
-                'notif_h7_sent_at' => $now,
-            ]);
 
             $processedCount++;
         }
 
         return [
-            'total_h7' => $h7List->count(),
+            'total_kamar_h7' => $groupedByKamar->count(),
             'processed' => $processedCount,
         ];
     }
 
     /**
      * Memeriksa dan mengirimkan notifikasi H-3 (Khusus Masa Sewa BULANAN dan MINGGUAN).
+     * Pesan WhatsApp dikirim 1x per kamar ke ID Grup WhatsApp Kamar dengan nama penghuni digabung.
      * Flag status tersimpan langsung pada tabel kamar (notif_h3_sent_at).
      */
     public function periksaDanKirimNotifikasiH3(): array
@@ -361,12 +392,15 @@ class PenghuniKamarService
 
         // Cari data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Khusus durasi sewa BULANAN dan MINGGUAN
+        // 2. Khusus durasi sewa BULANAN dan MINGGUAN (atau sewa >= 3 hari)
         // 3. Tanggal keluar masih di masa depan (> now) tetapi <= 3 hari ke depan
         // 4. Kamar belum pernah dikirimkan notifikasi H-3 untuk periode ini (kamar.notif_h3_sent_at IS NULL)
         $h3List = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
             ->where('status', 'aktif')
-            ->whereIn('durasi', ['bulanan', 'mingguan'])
+            ->where(function ($q) {
+                $q->whereIn('durasi', ['bulanan', 'mingguan'])
+                  ->orWhereRaw('DATEDIFF(tanggal_keluar, tanggal_masuk) >= 3');
+            })
             ->whereNotNull('tanggal_keluar')
             ->where('tanggal_keluar', '>', $now)
             ->where('tanggal_keluar', '<=', $threeDaysAhead)
@@ -379,32 +413,46 @@ class PenghuniKamarService
         $whatsAppService = app(\App\Services\WhatsAppService::class);
         $appName = Setting::appName();
 
-        foreach ($h3List as $pk) {
-            $penghuni = $pk->penghuni;
-            $kamar = $pk->kamar;
+        // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
+        $groupedByKamar = $h3List->groupBy('kamar_id');
+
+        foreach ($groupedByKamar as $kamarId => $pks) {
+            $firstPk = $pks->first();
+            $kamar = $firstPk->kamar ?? null;
             $kos = $kamar->kos ?? null;
 
-            if (!$penghuni || !$kamar) {
+            if (!$kamar) {
                 continue;
             }
 
-            $penghuniNama = $penghuni->nama ?? 'Penghuni';
             $kodeKamar = $kamar->kode_kamar ?? '-';
             $kosNama = $kos->nama ?? 'Kos';
-            $tglKeluarFormatted = $pk->tanggal_keluar ? $pk->tanggal_keluar->format('d/m/Y H:i') : '-';
-            $sisaHari = max(1, (int)$now->diffInDays(\Carbon\Carbon::parse($pk->tanggal_keluar), false));
+            $tglKeluarFormatted = $firstPk->tanggal_keluar ? $firstPk->tanggal_keluar->format('d/m/Y H:i') : '-';
+            $sisaHari = max(1, (int)$now->diffInDays(\Carbon\Carbon::parse($firstPk->tanggal_keluar), false));
 
-            // 1. Notifikasi Web ke Penghuni
-            \App\Models\Notifikasi::create([
-                'user_id' => $penghuni->id,
-                'judul' => "Masa Sewa Kamar Tersisa {$sisaHari} Hari Lagi (H-3)",
-                'pesan' => "Pemberitahuan: Masa sewa Kamar {$kodeKamar} di {$kosNama} tersisa {$sisaHari} hari lagi (berakhir {$tglKeluarFormatted} WIB). Segera lakukan perpanjangan sewa melalui menu Pembayaran.",
-                'channel' => 'web',
-                'status' => 'terkirim',
-            ]);
+            // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
+            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get();
+            $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
+            $combinedNames = $this->formatCombinedNames($names);
 
-            // Pesan WhatsApp H-3
-            $waMessage = "Halo *{$penghuniNama}* / Rekan Kamar *{$kodeKamar}*,\n\n"
+            // 1. Notifikasi Web ke Seluruh Penghuni Kamar
+            foreach ($allRoomOccupants as $pk) {
+                if ($pk->penghuni) {
+                    \App\Models\Notifikasi::create([
+                        'user_id' => $pk->penghuni->id,
+                        'judul' => "Masa Sewa Kamar Tersisa {$sisaHari} Hari Lagi (H-3)",
+                        'pesan' => "Pemberitahuan: Masa sewa Kamar {$kodeKamar} di {$kosNama} tersisa {$sisaHari} hari lagi (berakhir {$tglKeluarFormatted} WIB). Segera lakukan perpanjangan sewa melalui menu Pembayaran.",
+                        'channel' => 'web',
+                        'status' => 'terkirim',
+                    ]);
+                }
+            }
+
+            // 2. Pesan WhatsApp H-3 (Hanya nama aplikasi tanpa link web)
+            $waMessage = "Halo *{$combinedNames}* (Kamar *{$kodeKamar}*),\n\n"
                 . "⏳ *PEMBERITAHUAN SISA MASA SEWA KOS (H-3)*\n\n"
                 . "Kami menginformasikan bahwa masa sewa kamar kos Anda tersisa *{$sisaHari} Hari lagi*.\n\n"
                 . "📋 *RINCIAN SEWA KAMAR:*\n"
@@ -414,12 +462,12 @@ class PenghuniKamarService
                 . "• Sisa Waktu: *{$sisaHari} Hari*\n\n"
                 . "💡 *PANDUAN PERPANJANGAN SEWA:*\n"
                 . "1. Buka aplikasi *{$appName}*, masuk ke menu *Pembayaran*.\n"
-                . "2. Pilih skema perpanjangan sewa kamar Anda (Bulanan / Mingguan / Tarif 1 Orang).\n"
+                . "2. Pilih skema perpanjangan sewa kamar Anda.\n"
                 . "3. Lakukan transfer dan unggah bukti pembayaran agar segera diverifikasi oleh Admin.\n\n"
                 . "Jika Anda berencana selesai/checkout pada akhir periode ini, mohon segera konfirmasi kepada pihak pengelola.\n"
                 . "Terima kasih atas kerja sama Anda!";
 
-            // 2. Kirim ke Grup WhatsApp Kamar (jika ada)
+            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $whatsAppService->sendDirect(
@@ -430,37 +478,26 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-            }
 
-            // 3. Kirim ke Nomor WhatsApp Pribadi Penghuni
-            if (!empty($penghuni->no_hp) && $penghuni->no_hp !== '-') {
-                try {
-                    $whatsAppService->sendDirect(
-                        $penghuni->no_hp,
-                        "PENGINGAT MASA SEWA KOS (H-3)",
-                        $waMessage
-                    );
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-3 ke {$penghuni->no_hp}: " . $e->getMessage());
-                }
+                $kamar->update([
+                    'notif_h3_sent_at' => $now,
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} masuk H-3 namun wa_group_id kosong.");
             }
-
-            // 4. Update flag status notifikasi langsung pada tabel kamar
-            $kamar->update([
-                'notif_h3_sent_at' => $now,
-            ]);
 
             $processedCount++;
         }
 
         return [
-            'total_h3' => $h3List->count(),
+            'total_kamar_h3' => $groupedByKamar->count(),
             'processed' => $processedCount,
         ];
     }
 
     /**
      * Memeriksa dan mengirimkan notifikasi Web & WhatsApp untuk sewa kamar yang telah jatuh tempo (waktunya habis).
+     * Pesan WhatsApp dikirim 1x per kamar ke ID Grup WhatsApp Kamar dengan nama penghuni digabung.
      * Flag status tersimpan langsung pada tabel kamar (notif_jatuh_tempo_sent_at).
      */
     public function periksaDanKirimNotifikasiJatuhTempo(): array
@@ -484,31 +521,45 @@ class PenghuniKamarService
         $whatsAppService = app(\App\Services\WhatsAppService::class);
         $appName = Setting::appName();
 
-        foreach ($expiredList as $pk) {
-            $penghuni = $pk->penghuni;
-            $kamar = $pk->kamar;
+        // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
+        $groupedByKamar = $expiredList->groupBy('kamar_id');
+
+        foreach ($groupedByKamar as $kamarId => $pks) {
+            $firstPk = $pks->first();
+            $kamar = $firstPk->kamar ?? null;
             $kos = $kamar->kos ?? null;
 
-            if (!$penghuni || !$kamar) {
+            if (!$kamar) {
                 continue;
             }
 
-            $penghuniNama = $penghuni->nama ?? 'Penghuni';
             $kodeKamar = $kamar->kode_kamar ?? '-';
             $kosNama = $kos->nama ?? 'Kos';
-            $tglKeluarFormatted = $pk->tanggal_keluar ? $pk->tanggal_keluar->format('d/m/Y H:i') : '-';
+            $tglKeluarFormatted = $firstPk->tanggal_keluar ? $firstPk->tanggal_keluar->format('d/m/Y H:i') : '-';
 
-            // 1. Kirim Notifikasi Web ke Penghuni
-            \App\Models\Notifikasi::create([
-                'user_id' => $penghuni->id,
-                'judul' => 'Masa Sewa Kamar Telah Jatuh Tempo',
-                'pesan' => "Perhatian: Masa sewa Kamar {$kodeKamar} di {$kosNama} telah berakhir pada {$tglKeluarFormatted} WIB. Silakan lakukan perpanjangan sewa melalui menu Pembayaran atau konfirmasi penyelesaian sewa.",
-                'channel' => 'web',
-                'status' => 'terkirim',
-            ]);
+            // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
+            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get();
+            $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
+            $combinedNames = $this->formatCombinedNames($names);
 
-            // Pesan WhatsApp Jatuh Tempo
-            $waMessage = "Halo *{$penghuniNama}* / Rekan Kamar *{$kodeKamar}*,\n\n"
+            // 1. Kirim Notifikasi Web ke Seluruh Penghuni Kamar
+            foreach ($allRoomOccupants as $pk) {
+                if ($pk->penghuni) {
+                    \App\Models\Notifikasi::create([
+                        'user_id' => $pk->penghuni->id,
+                        'judul' => 'Masa Sewa Kamar Telah Jatuh Tempo',
+                        'pesan' => "Perhatian: Masa sewa Kamar {$kodeKamar} di {$kosNama} telah berakhir pada {$tglKeluarFormatted} WIB. Silakan lakukan perpanjangan sewa melalui menu Pembayaran atau konfirmasi penyelesaian sewa.",
+                        'channel' => 'web',
+                        'status' => 'terkirim',
+                    ]);
+                }
+            }
+
+            // 2. Pesan WhatsApp Jatuh Tempo (Hanya nama aplikasi tanpa link web)
+            $waMessage = "Halo *{$combinedNames}* (Kamar *{$kodeKamar}*),\n\n"
                 . "⚠️ *PEMBERITAHUAN MASA SEWA JATUH TEMPO*\n\n"
                 . "Kami informasikan bahwa masa sewa kamar kos Anda telah *BERAKHIR / JATUH TEMPO*.\n\n"
                 . "📋 *RINCIAN SEWA KAMAR:*\n"
@@ -520,7 +571,7 @@ class PenghuniKamarService
                 . "2. Jika Anda *SUDAH SELESAI / CHECKOUT*, silakan konfirmasi kepada pihak pengelola/admin kos.\n\n"
                 . "Terima kasih atas kerja sama Anda!";
 
-            // 2. Kirim ke Grup WhatsApp Kamar (jika ada)
+            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $whatsAppService->sendDirect(
@@ -531,19 +582,12 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA jatuh tempo ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-            }
 
-            // 3. Kirim Notifikasi WhatsApp ke Nomor Pribadi Penghuni
-            if (!empty($penghuni->no_hp) && $penghuni->no_hp !== '-') {
-                try {
-                    $whatsAppService->sendDirect(
-                        $penghuni->no_hp,
-                        'PERINGATAN JATUH TEMPO SEWA KOS',
-                        $waMessage
-                    );
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error("Gagal kirim WA jatuh tempo ke {$penghuni->no_hp}: " . $e->getMessage());
-                }
+                $kamar->update([
+                    'notif_jatuh_tempo_sent_at' => $now,
+                ]);
+            } else {
+                \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} jatuh tempo namun wa_group_id kosong.");
             }
 
             // 4. Kirim Notifikasi Web ke Mitra Kos
@@ -551,22 +595,17 @@ class PenghuniKamarService
                 \App\Models\Notifikasi::create([
                     'user_id' => $kos->mitra->id,
                     'judul' => "Masa Sewa Penghuni Kamar {$kodeKamar} Jatuh Tempo",
-                    'pesan' => "Masa sewa penghuni {$penghuniNama} di Kamar {$kodeKamar} ({$kosNama}) telah habis per {$tglKeluarFormatted} WIB.",
+                    'pesan' => "Masa sewa penghuni {$combinedNames} di Kamar {$kodeKamar} ({$kosNama}) telah habis per {$tglKeluarFormatted} WIB.",
                     'channel' => 'web',
                     'status' => 'terkirim',
                 ]);
             }
 
-            // 5. Update flag status notifikasi langsung pada tabel kamar
-            $kamar->update([
-                'notif_jatuh_tempo_sent_at' => $now,
-            ]);
-
             $processedCount++;
         }
 
         return [
-            'total_expired' => $expiredList->count(),
+            'total_kamar_expired' => $groupedByKamar->count(),
             'processed' => $processedCount,
         ];
     }

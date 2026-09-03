@@ -54,6 +54,8 @@ class PenghuniDashboardController extends Controller
 
     public function pembayaran()
     {
+        $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
+
         /** @var User $user */
         $user = Auth::user();
         $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
@@ -155,7 +157,7 @@ class PenghuniDashboardController extends Controller
                 }
             }
 
-            // 3. Cek apakah ada teman sekamar yang membayar SETENGAH (50%) di kamar isi 2 orang
+            // 3. Cek apakah ada teman sekamar yang sedang membayar SETENGAH (50%) dan pending di kamar isi 2 orang
             if ($activePenghuniCount <= 2 && !$roommateFullPaid && !$roommateFullPending && !$myPendingWithProof) {
                 foreach ($roommatePks as $rPk) {
                     $rHalf = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
@@ -165,18 +167,6 @@ class PenghuniDashboardController extends Controller
                         ->where('porsi_bayar', 50)
                         ->latest()
                         ->first();
-
-                    if (!$rHalf) {
-                        $rHalf = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
-                            ->where('status', 'terverifikasi')
-                            ->where('porsi_bayar', 50)
-                            ->where(function ($q) use ($penghuniKamar) {
-                                $q->where('periode_mulai', $penghuniKamar->tanggal_masuk)
-                                  ->orWhereDate('tanggal_verifikasi', now()->toDateString());
-                            })
-                            ->latest()
-                            ->first();
-                    }
 
                     if ($rHalf) {
                         $onlyHalfOption = true;
@@ -190,10 +180,31 @@ class PenghuniDashboardController extends Controller
             }
         }
 
+        $myVerifiedInitial = $pembayarans->where('status', 'terverifikasi')->isNotEmpty();
+        $roommateUnpaidInitial = false;
+        $roommateUnpaidName = '';
+        $canRenew = true;
+
+        if ($isKamarBerbagi && $activePenghuniCount <= 2) {
+            foreach ($roommatePks as $rPk) {
+                $rHasVerified = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                    ->where('status', 'terverifikasi')
+                    ->exists();
+
+                if (!$rHasVerified) {
+                    $roommateUnpaidInitial = true;
+                    $roommateUnpaidName = $rPk->penghuni->nama ?? 'Rekan Sekamar';
+                    $canRenew = false;
+                    break;
+                }
+            }
+        }
+
         $activeCount = $activePenghuniCount;
 
         return view('penghuni.pembayaran', compact(
             'pembayarans',
+            'penghuniKamar',
             'rekening',
             'isKamarBerbagi',
             'activePenghuniCount',
@@ -209,14 +220,18 @@ class PenghuniDashboardController extends Controller
             'roommateHalfName',
             'roommateHalfTipe',
             'roommateHalfDays',
-            'roommateHalfJumlah'
+            'roommateHalfJumlah',
+            'myVerifiedInitial',
+            'roommateUnpaidInitial',
+            'roommateUnpaidName',
+            'canRenew'
         ));
     }
 
     public function uploadBukti(Request $request)
     {
         $request->validate([
-            'pembayaran_id' => 'required|exists:pembayaran,id',
+            'pembayaran_id' => 'nullable',
             'tipe_perpanjangan' => 'required|in:bulanan,mingguan,harian',
             'porsi_bayar' => 'nullable|in:100,50',
             'jumlah_hari' => 'nullable|integer|min:1|max:365',
@@ -231,13 +246,31 @@ class PenghuniDashboardController extends Controller
             return redirect()->back()->with('error', 'Anda belum terdaftar di kamar manapun.');
         }
 
-        // Proteksi Keamanan IDOR: Pastikan tagihan milik kamar penghuni yang sedang login
-        $pembayaran = \App\Models\Pembayaran::where('id', $request->input('pembayaran_id'))
-            ->whereIn('penghuni_kamar_id', $penghuniKamarIds)
-            ->first();
+        $pembayaranId = $request->input('pembayaran_id');
+        if ($pembayaranId === 'new' || empty($pembayaranId)) {
+            $activePk = $user->penghuniKamar()->where('status', 'aktif')->latest()->first();
+            if (!$activePk) {
+                return redirect()->back()->with('error', 'Data kamar aktif tidak ditemukan.');
+            }
 
-        if (!$pembayaran) {
-            return redirect()->back()->with('error', 'Tagihan pembayaran tidak ditemukan atau bukan milik Anda.');
+            $pembayaran = \App\Models\Pembayaran::create([
+                'penghuni_kamar_id' => $activePk->id,
+                'jumlah' => 0,
+                'porsi_bayar' => (int) $request->input('porsi_bayar', 100),
+                'tipe_perpanjangan' => $request->input('tipe_perpanjangan', 'bulanan'),
+                'status' => 'pending',
+                'periode_mulai' => $activePk->tanggal_keluar ? \Carbon\Carbon::parse($activePk->tanggal_keluar)->toDateString() : now()->toDateString(),
+                'periode_selesai' => $activePk->tanggal_keluar ? \Carbon\Carbon::parse($activePk->tanggal_keluar)->addMonth()->toDateString() : now()->addMonth()->toDateString(),
+            ]);
+        } else {
+            // Proteksi Keamanan IDOR: Pastikan tagihan milik kamar penghuni yang sedang login
+            $pembayaran = \App\Models\Pembayaran::where('id', $pembayaranId)
+                ->whereIn('penghuni_kamar_id', $penghuniKamarIds)
+                ->first();
+
+            if (!$pembayaran) {
+                return redirect()->back()->with('error', 'Tagihan pembayaran tidak ditemukan atau bukan milik Anda.');
+            }
         }
 
         $tipePerpanjangan = $request->input('tipe_perpanjangan', 'bulanan');

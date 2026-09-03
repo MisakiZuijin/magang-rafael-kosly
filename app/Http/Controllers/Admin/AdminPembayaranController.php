@@ -54,32 +54,9 @@ class AdminPembayaranController extends Controller
                 'channel' => 'web',
                 'status' => 'terkirim',
             ]);
-
-            if (!empty($penghuni->no_hp) && $penghuni->no_hp !== '-') {
-                $tglVerif = $pembayaran->tanggal_verifikasi ? $pembayaran->tanggal_verifikasi->format('d-m-Y H:i') : date('d-m-Y H:i');
-                $waMessage = "Halo *{$penghuniNama}*,\n\n"
-                    . "Pembayaran sewa kos Anda telah *BERHASIL DIVERIFIKASI* oleh admin.\n\n"
-                    . "📋 *RINCIAN PEMBAYARAN:*\n"
-                    . "• Kos: *{$kosNama}*\n"
-                    . "• Kamar: *{$kodeKamar}*\n"
-                    . "• Nominal: *Rp {$nominal}*\n"
-                    . "• Waktu Verifikasi: *{$tglVerif}*\n"
-                    . "• Status: *LUNAS / TERVERIFIKASI*\n\n"
-                    . "Terima kasih telah melakukan pembayaran!";
-
-                try {
-                    app(\App\Services\WhatsAppService::class)->sendDirect(
-                        $penghuni->no_hp,
-                        'NOTIFIKASI PEMBAYARAN KOSLY',
-                        $waMessage
-                    );
-                } catch (\Throwable $e) {
-                    // Fail-safe
-                }
-            }
         }
 
-        // 3. Notifikasi ke teman sekamar jika pelunasan 1 kamar penuh (100%)
+        // 3. Notifikasi in-app ke teman sekamar jika pelunasan 1 kamar penuh (100%)
         $kamar = $pembayaran->penghuniKamar->kamar ?? null;
         if ($kamar && $kamar->tipe === 'berbagi' && $pembayaran->porsi_bayar == 100) {
             $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
@@ -98,22 +75,6 @@ class AdminPembayaranController extends Controller
                         'channel' => 'web',
                         'status' => 'terkirim',
                     ]);
-
-                    if (!empty($rPenghuni->no_hp) && $rPenghuni->no_hp !== '-') {
-                        $waRoommate = "Halo *{$rPenghuni->nama}*,\n\n"
-                            . "Pembayaran sewa kos untuk Kamar *{$kodeKamar}* ({$kosNama}) telah *BERHASIL DIVERIFIKASI* oleh admin (dilunasi penuh oleh *{$penghuniNama}*).\n\n"
-                            . "Status sewa kamar Anda kini sudah *LUNAS*.\n\n"
-                            . "Terima kasih!";
-                        try {
-                            app(\App\Services\WhatsAppService::class)->sendDirect(
-                                $rPenghuni->no_hp,
-                                'NOTIFIKASI PEMBAYARAN KOSLY',
-                                $waRoommate
-                            );
-                        } catch (\Throwable $e) {
-                            // Fail-safe
-                        }
-                    }
                 }
             }
         }

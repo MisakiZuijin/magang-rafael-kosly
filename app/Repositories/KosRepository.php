@@ -25,7 +25,7 @@ class KosRepository extends BaseRepository implements KosRepositoryInterface
 
     public function getWithKamarCount(): Collection
     {
-        return $this->model->with(['mitra', 'kamar.penghuniKamar.penghuni', 'aturanKos'])->withCount(['kamar as total_kamar', 'kamar as kamar_terisi' => function ($q) {
+        return $this->model->with(['mitra', 'kamar.penghuniKamar.penghuni', 'kamar.penghuniKamar.pembayaran', 'aturanKos'])->withCount(['kamar as total_kamar', 'kamar as kamar_terisi' => function ($q) {
             $q->where('status', 'terisi');
         }])->latest()->get();
     }

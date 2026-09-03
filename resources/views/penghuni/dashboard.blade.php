@@ -166,6 +166,52 @@
             </div>
         </div>
 
+        @if(isset($data['status_pembayaran']) && !$data['status_pembayaran']['can_use_room'])
+            @if(($data['status_pembayaran']['unpaid_type'] ?? '') === 'roommate')
+            {{-- Kasus kamar berdua: diri sendiri sudah bayar 50%, tetapi rekan sekamar belum bayar 50% --}}
+            <div class="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/50 space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                    </span>
+                    <p class="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                        Status Penggunaan Kamar
+                    </p>
+                </div>
+                <p class="text-xs font-bold text-amber-900 dark:text-amber-200 leading-relaxed">
+                    Kamar belum bisa digunakan karena rekan sekamar ({{ $data['status_pembayaran']['roommate_name'] ?: 'Rekan Sekamar' }}) belum membayar biaya awal (50%).
+                </p>
+                <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-amber-200/60 dark:border-amber-900/40 text-xs text-gray-600 dark:text-gray-300">
+                    <p class="text-[11px]">
+                        Pembayaran bagian Anda (50%) telah terverifikasi. Sesuai aturan sewa kamar berdua, kedua penghuni harus sudah menyelesaikan pembayaran biaya awal agar kamar dapat digunakan.
+                    </p>
+                </div>
+            </div>
+            @else
+            {{-- Tampilan jika diri sendiri belum membayar biaya awal --}}
+            <div class="p-3.5 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-900/50 space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="relative flex h-2.5 w-2.5">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                    </span>
+                    <p class="text-[11px] font-bold text-red-700 dark:text-red-300 uppercase tracking-wider">
+                        Status Penggunaan Kamar
+                    </p>
+                </div>
+                <p class="text-xs font-bold text-red-900 dark:text-red-200 leading-relaxed">
+                    Kamar belum bisa digunakan karena belum membayar biaya awal.
+                </p>
+                <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs">
+                    <span class="text-gray-600 dark:text-gray-300 font-medium">Tagihan Awal:</span>
+                    <a href="{{ route('penghuni.pembayaran') }}" class="font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 underline">
+                        <span>Bayar Sekarang</span> &rarr;
+                    </a>
+                </div>
+            </div>
+            @endif
+        @else
         <div x-data="{ 
                         target: {{ $targetKeluar->getTimestamp() * 1000 }},
                         formatted: '{{ $initialText }}',
@@ -198,6 +244,7 @@
             </div>
             <p class="text-xl font-bold font-mono" :class="isOverdue ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'" x-text="formatted">{{ $initialText }}</p>
         </div>
+        @endif
         @endif
 
         {{-- Tombol Checkout Self Service --}}
