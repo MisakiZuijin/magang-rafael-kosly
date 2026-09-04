@@ -398,12 +398,12 @@ class PembayaranService
             $labelTarif = ($totalOccupants >= 3 || str_contains($pembayaran->catatan_verifikasi ?? '', '3 Orang')) ? 'Tarif 3 Orang' : 'Tarif 2 Orang';
 
             if ($pembayaran->porsi_bayar == 100) {
-                $data['catatan_verifikasi'] = "Lunas (Pelunasan 1 Kamar {$labelTarif} terverifikasi oleh Admin pada {$verifTimeStr})";
+                $data['catatan_verifikasi'] = "Lunas (Pelunasan 1 Kamar {$labelTarif} terverifikasi pada {$verifTimeStr})";
             } else {
-                $data['catatan_verifikasi'] = "Lunas (Pembayaran Tarif 1 Orang terverifikasi oleh Admin pada {$verifTimeStr})";
+                $data['catatan_verifikasi'] = "Lunas (Pembayaran Tarif 1 Orang terverifikasi pada {$verifTimeStr})";
             }
         } else {
-            $data['catatan_verifikasi'] = "Lunas (Pembayaran sewa terverifikasi oleh Admin pada {$verifTimeStr})";
+            $data['catatan_verifikasi'] = "Lunas (Pembayaran sewa terverifikasi pada {$verifTimeStr})";
         }
 
         $data['status'] = 'terverifikasi';

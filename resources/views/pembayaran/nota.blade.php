@@ -3,15 +3,15 @@
 @php
 $userRole = Auth::user()->role ?? '';
 if ($userRole === 'penghuni') {
-    $backUrl = route('penghuni.pembayaran');
+$backUrl = route('penghuni.pembayaran');
 } elseif ($userRole === 'super_admin' || $userRole === 'superadmin') {
-    $backUrl = route('superadmin.pembayaran.index');
+$backUrl = route('superadmin.pembayaran.index');
 } elseif ($userRole === 'admin') {
-    $backUrl = route('admin.pembayaran.index');
+$backUrl = route('admin.pembayaran.index');
 } elseif ($userRole === 'mitra') {
-    $backUrl = route('mitra.dashboard');
+$backUrl = route('mitra.dashboard');
 } else {
-    $backUrl = route('dashboard');
+$backUrl = route('dashboard');
 }
 
 $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($pembayaran->created_at)) . '-' . sprintf('%04d', $pembayaran->id));
@@ -156,8 +156,8 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
     @if($effectiveBukti)
     @php
     $buktiImg = str_starts_with($effectiveBukti, 'http')
-        ? $effectiveBukti
-        : asset('storage/' . $effectiveBukti);
+    ? $effectiveBukti
+    : asset('storage/' . $effectiveBukti);
     @endphp
     <div class="print-page-break bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3 print:shadow-none print:border-none print:p-0 print:rounded-none print:space-y-4 print:bg-white print:text-black">
         {{-- Header Lampiran --}}
@@ -195,7 +195,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
                 <img src="{{ $buktiImg }}" alt="Bukti Transfer {{ $pembayaran->penghuniKamar->penghuni->nama ?? 'Penghuni' }}" class="w-full max-h-[340px] print:max-h-[820px] object-contain rounded-md cursor-pointer print-img-full" onclick="window.open('{{ $buktiImg }}', '_blank')" title="Klik untuk membuka ukuran penuh">
             </div>
 
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 pt-1.5 text-[11px] text-gray-600 dark:text-gray-300 border-t border-gray-200/60 dark:border-gray-700/60 print:border-gray-200">
+            <div class="grid grid-cols-1 gap-1.5 pt-1.5 text-[11px] text-gray-600 dark:text-gray-300 border-t border-gray-200/60 dark:border-gray-700/60 print:border-gray-200">
                 <div class="flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-400">
                     <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -208,9 +208,12 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
             </div>
 
             @if($pembayaran->catatan_verifikasi)
+            @php
+            $cleanCatatan = trim(str_ireplace([' oleh Admin', ' oleh admin'], '', $pembayaran->catatan_verifikasi));
+            @endphp
             <div class="p-2 bg-white/80 dark:bg-gray-900/60 rounded-lg border border-gray-200/60 dark:border-gray-700/40 print:border-gray-200 text-[10px] text-gray-600 dark:text-gray-300">
-                <span class="font-bold text-gray-700 dark:text-gray-200 print:text-black">Catatan Admin:</span>
-                <span class="italic ml-1">"{{ $pembayaran->catatan_verifikasi }}"</span>
+                <span class="font-bold text-gray-700 dark:text-gray-200 print:text-black">Catatan:</span>
+                <span class="italic ml-1">"{{ $cleanCatatan }}"</span>
             </div>
             @endif
         </div>
@@ -225,7 +228,8 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
             margin: 12mm 15mm;
         }
 
-        html, body {
+        html,
+        body {
             background: #ffffff !important;
             color: #000000 !important;
             height: auto !important;

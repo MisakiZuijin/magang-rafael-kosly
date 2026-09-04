@@ -29,7 +29,7 @@ class AturanKosService
 
     public function getAll(): Collection
     {
-        return $this->repository->all();
+        return $this->repository->getAll();
     }
 
     public function update(int $id, array $data): AturanKos

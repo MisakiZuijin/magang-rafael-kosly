@@ -4,6 +4,11 @@ namespace App\Traits;
 
 use Illuminate\Support\Facades\Cache;
 
+/**
+ * @property string|null $link_gmaps
+ * @property string|null $alamat
+ * @property string|null $nama
+ */
 trait HasGmapsQuery
 {
     /**

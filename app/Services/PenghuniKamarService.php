@@ -278,13 +278,13 @@ class PenghuniKamarService
 
         // Cari data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Khusus durasi sewa BULANAN
+        // 2. Durasi sewa BULANAN atau HARIAN (Khusus Mingguan dikecualikan dari H-7)
         // 3. Tanggal keluar berada di rentang H-7 hingga H-4 (> 3 hari ke depan dan <= 7 hari ke depan)
         //    (Mencegah pengiriman ganda H-7 saat kamar sudah berada pada periode H-3)
         // 4. Kamar belum pernah dikirimkan notifikasi H-7 untuk periode ini (kamar.notif_h7_sent_at IS NULL)
         $h7List = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
             ->where('status', 'aktif')
-            ->where('durasi', 'bulanan')
+            ->whereIn('durasi', ['bulanan', 'harian'])
             ->whereNotNull('tanggal_keluar')
             ->where('tanggal_keluar', '>', $threeDaysAhead)
             ->where('tanggal_keluar', '<=', $sevenDaysAhead)
@@ -391,12 +391,12 @@ class PenghuniKamarService
 
         // Cari data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Khusus durasi sewa BULANAN dan MINGGUAN
+        // 2. Durasi sewa BULANAN, MINGGUAN, dan HARIAN
         // 3. Tanggal keluar masih di masa depan (> now) tetapi <= 3 hari ke depan
         // 4. Kamar belum pernah dikirimkan notifikasi H-3 untuk periode ini (kamar.notif_h3_sent_at IS NULL)
         $h3List = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
             ->where('status', 'aktif')
-            ->whereIn('durasi', ['bulanan', 'mingguan'])
+            ->whereIn('durasi', ['bulanan', 'mingguan', 'harian'])
             ->whereNotNull('tanggal_keluar')
             ->where('tanggal_keluar', '>', $now)
             ->where('tanggal_keluar', '<=', $threeDaysAhead)
