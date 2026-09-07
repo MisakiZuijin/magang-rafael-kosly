@@ -81,8 +81,11 @@ $namaBulan = [
                         @endfor
                 </select>
 
-                <x-btn type="submit" variant="primary" size="sm" class="col-span-2 !py-2 font-bold shadow-xs">
-                    🔍 Filter Periode
+                <x-btn type="submit" variant="primary" size="sm" class="col-span-2 !py-2 font-bold shadow-xs flex items-center justify-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    <span>Filter Periode</span>
                 </x-btn>
             </div>
         </form>
@@ -93,7 +96,7 @@ $namaBulan = [
             <div class="relative min-w-[260px] flex-1 max-w-md">
                 <input type="text"
                     x-model="searchQuery"
-                    placeholder="🔍 Cari nama kos atau nama pemilik mitra..."
+                    placeholder="Cari nama kos atau nama pemilik mitra..."
                     class="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-2 focus:ring-emerald-500 shadow-xs">
                 <svg class="w-4 h-4 text-gray-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -165,8 +168,11 @@ $namaBulan = [
             </svg>
         </div>
         <div class="text-xs text-emerald-950 dark:text-emerald-200 leading-relaxed min-w-0">
-            <p class="font-bold text-sm text-emerald-900 dark:text-emerald-300 mb-0.5">
-                📌 Kebijakan Alokasi Periode Pencairan:
+            <p class="font-bold text-sm text-emerald-900 dark:text-emerald-300 mb-0.5 flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Kebijakan Alokasi Periode Pencairan:</span>
             </p>
             <p>
                 Pencairan dana ke Mitra dihitung berdasarkan <strong>Periode Mulai Sewa (Tanggal Masuk)</strong>. Jika penghuni membayar lebih awal di bulan ini untuk sewa bulan depan (misal: <strong>{{ $namaBulanDepan }} {{ $tahunDepanNum }}</strong>), dana secara otomatis dialokasikan ke pencairan periode <strong>{{ $namaBulanDepan }} {{ $tahunDepanNum }}</strong> dan tampil sebagai simpanan/ditunda di periode ini.
@@ -209,8 +215,11 @@ $namaBulan = [
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div class="grid grid-cols-1 sm:grid-cols-4 col-span-2 min-w-0 space-y-1">
                         <div class="grid grid-cols-1 sm:grid-cols-6 col-span-4 gap-2 flex-wrap">
-                            <h3 class="col-span-4 font-bold text-lg text-gray-900 dark:text-white leading-snug">
-                                🏢 {{ $kos->nama }}
+                            <h3 class="col-span-4 font-bold text-lg text-gray-900 dark:text-white leading-snug flex items-center gap-2">
+                                <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                                <span>{{ $kos->nama }}</span>
                             </h3>
 
                             {{-- Status Badge --}}
@@ -269,7 +278,12 @@ $namaBulan = [
                 {{-- Rekening Transfer Mitra Box --}}
                 <div class="p-4 rounded-xl bg-gray-50/90 dark:bg-gray-800/60 border border-gray-200/60 dark:border-gray-700/60 space-y-1.5 text-xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider">💳 Info Rekening Transfer Mitra:</span>
+                        <span class="text-[10px] uppercase font-bold text-gray-500 dark:text-gray-400 tracking-wider flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                            </svg>
+                            <span>Info Rekening Transfer Mitra:</span>
+                        </span>
                         @if($kos->bank)
                         <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 font-mono">
                             {{ $kos->bank }}
@@ -299,7 +313,12 @@ $namaBulan = [
                         Atas Nama: <strong class="text-gray-900 dark:text-white font-bold">{{ $kos->nama_pemilik_rekening ?? '-' }}</strong>
                     </p>
                     @else
-                    <p class="text-amber-600 dark:text-amber-400 italic text-xs pt-1">⚠️ Rekening belum diisi oleh mitra/admin</p>
+                    <p class="text-amber-600 dark:text-amber-400 italic text-xs pt-1 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-amber-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <span>Rekening belum diisi oleh mitra/admin</span>
+                    </p>
                     @endif
                 </div>
 
@@ -307,7 +326,12 @@ $namaBulan = [
                 <div class="grid grid-cols-1 md:grid-cols-1 gap-4 pt-1 pb-1">
                     {{-- Jumlah Harus Dicairkan Bulan Ini (Lolos Cutoff) --}}
                     <div class="p-4 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/50 space-y-1.5 text-xs">
-                        <span class="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400 tracking-wider block">💰 DICAIRKAN PERIODE {{ strtoupper($namaBulan[$bulan]) }} {{ $tahun }}:</span>
+                        <span class="text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400 tracking-wider flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>DICAIRKAN PERIODE {{ strtoupper($namaBulan[$bulan]) }} {{ $tahun }}:</span>
+                        </span>
                         <p class="font-mono font-black text-emerald-700 dark:text-emerald-300 text-lg leading-tight">
                             {{ $nominalRp }}
                         </p>
@@ -318,7 +342,12 @@ $namaBulan = [
 
                     {{-- Jumlah Ditunda / Roll Over Ke Bulan Depan --}}
                     <div class="p-4 rounded-xl bg-purple-50/80 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-900/50 space-y-1.5 text-xs">
-                        <span class="text-[10px] uppercase font-bold text-purple-800 dark:text-purple-400 tracking-wider block">⏳ DITUNDA KE PERIODE {{ strtoupper($namaBulanDepan) }} {{ $tahunDepanNum }}:</span>
+                        <span class="text-[10px] uppercase font-bold text-purple-800 dark:text-purple-400 tracking-wider flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-purple-600 dark:text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>DITUNDA KE PERIODE {{ strtoupper($namaBulanDepan) }} {{ $tahunDepanNum }}:</span>
+                        </span>
                         <p class="font-mono font-black text-purple-700 dark:text-purple-300 text-lg leading-tight">
                             {{ $nominalDitundaRp }}
                         </p>
@@ -404,23 +433,33 @@ $namaBulan = [
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    📷 Unggah Resi / Foto Bukti Transfer Bank (Opsional)
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span>Unggah Resi / Foto Bukti Transfer Bank (Opsional)</span>
                 </label>
                 <input type="file" name="bukti_transfer" accept="image/*" class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">
-                    📝 Catatan Pemrosesan (Opsional)
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Catatan Pemrosesan (Opsional)</span>
                 </label>
                 <textarea name="catatan" rows="3" placeholder="Masukkan nomor referensi transaksi atau catatan internal..." class="w-full px-3 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white"></textarea>
             </div>
 
             <div class="pt-2 flex justify-end gap-2 border-t border-gray-100 dark:border-gray-800">
                 <x-btn type="button" variant="secondary" size="sm" @click="modalProses = false">Batal</x-btn>
-                <x-btn type="submit" variant="primary" size="sm" class="!py-2.5 !px-4 font-bold shadow-sm">
-                    ✓ Konfirmasi Pencairan Selesai
+                <x-btn type="submit" variant="primary" size="sm" class="!py-2.5 !px-4 font-bold shadow-sm flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span>Konfirmasi Pencairan Selesai</span>
                 </x-btn>
             </div>
         </form>
@@ -450,7 +489,12 @@ $namaBulan = [
 
             <template x-if="detailData.bukti_url">
                 <div class="text-center space-y-2">
-                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300">📷 Pratinjau Resi / Bukti Transfer:</p>
+                    <p class="text-xs font-bold text-gray-700 dark:text-gray-300 flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Pratinjau Resi / Bukti Transfer:</span>
+                    </p>
                     <div class="relative w-full max-h-[60vh] overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800 bg-black flex items-center justify-center">
                         <img :src="detailData.bukti_url" alt="Bukti Transfer Pencairan" class="max-w-full max-h-[60vh] object-contain rounded-lg">
                     </div>
