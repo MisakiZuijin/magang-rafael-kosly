@@ -14,18 +14,42 @@
     @if($data['kos'])
     {{-- Info Card --}}
     <x-card class="border-l-4 border-l-emerald-500 space-y-3">
-        <div class="flex justify-between items-start">
-            <div>
-                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1">Kos Anda</p>
-                <h2 class="font-bold text-lg leading-tight dark:text-white">{{ $data['kos']->nama }}</h2>
-                <div class="flex items-center gap-2 mt-1 flex-wrap">
-                    <p class="text-sm font-semibold text-gray-700 dark:text-gray-300">Kamar {{ $data['kamar']->kode_kamar }}</p>
+        <div class="flex justify-between items-start gap-2">
+            <div class="min-w-0 flex-1 space-y-1">
+                <p class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Kos Anda</p>
+                <h2 class="font-bold text-lg leading-tight dark:text-white truncate">{{ $data['kos']->nama }}</h2>
+
+                @php
+                $mapsUrl = !empty($data['kos']->link_gmaps) && $data['kos']->link_gmaps !== '-'
+                    ? $data['kos']->link_gmaps
+                    : 'https://www.google.com/maps/search/?api=1&query=' . urlencode($data['kos']->gmaps_query ?: ($data['kos']->alamat ?: $data['kos']->nama));
+                @endphp
+
+                @if($data['kos']->alamat)
+                <a href="{{ $mapsUrl }}" target="_blank"
+                    class="group inline-flex items-center gap-1.5 text-xs text-gray-500 hover:text-emerald-600 dark:text-gray-400 dark:hover:text-emerald-400 transition-colors duration-200 min-w-0"
+                    title="Buka alamat di Google Maps">
+                    <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    <span class="truncate group-hover:underline">{{ $data['kos']->alamat }}</span>
+                    <svg class="w-3 h-3 text-gray-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 opacity-70 flex-shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                </a>
+                @endif
+
+                <div class="flex items-center gap-2 pt-1 flex-wrap">
+                    <p class="text-xs font-bold text-gray-800 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-lg border border-gray-200 dark:border-gray-700">
+                        Kamar {{ $data['kamar']->kode_kamar }}
+                    </p>
                     <span class="text-[11px] font-mono font-bold px-2 py-0.5 rounded-lg bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
-                        Penghuni : {{ $data['jumlah_penghuni'] }}/{{ $data['kamar']->kapasitas }} Orang
+                        Penghuni: {{ $data['jumlah_penghuni'] }}/{{ $data['kamar']->kapasitas }} Orang
                     </span>
                 </div>
             </div>
-            <x-badge type="{{ $data['is_future'] ? 'info' : 'success' }}">{{ $data['is_future'] ? 'Reservasi' : ucfirst($data['durasi']) }}</x-badge>
+            <x-badge type="{{ $data['is_future'] ? 'info' : 'success' }}" class="flex-shrink-0">{{ $data['is_future'] ? 'Reservasi' : ucfirst($data['durasi']) }}</x-badge>
         </div>
 
         @php
@@ -167,50 +191,50 @@
         </div>
 
         @if(isset($data['status_pembayaran']) && !$data['status_pembayaran']['can_use_room'])
-            @if(($data['status_pembayaran']['unpaid_type'] ?? '') === 'roommate')
-            {{-- Kasus kamar berdua: diri sendiri sudah bayar 50%, tetapi rekan sekamar belum bayar 50% --}}
-            <div class="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/50 space-y-2">
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
-                    </span>
-                    <p class="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
-                        Status Penggunaan Kamar
-                    </p>
-                </div>
-                <p class="text-xs font-bold text-amber-900 dark:text-amber-200 leading-relaxed">
-                    Kamar belum bisa digunakan karena rekan sekamar ({{ $data['status_pembayaran']['roommate_name'] ?: 'Rekan Sekamar' }}) belum membayar biaya awal (50%).
+        @if(($data['status_pembayaran']['unpaid_type'] ?? '') === 'roommate')
+        {{-- Kasus kamar berdua: diri sendiri sudah bayar 50%, tetapi rekan sekamar belum bayar 50% --}}
+        <div class="p-3.5 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-900/50 space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                </span>
+                <p class="text-[11px] font-bold text-amber-700 dark:text-amber-300 uppercase tracking-wider">
+                    Status Penggunaan Kamar
                 </p>
-                <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-amber-200/60 dark:border-amber-900/40 text-xs text-gray-600 dark:text-gray-300">
-                    <p class="text-[11px]">
-                        Pembayaran bagian Anda (50%) telah terverifikasi. Sesuai aturan sewa kamar berdua, kedua penghuni harus sudah menyelesaikan pembayaran biaya awal agar kamar dapat digunakan.
-                    </p>
-                </div>
             </div>
-            @else
-            {{-- Tampilan jika diri sendiri belum membayar biaya awal --}}
-            <div class="p-3.5 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-900/50 space-y-2">
-                <div class="flex items-center gap-2">
-                    <span class="relative flex h-2.5 w-2.5">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                    </span>
-                    <p class="text-[11px] font-bold text-red-700 dark:text-red-300 uppercase tracking-wider">
-                        Status Penggunaan Kamar
-                    </p>
-                </div>
-                <p class="text-xs font-bold text-red-900 dark:text-red-200 leading-relaxed">
-                    Kamar belum bisa digunakan karena belum membayar biaya awal.
+            <p class="text-xs font-bold text-amber-900 dark:text-amber-200 leading-relaxed">
+                Kamar belum bisa digunakan karena rekan sekamar ({{ $data['status_pembayaran']['roommate_name'] ?: 'Rekan Sekamar' }}) belum membayar biaya awal (50%).
+            </p>
+            <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-amber-200/60 dark:border-amber-900/40 text-xs text-gray-600 dark:text-gray-300">
+                <p class="text-[11px]">
+                    Pembayaran bagian Anda (50%) telah terverifikasi. Sesuai aturan sewa kamar berdua, kedua penghuni harus sudah menyelesaikan pembayaran biaya awal agar kamar dapat digunakan.
                 </p>
-                <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs">
-                    <span class="text-gray-600 dark:text-gray-300 font-medium">Tagihan Awal:</span>
-                    <a href="{{ route('penghuni.pembayaran') }}" class="font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 underline">
-                        <span>Bayar Sekarang</span> &rarr;
-                    </a>
-                </div>
             </div>
-            @endif
+        </div>
+        @else
+        {{-- Tampilan jika diri sendiri belum membayar biaya awal --}}
+        <div class="p-3.5 bg-red-50 dark:bg-red-950/30 rounded-xl border border-red-200 dark:border-red-900/50 space-y-2">
+            <div class="flex items-center gap-2">
+                <span class="relative flex h-2.5 w-2.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                </span>
+                <p class="text-[11px] font-bold text-red-700 dark:text-red-300 uppercase tracking-wider">
+                    Status Penggunaan Kamar
+                </p>
+            </div>
+            <p class="text-xs font-bold text-red-900 dark:text-red-200 leading-relaxed">
+                Kamar belum bisa digunakan karena belum membayar biaya awal.
+            </p>
+            <div class="p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-red-200/60 dark:border-red-900/40 flex items-center justify-between text-xs">
+                <span class="text-gray-600 dark:text-gray-300 font-medium">Tagihan Awal:</span>
+                <a href="{{ route('penghuni.pembayaran') }}" class="font-bold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 inline-flex items-center gap-1 underline">
+                    <span>Bayar Sekarang</span> &rarr;
+                </a>
+            </div>
+        </div>
+        @endif
         @else
         <div x-data="{ 
                         target: {{ $targetKeluar->getTimestamp() * 1000 }},
