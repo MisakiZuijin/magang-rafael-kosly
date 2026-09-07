@@ -36,7 +36,7 @@ class DashboardService
 
         $kamar = $penghuniKamar->kamar;
         $kos = $kamar->kos;
-        $jumlahPenghuni = $this->penghuniKamarRepository->getByKamar($kamar->id)
+        $jumlahPenghuni = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
             ->where('status', 'aktif')
             ->count();
 
@@ -77,7 +77,6 @@ class DashboardService
     public function getMitraData(int $mitraId): array
     {
         $kosList = $this->kosRepository->getByMitra($mitraId);
-        $kosList->load('kamar.penghuniKamar.penghuni');
         $kosIds = $kosList->pluck('id');
 
         $kamars = $kosList->pluck('kamar')->flatten();
@@ -115,12 +114,18 @@ class DashboardService
     public function getAdminData(): array
     {
         $totalKos = $this->kosRepository->getAll()->count();
-        $totalKamar = $this->kamarRepository->getAll()->count();
-        $kamarTerisi = $this->kamarRepository->getTerisi()->count();
-        $kamarKosong = $this->kamarRepository->getKosong()->count();
+        $kamars = $this->kamarRepository->getAll();
+        $totalKamar = $kamars->count();
+        $kamarTerisi = $kamars->where('status', 'terisi')->count();
+        $kamarKosong = $kamars->where('status', 'kosong')->count();
 
         $penghuniAktif = $this->penghuniKamarRepository->getAktif();
         $pendingPayments = $this->pembayaranRepository->getPending();
+
+        $cutoffDate = now()->hour >= 14 ? now()->toDateString() : now()->subDay()->toDateString();
+        $expiredSewa = $penghuniAktif->filter(function ($pk) use ($cutoffDate) {
+            return $pk->tanggal_keluar && $pk->tanggal_keluar->toDateString() <= $cutoffDate;
+        });
 
         return [
             'total_kos' => $totalKos,
@@ -129,7 +134,7 @@ class DashboardService
             'kamar_kosong' => $kamarKosong,
             'penghuni_aktif' => $penghuniAktif,
             'pending_payments' => $pendingPayments,
-            'expired_sewa' => $this->penghuniKamarRepository->getExpired(),
+            'expired_sewa' => $expiredSewa,
         ];
     }
 
@@ -137,11 +142,15 @@ class DashboardService
     {
         $adminData = $this->getAdminData();
 
+        $userCounts = \App\Models\User::select('role', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
+            ->groupBy('role')
+            ->pluck('count', 'role');
+
         return array_merge($adminData, [
-            'total_users' => $this->userRepository->getAll()->count(),
-            'total_mitra' => $this->userRepository->getByRole('mitra')->count(),
-            'total_penghuni' => $this->userRepository->getByRole('penghuni')->count(),
-            'total_admin' => $this->userRepository->getByRole('admin')->count(),
+            'total_users' => (int) $userCounts->sum(),
+            'total_mitra' => (int) ($userCounts['mitra'] ?? 0),
+            'total_penghuni' => (int) ($userCounts['penghuni'] ?? 0),
+            'total_admin' => (int) (($userCounts['admin'] ?? 0) + ($userCounts['super_admin'] ?? 0)),
         ]);
     }
 }

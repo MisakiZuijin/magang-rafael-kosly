@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Kamar;
 use App\Models\Kos;
 use App\Models\PenghuniKamar;
 use App\Models\Setting;
@@ -227,21 +228,21 @@ class WhatsAppService
     /**
      * Generate template teks WhatsApp ke Penghuni berdasarkan status (Belum Bayar Awal, Jatuh Tempo/Lewat, Lunas/Info Umum).
      */
-    public static function generatePenghuniMessage(?User $penghuni, ?PenghuniKamar $penghuniKamar = null, ?User $sender = null): string
+    public static function generatePenghuniMessage(?User $penghuni, ?PenghuniKamar $penghuniKamar = null, ?User $sender = null, ?Kamar $kamar = null, ?Kos $kos = null): string
     {
         $penghuniNama = $penghuni->nama ?? 'Penghuni';
         $currentAuth = Auth::user();
         $senderUser = $sender ?: $currentAuth;
         $senderNama = $senderUser ? ($senderUser->nama ?? 'Pengelola') : 'Pengelola Kos';
-        $isAdmin = $senderUser && in_array($senderUser->role, ['admin', 'superadmin']);
+        $isAdmin = $senderUser && in_array($senderUser->role, ['admin', 'superadmin', 'super_admin']);
         $senderRole = $isAdmin ? 'Admin Kostly' : 'Pengelola/Pemilik Kos';
         $appName = Setting::appName();
 
         if ($penghuniKamar) {
-            $kamar = $penghuniKamar->relationLoaded('kamar') ? $penghuniKamar->kamar : $penghuniKamar->kamar()->with('kos')->first();
-            $kos = $kamar ? ($kamar->relationLoaded('kos') ? $kamar->kos : $kamar->kos()->first()) : null;
-            $kodeKamar = $kamar->kode_kamar ?? '-';
-            $kosNama = $kos->nama ?? 'Kos';
+            $resolvedKamar = $kamar ?: ($penghuniKamar->relationLoaded('kamar') ? $penghuniKamar->kamar : $penghuniKamar->kamar);
+            $resolvedKos = $kos ?: ($resolvedKamar ? ($resolvedKamar->relationLoaded('kos') ? $resolvedKamar->kos : $resolvedKamar->kos) : null);
+            $kodeKamar = $resolvedKamar->kode_kamar ?? '-';
+            $kosNama = $resolvedKos->nama ?? 'Kos';
             $durasi = ucfirst($penghuniKamar->durasi ?? 'bulanan');
             $tglKeluarFormatted = $penghuniKamar->tanggal_keluar ? $penghuniKamar->tanggal_keluar->format('d/m/Y') : '-';
 
@@ -251,7 +252,7 @@ class WhatsAppService
             $sisaHari = $tglKeluar ? (int) $today->diffInDays($tglKeluar, false) : 999;
 
             // Dapatkan info status pembayaran
-            $statusInfo = $penghuniKamar->getStatusPembayaranInfo($kamar);
+            $statusInfo = $penghuniKamar->getStatusPembayaranInfo($resolvedKamar);
 
             // KONDISI 1: Belum Bayar Biaya Awal
             if ($statusInfo['status'] === 'belum_bayar_awal') {
@@ -311,13 +312,13 @@ class WhatsAppService
     /**
      * Generate URL WhatsApp link langsung ke Penghuni.
      */
-    public static function generatePenghuniUrl(?User $penghuni, ?PenghuniKamar $penghuniKamar = null, ?User $sender = null): string
+    public static function generatePenghuniUrl(?User $penghuni, ?PenghuniKamar $penghuniKamar = null, ?User $sender = null, ?Kamar $kamar = null, ?Kos $kos = null): string
     {
         $phone = static::formatPhoneNumber($penghuni->no_hp ?? '');
         if (empty($phone)) {
             return '#';
         }
-        $message = static::generatePenghuniMessage($penghuni, $penghuniKamar, $sender);
+        $message = static::generatePenghuniMessage($penghuni, $penghuniKamar, $sender, $kamar, $kos);
         return 'https://wa.me/' . $phone . '?text=' . rawurlencode($message);
     }
 

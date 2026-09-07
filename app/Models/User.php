@@ -100,6 +100,11 @@ class User extends Authenticatable
         return $this->hasMany(PenghuniKamar::class, 'penghuni_id');
     }
 
+    public function activePenghuniKamar()
+    {
+        return $this->hasOne(PenghuniKamar::class, 'penghuni_id')->where('status', 'aktif');
+    }
+
     public function notifikasi()
     {
         return $this->hasMany(Notifikasi::class, 'user_id');

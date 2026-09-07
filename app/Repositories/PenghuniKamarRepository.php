@@ -17,6 +17,10 @@ class PenghuniKamarRepository extends BaseRepository implements PenghuniKamarRep
     public function getAktif(): Collection
     {
         return $this->model->where('status', 'aktif')
+            ->whereHas('kamar.kos', function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
             ->with(['kamar.kos', 'penghuni', 'pembayaran'])
             ->latest()
             ->get();
@@ -70,6 +74,10 @@ class PenghuniKamarRepository extends BaseRepository implements PenghuniKamarRep
 
         return $this->model->where('status', 'aktif')
             ->where('tanggal_keluar', '<=', $cutoffDate)
+            ->whereHas('kamar.kos', function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
             ->with(['kamar.kos', 'penghuni'])
             ->get();
     }
