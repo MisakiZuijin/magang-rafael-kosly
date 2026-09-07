@@ -18,60 +18,6 @@ class NotifikasiController extends Controller
         $user = Auth::user();
         $notifikasis = $this->service->getByUser($user->id);
 
-        $userKosId = null;
-        $userKamarId = null;
-
-        if ($user->role === 'penghuni') {
-            $activePk = $user->penghuniKamar()->with('kamar')->where('status', 'aktif')->first();
-            if ($activePk) {
-                $userKamarId = $activePk->kamar_id;
-                $userKosId = $activePk->kamar->kos_id ?? null;
-            }
-        }
-
-        // Fetch announcements matching user scope and meant for web (web or keduanya)
-        $pengumumanQuery = \App\Models\Pengumuman::with('targets')
-            ->whereIn('channel', ['web', 'keduanya']);
-
-        if ($user->role === 'penghuni') {
-            $pengumumanQuery->where(function($q) use ($userKosId, $userKamarId) {
-                $q->whereDoesntHave('targets')
-                  ->orWhereHas('targets', function($tq) use ($userKosId, $userKamarId) {
-                      if ($userKosId) {
-                          $tq->orWhere(function($sub) use ($userKosId) {
-                              $sub->where('target_tipe', 'kos')->where('target_id', $userKosId);
-                          });
-                      }
-                      if ($userKamarId) {
-                          $tq->orWhere(function($sub) use ($userKamarId) {
-                              $sub->where('target_tipe', 'kamar')->where('target_id', $userKamarId);
-                          });
-                      }
-                  });
-            });
-        }
-        $pengumumans = $pengumumanQuery->latest()->get();
-
-        foreach ($pengumumans as $p) {
-            $alreadyExists = $notifikasis->contains(function($n) use ($p) {
-                return str_contains($n->judul, $p->judul);
-            });
-
-            if (!$alreadyExists) {
-                $notifItem = \App\Models\Notifikasi::create([
-                    'user_id' => $user->id,
-                    'judul' => $p->judul,
-                    'pesan' => $p->isi,
-                    'channel' => 'web',
-                    'status' => 'terkirim',
-                    'created_at' => $p->created_at,
-                ]);
-                $notifikasis->push($notifItem);
-            }
-        }
-
-        $notifikasis = $notifikasis->sortByDesc('created_at')->values();
-
         return view('notifikasi.index', compact('notifikasis'));
     }
 

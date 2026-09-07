@@ -10,27 +10,33 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     /**
-     * Dapatkan API Key Fonnte dari DB settings atau env.
+     * Dapatkan API Key Fonnte dari DB settings, user Mitra Pro, atau env.
      */
-    public function getApiKey(): ?string
+    public function getApiKey(?User $user = null): ?string
     {
+        if ($user && $user->is_pro && !empty($user->wa_gateway_token)) {
+            return $user->wa_gateway_token;
+        }
         return Setting::getByKey('fonnte_api_key', config('services.whatsapp.api_key'));
     }
 
     /**
-     * Dapatkan Endpoint Fonnte dari DB settings atau default.
+     * Dapatkan Endpoint Fonnte dari DB settings, user Mitra Pro, atau default.
      */
-    public function getEndpoint(): string
+    public function getEndpoint(?User $user = null): string
     {
+        if ($user && $user->is_pro && !empty($user->wa_gateway_endpoint)) {
+            return $user->wa_gateway_endpoint;
+        }
         return Setting::getByKey('fonnte_endpoint', config('services.whatsapp.endpoint', 'https://api.fonnte.com/send'));
     }
 
     /**
      * Cek status device Fonnte secara langsung via API Fonnte.
      */
-    public function checkDeviceStatus(): array
+    public function checkDeviceStatus(?string $customApiKey = null): array
     {
-        $apiKey = $this->getApiKey();
+        $apiKey = $customApiKey ?: $this->getApiKey();
         if (!$apiKey) {
             return [
                 'connected' => false,
@@ -82,10 +88,10 @@ class WhatsAppService
     /**
      * Kirim pesan langsung ke 1 target (nomor HP atau ID Grup WA Fonnte).
      */
-    public function sendDirect(string $target, string $judul, string $pesan): array
+    public function sendDirect(string $target, string $judul, string $pesan, ?string $customApiKey = null, ?string $customEndpoint = null): array
     {
-        $apiKey = $this->getApiKey();
-        $endpoint = $this->getEndpoint();
+        $apiKey = $customApiKey ?: $this->getApiKey();
+        $endpoint = $customEndpoint ?: $this->getEndpoint();
         $appName = Setting::appName();
         $formattedMessage = "*[{$judul}]*\n\n{$pesan}\n\n_Pesan otomatis dari {$appName} App_";
 
@@ -158,7 +164,7 @@ class WhatsAppService
      * @param array $items Array asosiatif berisi ['target' => string, 'judul' => string, 'pesan' => string, 'user_id' => int|null]
      * @return int Jumlah pesan yang berhasil diproses
      */
-    public function sendPengumumanWithThrottle(array $items): int
+    public function sendPengumumanWithThrottle(array $items, ?string $customApiKey = null, ?string $customEndpoint = null): int
     {
         @set_time_limit(0); // Menghindari script timeout karena jeda pengiriman
         $sentCount = 0;
@@ -185,7 +191,7 @@ class WhatsAppService
                 ]);
             }
 
-            $this->sendDirect($target, $judul, $pesan);
+            $this->sendDirect($target, $judul, $pesan, $customApiKey, $customEndpoint);
             $sentCount++;
 
             // Jika kelipatan 5 pesan dan masih ada pesan tersisa yang harus dikirim, jeda 1 menit (60 detik)

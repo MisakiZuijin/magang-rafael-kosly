@@ -71,6 +71,11 @@ class Pembayaran extends Model
         return $this->belongsTo(User::class, 'diverifikasi_oleh');
     }
 
+    public function verifikator()
+    {
+        return $this->belongsTo(User::class, 'diverifikasi_oleh');
+    }
+
     /**
      * Dapatkan URL bukti transfer efektif (termasuk bukti transfer yang diunggah oleh rekan sekamar jika pembayaran diwakilkan).
      */
@@ -80,9 +85,33 @@ class Pembayaran extends Model
             return $this->bukti_transfer_url;
         }
 
-        if ($this->penghuniKamar && $this->penghuniKamar->kamar_id) {
-            $roommatePayment = static::whereHas('penghuniKamar', function ($q) {
-                $q->where('kamar_id', $this->penghuniKamar->kamar_id);
+        $pk = $this->penghuniKamar;
+        if ($pk && $pk->kamar_id) {
+            $kamar = $pk->kamar;
+            if ($kamar && $kamar->relationLoaded('penghuniKamar')) {
+                $allPks = $kamar->penghuniKamar;
+                $allPembayaranLoaded = $allPks->every(fn($p) => $p->relationLoaded('pembayaran'));
+                if ($allPembayaranLoaded) {
+                    $pMulai1 = $this->periode_mulai instanceof \Carbon\Carbon ? $this->periode_mulai->toDateString() : (string)$this->periode_mulai;
+                    $roommatePayment = $allPks->flatMap->pembayaran
+                        ->where('id', '!=', $this->id)
+                        ->whereNotNull('bukti_transfer_url')
+                        ->filter(function($pm) use ($pMulai1) {
+                            if ($pMulai1) {
+                                $pMulai2 = $pm->periode_mulai instanceof \Carbon\Carbon ? $pm->periode_mulai->toDateString() : (string)$pm->periode_mulai;
+                                return $pMulai1 === $pMulai2;
+                            }
+                            return true;
+                        })
+                        ->sortByDesc('tanggal_verifikasi')
+                        ->first();
+
+                    return $roommatePayment?->bukti_transfer_url;
+                }
+            }
+
+            $roommatePayment = static::whereHas('penghuniKamar', function ($q) use ($pk) {
+                $q->where('kamar_id', $pk->kamar_id);
             })
             ->where('id', '!=', $this->id)
             ->whereNotNull('bukti_transfer_url')
@@ -136,9 +165,13 @@ class Pembayaran extends Model
         // 3. Hitung jumlah penghuni aktif di kamar ini atau transaksi pembayaran bersamaan
         $kamarId = $this->penghuniKamar->kamar_id ?? null;
         if ($kamarId) {
-            $activeCount = \App\Models\PenghuniKamar::where('kamar_id', $kamarId)
-                ->where('status', 'aktif')
-                ->count();
+            if ($kamar && $kamar->relationLoaded('penghuniKamar')) {
+                $activeCount = $kamar->penghuniKamar->where('status', 'aktif')->count();
+            } else {
+                $activeCount = \App\Models\PenghuniKamar::where('kamar_id', $kamarId)
+                    ->where('status', 'aktif')
+                    ->count();
+            }
 
             if ($activeCount >= 3) {
                 return [
@@ -149,21 +182,66 @@ class Pembayaran extends Model
 
             // Jika status terverifikasi, cek juga apakah pada transaksi historis ada 3 penghuni
             if ($this->status === 'terverifikasi') {
-                $roommatePaymentsCount = static::whereHas('penghuniKamar', function($q) use ($kamarId) {
-                    $q->where('kamar_id', $kamarId);
-                })
-                ->where('porsi_bayar', 100)
-                ->where(function($q) {
-                    if ($this->periode_mulai && $this->periode_selesai) {
-                        $q->where('periode_mulai', $this->periode_mulai)
-                          ->where('periode_selesai', $this->periode_selesai);
-                    } elseif ($this->tanggal_bayar) {
-                        $q->whereDate('tanggal_bayar', $this->tanggal_bayar);
-                    } elseif ($this->created_at) {
-                        $q->whereDate('created_at', $this->created_at);
+                if ($kamar && $kamar->relationLoaded('penghuniKamar')) {
+                    $allRoommatePks = $kamar->penghuniKamar;
+                    $allPembayaranLoaded = $allRoommatePks->every(fn($pk) => $pk->relationLoaded('pembayaran'));
+
+                    if ($allPembayaranLoaded) {
+                        $roommatePaymentsCount = $allRoommatePks->flatMap->pembayaran
+                            ->where('porsi_bayar', 100)
+                            ->filter(function($pm) {
+                                if ($this->periode_mulai && $this->periode_selesai) {
+                                    $pMulai1 = $this->periode_mulai instanceof \Carbon\Carbon ? $this->periode_mulai->toDateString() : (string)$this->periode_mulai;
+                                    $pSelesai1 = $this->periode_selesai instanceof \Carbon\Carbon ? $this->periode_selesai->toDateString() : (string)$this->periode_selesai;
+                                    $pMulai2 = $pm->periode_mulai instanceof \Carbon\Carbon ? $pm->periode_mulai->toDateString() : (string)$pm->periode_mulai;
+                                    $pSelesai2 = $pm->periode_selesai instanceof \Carbon\Carbon ? $pm->periode_selesai->toDateString() : (string)$pm->periode_selesai;
+                                    return $pMulai1 === $pMulai2 && $pSelesai1 === $pSelesai2;
+                                } elseif ($this->tanggal_bayar) {
+                                    $tgl1 = $this->tanggal_bayar instanceof \Carbon\Carbon ? $this->tanggal_bayar->toDateString() : (string)$this->tanggal_bayar;
+                                    $tgl2 = $pm->tanggal_bayar instanceof \Carbon\Carbon ? $pm->tanggal_bayar->toDateString() : (string)$pm->tanggal_bayar;
+                                    return $tgl1 === $tgl2;
+                                } elseif ($this->created_at) {
+                                    $tgl1 = $this->created_at instanceof \Carbon\Carbon ? $this->created_at->toDateString() : (string)$this->created_at;
+                                    $tgl2 = $pm->created_at instanceof \Carbon\Carbon ? $pm->created_at->toDateString() : (string)$pm->created_at;
+                                    return $tgl1 === $tgl2;
+                                }
+                                return false;
+                            })
+                            ->count();
+                    } else {
+                        $roommatePaymentsCount = static::whereHas('penghuniKamar', function($q) use ($kamarId) {
+                            $q->where('kamar_id', $kamarId);
+                        })
+                        ->where('porsi_bayar', 100)
+                        ->where(function($q) {
+                            if ($this->periode_mulai && $this->periode_selesai) {
+                                $q->where('periode_mulai', $this->periode_mulai)
+                                  ->where('periode_selesai', $this->periode_selesai);
+                            } elseif ($this->tanggal_bayar) {
+                                $q->whereDate('tanggal_bayar', $this->tanggal_bayar);
+                            } elseif ($this->created_at) {
+                                $q->whereDate('created_at', $this->created_at);
+                            }
+                        })
+                        ->count();
                     }
-                })
-                ->count();
+                } else {
+                    $roommatePaymentsCount = static::whereHas('penghuniKamar', function($q) use ($kamarId) {
+                        $q->where('kamar_id', $kamarId);
+                    })
+                    ->where('porsi_bayar', 100)
+                    ->where(function($q) {
+                        if ($this->periode_mulai && $this->periode_selesai) {
+                            $q->where('periode_mulai', $this->periode_mulai)
+                              ->where('periode_selesai', $this->periode_selesai);
+                        } elseif ($this->tanggal_bayar) {
+                            $q->whereDate('tanggal_bayar', $this->tanggal_bayar);
+                        } elseif ($this->created_at) {
+                            $q->whereDate('created_at', $this->created_at);
+                        }
+                    })
+                    ->count();
+                }
 
                 if ($roommatePaymentsCount >= 3) {
                     return [

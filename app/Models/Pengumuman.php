@@ -45,4 +45,37 @@ class Pengumuman extends Model
     {
         return $this->hasMany(PengumumanTarget::class, 'pengumuman_id');
     }
+
+    /**
+     * Menghasilkan teks deskripsi target pengumuman secara in-memory tanpa query N+1.
+     */
+    public function getTargetDescription(bool $isMitra = false): string
+    {
+        if (!$this->relationLoaded('targets') || $this->targets->isEmpty()) {
+            return $isMitra ? 'Semua Kos Milik Anda' : 'Semua User / Anak Kos';
+        }
+
+        $firstTarget = $this->targets->first();
+        $targetTipe = $firstTarget->target_tipe;
+
+        if ($targetTipe === 'kos') {
+            $kosNames = $this->targets->map(function ($t) {
+                return $t->kos ? $t->kos->nama : null;
+            })->filter()->unique()->values()->toArray();
+
+            return !empty($kosNames) ? 'Target Kos: ' . implode(', ', $kosNames) : ($isMitra ? 'Semua Kos Milik Anda' : 'Semua User / Anak Kos');
+        } elseif ($targetTipe === 'kamar') {
+            $kamarNames = $this->targets->map(function ($t) {
+                if ($t->kamar) {
+                    $kosNama = $t->kamar->kos ? $t->kamar->kos->nama : '-';
+                    return 'Kamar ' . $t->kamar->kode_kamar . ' (' . $kosNama . ')';
+                }
+                return null;
+            })->filter()->unique()->values()->toArray();
+
+            return !empty($kamarNames) ? 'Target Kamar: ' . implode(', ', $kamarNames) : 'Target Kamar';
+        }
+
+        return $isMitra ? 'Semua Kos Milik Anda' : 'Semua User / Anak Kos';
+    }
 }

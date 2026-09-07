@@ -37,6 +37,26 @@ class PembayaranService
         return $this->repository->getDitolak();
     }
 
+    public function getPendingByMitra(int $mitraId): Collection
+    {
+        return $this->repository->getPendingByMitra($mitraId);
+    }
+
+    public function getTerverifikasiByMitra(int $mitraId): Collection
+    {
+        return $this->repository->getTerverifikasiByMitra($mitraId);
+    }
+
+    public function getDitolakByMitra(int $mitraId): Collection
+    {
+        return $this->repository->getDitolakByMitra($mitraId);
+    }
+
+    public function getLaporanByMitra(int $mitraId, string $start, string $end): Collection
+    {
+        return $this->repository->getLaporanByMitraAndDateRange($mitraId, $start, $end);
+    }
+
     public function getById(int $id): ?Pembayaran
     {
         return $this->repository->findById($id);
@@ -248,6 +268,38 @@ class PembayaranService
                     }
                 }
             }
+        }
+
+        // Kirim notifikasi web ke Admin & Super Admin, atau langsung ke Mitra Pro jika kos milik Mitra Pro
+        try {
+            $nominalFormatted = 'Rp ' . number_format($pembayaran->jumlah, 0, ',', '.');
+            $kamarKode = $kamar->kode_kamar ?? '-';
+            $kosNama = $kamar->kos->nama ?? 'Kos';
+            $mitra = $kamar->kos->mitra ?? null;
+
+            if ($mitra && $mitra->is_pro) {
+                // Notifikasi langsung ke Mitra Pro pemilik kos
+                \App\Models\Notifikasi::create([
+                    'user_id' => $mitra->id,
+                    'judul' => 'Bukti Pembayaran Baru Masuk',
+                    'pesan' => "Penghuni {$uploaderName} (Kamar {$kamarKode} - {$kosNama}) telah mengunggah bukti transfer {$nominalFormatted} ({$tarifLabel}) dan menunggu verifikasi Anda.",
+                    'channel' => 'web',
+                    'status' => 'terkirim',
+                ]);
+            } else {
+                $adminUsers = \App\Models\User::whereIn('role', ['admin', 'super_admin'])->where('is_active', true)->get();
+                foreach ($adminUsers as $adminUser) {
+                    \App\Models\Notifikasi::create([
+                        'user_id' => $adminUser->id,
+                        'judul' => 'Bukti Pembayaran Baru Masuk',
+                        'pesan' => "Penghuni {$uploaderName} (Kamar {$kamarKode} - {$kosNama}) telah mengunggah bukti transfer {$nominalFormatted} ({$tarifLabel}) dan menunggu verifikasi.",
+                        'channel' => 'web',
+                        'status' => 'terkirim',
+                    ]);
+                }
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Gagal membuat notifikasi upload bukti: " . $e->getMessage());
         }
 
         return $pembayaran->fresh();

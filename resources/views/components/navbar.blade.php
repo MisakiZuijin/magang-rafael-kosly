@@ -44,9 +44,10 @@
                     <span class="inline-block mt-2 px-2.5 py-1 text-[10px] uppercase tracking-wider font-bold rounded-full 
                         {{ Auth::user()->role === 'super_admin' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' : '' }}
                         {{ Auth::user()->role === 'admin' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' : '' }}
-                        {{ Auth::user()->role === 'mitra' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : '' }}
+                        {{ Auth::user()->role === 'mitra' && !Auth::user()->is_pro ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : '' }}
+                        {{ Auth::user()->role === 'mitra' && Auth::user()->is_pro ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-2xs' : '' }}
                         {{ Auth::user()->role === 'penghuni' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : '' }}">
-                        {{ str_replace('_', ' ', Auth::user()->role) }}
+                        {{ Auth::user()->role === 'mitra' && Auth::user()->is_pro ? 'MITRA PRO' : str_replace('_', ' ', Auth::user()->role) }}
                     </span>
                 </div>
                 <a href="{{ route('profile.show') }}" class="flex items-center gap-3 px-4 py-3 text-sm font-medium active:bg-gray-50 dark:text-white dark:active:bg-gray-700">

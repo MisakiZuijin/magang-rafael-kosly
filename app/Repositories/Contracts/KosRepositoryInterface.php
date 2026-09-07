@@ -12,6 +12,5 @@ interface KosRepositoryInterface extends BaseRepositoryInterface
     public function getWithKamarCount(): Collection;
     public function findWithKamar(int|string $id): ?Kos;
     public function getAllLocations(): Collection;
-    public function toggleLock(int|string $id): ?Kos;
     public function findBySlug(string $slug): ?Kos;
 }

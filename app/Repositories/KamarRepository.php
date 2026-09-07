@@ -13,6 +13,13 @@ class KamarRepository extends BaseRepository implements KamarRepositoryInterface
         parent::__construct($model);
     }
 
+    public function getAll(): Collection
+    {
+        return $this->model->whereHas('kos', function ($q) {
+            $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+        })->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
+    }
+
     public function getByKos(int $kosId): Collection
     {
         return $this->model->where('kos_id', $kosId)->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
@@ -20,12 +27,24 @@ class KamarRepository extends BaseRepository implements KamarRepositoryInterface
 
     public function getKosong(): Collection
     {
-        return $this->model->where('status', 'kosong')->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
+        return $this->model->where('status', 'kosong')
+            ->whereHas('kos', function ($q) {
+                $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
+            ->with(['kos.mitra', 'penghuniKamar.penghuni'])
+            ->latest()
+            ->get();
     }
 
     public function getTerisi(): Collection
     {
-        return $this->model->where('status', 'terisi')->with(['kos.mitra', 'penghuniKamar.penghuni'])->latest()->get();
+        return $this->model->where('status', 'terisi')
+            ->whereHas('kos', function ($q) {
+                $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
+            ->with(['kos.mitra', 'penghuniKamar.penghuni'])
+            ->latest()
+            ->get();
     }
 
     public function updateStatus(int $id, string $status): Kamar

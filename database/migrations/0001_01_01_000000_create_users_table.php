@@ -18,6 +18,10 @@ return new class extends Migration
             $table->enum('role', ['super_admin', 'admin', 'mitra', 'penghuni'])->default('penghuni');
             $table->string('foto_profile', 255)->nullable();
             $table->boolean('is_active')->default(true);
+            $table->boolean('is_pro')->default(false);
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('wa_gateway_token', 255)->nullable();
+            $table->string('wa_gateway_endpoint', 255)->nullable();
             $table->timestamps();
             $table->rememberToken();
         });
