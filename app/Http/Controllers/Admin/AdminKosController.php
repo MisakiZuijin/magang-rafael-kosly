@@ -12,6 +12,7 @@ use App\Services\LogAktivitasService;
 use App\Services\PenghuniKamarService;
 use App\Services\UserService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AdminKosController extends Controller
 {
@@ -29,8 +30,21 @@ class AdminKosController extends Controller
         $kosList = $this->kosService->getWithKamarCount();
         $mitras = User::where('role', 'mitra')->where('is_active', true)->where('is_pro', false)->latest()->get();
 
+        $penghuniUsers = User::where('role', 'penghuni')
+            ->where('is_active', true)
+            ->where(function($q) {
+                $q->whereNull('created_by')
+                  ->orWhereHas('creator', function($c) {
+                      $c->whereIn('role', ['admin', 'super_admin']);
+                  });
+            })
+            ->with(['penghuniKamar' => function($q) {
+                $q->where('status', 'aktif')->with('kamar');
+            }])
+            ->get();
+
         $view = request()->is('superadmin*') ? 'superadmin.kos.index' : 'admin.kos.index';
-        return view($view, compact('kosList', 'mitras'));
+        return view($view, compact('kosList', 'mitras', 'penghuniUsers'));
     }
 
     public function storeKos(Request $request)
@@ -403,7 +417,7 @@ class AdminKosController extends Controller
 
         return view('admin.kamar.show', [
             'kamar' => $kamar,
-            'isSuperAdmin' => auth()->user()->role === 'super_admin'
+            'isSuperAdmin' => Auth::user()?->role === 'super_admin'
         ]);
     }
 
