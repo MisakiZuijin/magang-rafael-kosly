@@ -173,7 +173,13 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                         </div>
                         <p class="text-xs text-gray-500 font-mono truncate">{{ $m->email }}</p>
                         @if($m->no_hp)
-                        <p class="text-[11px] text-gray-400 mt-0.5">HP: {{ $m->no_hp }}</p>
+                        @php
+                        $waUrlM = \App\Services\WhatsAppService::generateMitraUrl($m);
+                        @endphp
+                        <a href="{{ $waUrlM }}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono mt-0.5 hover:underline font-bold" title="Chat WhatsApp ke Mitra {{ $m->nama }}">
+                            <span>📱 {{ $m->no_hp }}</span>
+                            <span class="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[9px] font-bold">Chat WA</span>
+                        </a>
                         @endif
                     </div>
                 </div>
@@ -220,7 +226,14 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                         <p class="text-xs text-gray-500 font-mono truncate">{{ $p->email }}</p>
                         <div class="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-gray-400">
                             @if($p->no_hp)
-                            <span>HP: {{ $p->no_hp }}</span>
+                            @php
+                            $activePk = $p->penghuniKamar ? $p->penghuniKamar->where('status', 'aktif')->first() : null;
+                            $waUrlP = \App\Services\WhatsAppService::generatePenghuniUrl($p, $activePk);
+                            @endphp
+                            <a href="{{ $waUrlP }}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono hover:underline font-bold" title="Chat WhatsApp ke {{ $p->nama }}">
+                                <span>📱 {{ $p->no_hp }}</span>
+                                <span class="px-1.5 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-[9px] font-bold">Chat WA</span>
+                            </a>
                             @endif
                             @if($p->creator)
                             <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">

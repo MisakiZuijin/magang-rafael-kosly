@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\Kos;
+use App\Models\PenghuniKamar;
 use App\Models\Setting;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -202,5 +205,132 @@ class WhatsAppService
         }
 
         return $sentCount;
+    }
+
+    /**
+     * Format nomor HP agar standar internasional WhatsApp (62...).
+     */
+    public static function formatPhoneNumber(?string $noHp): string
+    {
+        if (empty($noHp)) {
+            return '';
+        }
+        $phone = preg_replace('/[^0-9]/', '', (string)$noHp);
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        } elseif (str_starts_with($phone, '8')) {
+            $phone = '628' . substr($phone, 1);
+        }
+        return $phone;
+    }
+
+    /**
+     * Generate template teks WhatsApp ke Penghuni berdasarkan status (Belum Bayar Awal, Jatuh Tempo/Lewat, Lunas/Info Umum).
+     */
+    public static function generatePenghuniMessage(?User $penghuni, ?PenghuniKamar $penghuniKamar = null, ?User $sender = null): string
+    {
+        $penghuniNama = $penghuni->nama ?? 'Penghuni';
+        $currentAuth = Auth::user();
+        $senderUser = $sender ?: $currentAuth;
+        $senderNama = $senderUser ? ($senderUser->nama ?? 'Pengelola') : 'Pengelola Kos';
+        $isAdmin = $senderUser && in_array($senderUser->role, ['admin', 'superadmin']);
+        $senderRole = $isAdmin ? 'Admin Kostly' : 'Pengelola/Pemilik Kos';
+        $appName = Setting::appName();
+
+        if ($penghuniKamar) {
+            $kamar = $penghuniKamar->relationLoaded('kamar') ? $penghuniKamar->kamar : $penghuniKamar->kamar()->with('kos')->first();
+            $kos = $kamar ? ($kamar->relationLoaded('kos') ? $kamar->kos : $kamar->kos()->first()) : null;
+            $kodeKamar = $kamar->kode_kamar ?? '-';
+            $kosNama = $kos->nama ?? 'Kos';
+            $durasi = ucfirst($penghuniKamar->durasi ?? 'bulanan');
+            $tglKeluarFormatted = $penghuniKamar->tanggal_keluar ? $penghuniKamar->tanggal_keluar->format('d/m/Y') : '-';
+
+            // Hitung sisa hari sewa
+            $today = \Carbon\Carbon::now()->startOfDay();
+            $tglKeluar = $penghuniKamar->tanggal_keluar ? \Carbon\Carbon::parse($penghuniKamar->tanggal_keluar)->startOfDay() : null;
+            $sisaHari = $tglKeluar ? (int) $today->diffInDays($tglKeluar, false) : 999;
+
+            // Dapatkan info status pembayaran
+            $statusInfo = $penghuniKamar->getStatusPembayaranInfo($kamar);
+
+            // KONDISI 1: Belum Bayar Biaya Awal
+            if ($statusInfo['status'] === 'belum_bayar_awal') {
+                return "Assalamualaikum Kak *{$penghuniNama}*,\n\n"
+                    . "Salam dari *{$senderRole} {$senderNama}* (*{$kosNama}* - Kamar *{$kodeKamar}*).\n\n"
+                    . "Kami ingin mengonfirmasi terkait pembayaran awal sewa kamar Kakak ({$durasi}). Mohon dapat segera menyelesaikan pembayaran dan mengunggah bukti transfer melalui aplikasi *{$appName}* agar kamar dapat segera kami siapkan dan diverifikasi.\n\n"
+                    . "Jika ada kendala atau pertanyaan mengenai pembayaran, silakan hubungi kami ya. Terima kasih! 🙏";
+            }
+
+            // KONDISI 2: Jatuh Tempo / Lewat Masa Sewa / Mendekati Jatuh Tempo (H-3 s.d. lewat)
+            if ($sisaHari <= 3) {
+                $statusSewaTeks = $sisaHari < 0 
+                    ? "telah berakhir/terlewat " . abs($sisaHari) . " hari yang lalu (jatuh tempo pada {$tglKeluarFormatted})" 
+                    : ($sisaHari === 0 
+                        ? "jatuh tempo hari ini ({$tglKeluarFormatted})" 
+                        : "akan segera berakhir dalam {$sisaHari} hari ke depan (pada {$tglKeluarFormatted})");
+
+                return "Assalamualaikum Kak *{$penghuniNama}*,\n\n"
+                    . "Salam dari *{$senderRole} {$senderNama}* (*{$kosNama}* - Kamar *{$kodeKamar}*).\n\n"
+                    . "Pemberitahuan bahwa masa sewa kamar Kakak di *{$kosNama}* (Kamar *{$kodeKamar}*) {$statusSewaTeks}.\n\n"
+                    . "Apakah Kakak berencana untuk memperpanjang sewa kamar? Jika ingin memperpanjang, silakan lakukan pembayaran perpanjangan sewa melalui aplikasi *{$appName}*. Jika berencana untuk checkout / selesai sewa, mohon konfirmasikan kepada kami ya.\n\n"
+                    . "Terima kasih atas kerja sama Anda! 🙏";
+            }
+
+            // KONDISI 3: Lunas / Tidak ada tanggungan / Sapaan Informasi Umum
+            return "Assalamualaikum Kak *{$penghuniNama}*,\n\n"
+                . "Salam dari *{$senderRole} {$senderNama}* (*{$kosNama}* - Kamar *{$kodeKamar}*).\n\n"
+                . "Semoga Kakak nyaman tinggal di *{$kosNama}*. Ada yang bisa kami bantu atau ada informasi yang ingin disampaikan terkait fasilitas dan kenyamanan kamar Kakak?\n\n"
+                . "Terima kasih! 🙏";
+        }
+
+        // KONDISI 4: Jika hanya data user penghuni (tanpa relasi kamar)
+        return "Assalamualaikum Kak *{$penghuniNama}*,\n\n"
+            . "Salam dari *{$senderRole} {$senderNama}* (*{$appName}*).\n\n"
+            . "Ada hal atau informasi yang ingin kami koordinasikan dengan Kakak terkait hunian dan akun sewa di *{$appName}*.\n\n"
+            . "Terima kasih! 🙏";
+    }
+
+    /**
+     * Generate template teks WhatsApp ke Mitra Kos (Pembuka Komunikasi).
+     */
+    public static function generateMitraMessage(?User $mitra, ?Kos $kos = null, ?User $sender = null): string
+    {
+        $mitraNama = $mitra->nama ?? 'Mitra Kos';
+        $currentAuth = Auth::user();
+        $senderUser = $sender ?: $currentAuth;
+        $senderNama = $senderUser ? ($senderUser->nama ?? 'Admin') : 'Admin Kostly';
+        $appName = Setting::appName();
+        $kosInfo = $kos ? " terkait properti *{$kos->nama}*" : '';
+
+        return "Assalamualaikum Bapak/Ibu *{$mitraNama}*,\n\n"
+            . "Salam dari Admin *{$appName}* (*{$senderNama}*).\n\n"
+            . "Semoga Bapak/Ibu sehat selalu. Kami ingin berkoordinasi dan mengawali komunikasi{$kosInfo} di platform *{$appName}*.\n\n"
+            . "Apakah ada waktu luang untuk berdiskusi sejenak? Terima kasih! 🙏";
+    }
+
+    /**
+     * Generate URL WhatsApp link langsung ke Penghuni.
+     */
+    public static function generatePenghuniUrl(?User $penghuni, ?PenghuniKamar $penghuniKamar = null, ?User $sender = null): string
+    {
+        $phone = static::formatPhoneNumber($penghuni->no_hp ?? '');
+        if (empty($phone)) {
+            return '#';
+        }
+        $message = static::generatePenghuniMessage($penghuni, $penghuniKamar, $sender);
+        return 'https://wa.me/' . $phone . '?text=' . rawurlencode($message);
+    }
+
+    /**
+     * Generate URL WhatsApp link langsung ke Mitra.
+     */
+    public static function generateMitraUrl(?User $mitra, ?Kos $kos = null, ?User $sender = null): string
+    {
+        $phone = static::formatPhoneNumber($mitra->no_hp ?? '');
+        if (empty($phone)) {
+            return '#';
+        }
+        $message = static::generateMitraMessage($mitra, $kos, $sender);
+        return 'https://wa.me/' . $phone . '?text=' . rawurlencode($message);
     }
 }

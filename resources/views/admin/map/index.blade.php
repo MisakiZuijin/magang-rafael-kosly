@@ -539,7 +539,10 @@
                             <span class="font-semibold text-emerald-700 dark:text-emerald-400">Mitra: {{ $loc->mitra->nama ?? '-' }}</span>
                             @if(!empty($loc->mitra->no_hp))
                             <span class="text-gray-400">•</span>
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $loc->mitra->no_hp) }}" target="_blank" class="font-mono text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1">
+                            @php
+                            $waUrlLoc = \App\Services\WhatsAppService::generateMitraUrl($loc->mitra, $loc);
+                            @endphp
+                            <a href="{{ $waUrlLoc }}" target="_blank" class="font-mono text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1" title="Chat WhatsApp ke Mitra {{ $loc->mitra->nama }}">
                                 <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>

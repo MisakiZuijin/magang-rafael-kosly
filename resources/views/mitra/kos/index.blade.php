@@ -186,7 +186,7 @@ return [
             Tambah Kos
         </button>
 
-        <button @click="modalKamar = true" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs active:scale-95 transition-all text-center truncate">
+        <button @click="selectedKosIdForKamar = ''; modalKamar = true" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs active:scale-95 transition-all text-center truncate">
             Tambah Kamar
         </button>
 
@@ -369,6 +369,16 @@ return [
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                                 </svg>
                                 <span>Edit Kos</span>
+                            </button>
+
+                            {{-- Tombol Tambah Kamar --}}
+                            <button type="button"
+                                @click="openKosDropdown = false; selectedKosIdForKamar = '{{ $kos->id }}'; modalKamar = true"
+                                class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer text-left">
+                                <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Tambah Kamar</span>
                             </button>
 
                             <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
@@ -611,10 +621,9 @@ return [
 
                                     @if($pk->penghuni && $pk->penghuni->no_hp)
                                     @php
-                                    $cleanHp = preg_replace('/[^0-9]/', '', $pk->penghuni->no_hp);
-                                    $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
+                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk);
                                     @endphp
-                                    <a href="https://wa.me/{{ $waHp }}" target="_blank"
+                                    <a href="{{ $waUrl }}" target="_blank"
                                         class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"
                                         title="Chat WhatsApp ke {{ $pk->penghuni->nama }} ({{ $pk->penghuni->no_hp }})">
                                         <svg class="w-3 h-3 fill-current text-emerald-600 dark:text-emerald-400" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
@@ -840,11 +849,32 @@ return [
                 selectedId: '',
                 kosList: @js($kosListJson),
                 init() {
-                    if (typeof selectedKosIdForKamar !== 'undefined' && selectedKosIdForKamar) {
-                        this.selectedId = selectedKosIdForKamar;
-                        const k = this.kosList.find(i => i.id == selectedKosIdForKamar);
-                        this.search = k ? k.nama : '';
+                    this.$watch('selectedKosIdForKamar', (id) => {
+                        this.syncSelectedKos(id);
+                    });
+                    this.$watch('modalKamar', (isOpen) => {
+                        if (isOpen) {
+                            this.syncSelectedKos(selectedKosIdForKamar);
+                        } else {
+                            this.open = false;
+                            selectedKosIdForKamar = '';
+                        }
+                    });
+                    if (selectedKosIdForKamar) {
+                        this.syncSelectedKos(selectedKosIdForKamar);
                     }
+                },
+                syncSelectedKos(id) {
+                    if (id) {
+                        const found = this.kosList.find(k => k.id == id);
+                        if (found) {
+                            this.selectedId = found.id;
+                            this.search = found.nama;
+                            return;
+                        }
+                    }
+                    this.selectedId = '';
+                    this.search = '';
                 },
                 get filtered() {
                     if (!this.search) return this.kosList;
@@ -1000,7 +1030,7 @@ return [
             </div>
 
             <div class="pt-2 flex justify-end gap-2">
-                <x-btn type="button" variant="secondary" size="sm" @click="modalKamar = false">Batal</x-btn>
+                <x-btn type="button" variant="secondary" size="sm" @click="modalKamar = false; selectedKosIdForKamar = ''">Batal</x-btn>
                 <x-btn type="submit" variant="primary" size="sm">Simpan Kamar</x-btn>
             </div>
         </form>

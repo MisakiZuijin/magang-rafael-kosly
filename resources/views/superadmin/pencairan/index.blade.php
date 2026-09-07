@@ -256,12 +256,9 @@ $namaBulan = [
                             <span>Mitra Pemilik: <strong class="text-gray-900 dark:text-white font-bold">{{ $mitra ? $mitra->nama : 'Mitra Tidak Ditemukan' }}</strong></span>
                             @if($mitra && $mitra->no_hp)
                             @php
-                            $cleanPhone = preg_replace('/[^0-9]/', '', $mitra->no_hp);
-                            if (str_starts_with($cleanPhone, '0')) {
-                            $cleanPhone = '62' . substr($cleanPhone, 1);
-                            }
+                            $waUrlPencairan = \App\Services\WhatsAppService::generateMitraUrl($mitra, $kos);
                             @endphp
-                            <a href="https://wa.me/{{ $cleanPhone }}?text=Halo%20{{ urlencode($mitra->nama) }},%20mengenai%20pencairan%20pendapatan%20Kos%20{{ urlencode($kos->nama) }}..."
+                            <a href="{{ $waUrlPencairan }}"
                                 target="_blank"
                                 class="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-300 hover:underline bg-emerald-50 dark:bg-emerald-950/80 px-2.5 py-0.5 rounded-lg border border-emerald-200/60 dark:border-emerald-800/60 transition-all active:scale-95 shadow-2xs"
                                 title="Hubungi Mitra via WhatsApp ({{ $mitra->no_hp }})">

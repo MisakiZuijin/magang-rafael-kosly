@@ -390,10 +390,9 @@ return [
 
                                     @if($pk->penghuni && $pk->penghuni->no_hp)
                                     @php
-                                    $cleanHp = preg_replace('/[^0-9]/', '', $pk->penghuni->no_hp);
-                                    $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
+                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk);
                                     @endphp
-                                    <a href="https://wa.me/{{ $waHp }}" target="_blank"
+                                    <a href="{{ $waUrl }}" target="_blank"
                                         class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"
                                         title="Chat WhatsApp ke {{ $pk->penghuni->nama }} ({{ $pk->penghuni->no_hp }})">
                                         <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400 fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
