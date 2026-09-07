@@ -61,31 +61,11 @@ class DatabaseSeeder extends Seeder
                     \App\Models\Pembayaran::factory(fake()->numberBetween(1, 3))->create([
                         'penghuni_kamar_id' => $penghuniKamar->id,
                     ]);
-
-                    // Buat notifikasi untuk penghuni
-                    \App\Models\Notifikasi::factory(fake()->numberBetween(1, 3))->create([
-                        'user_id' => $penghuni->id,
-                    ]);
                 }
             });
         });
 
-        // 4. Buat pengumuman dari admin
-        $pengumumans = \App\Models\Pengumuman::factory(5)->create([
-            'dibuat_oleh' => $admin->id,
-        ]);
-
-        $pengumumans->each(function ($pengumuman) {
-            \App\Models\PengumumanTarget::factory(fake()->numberBetween(1, 3))->create([
-                'pengumuman_id' => $pengumuman->id,
-            ]);
-        });
-
-        // 5. Buat log aktivitas
+        // 4. Buat log aktivitas
         \App\Models\LogAktivitas::factory(20)->create();
-
-        // 6. Buat notifikasi untuk super admin dan admin
-        \App\Models\Notifikasi::factory(3)->create(['user_id' => $superAdmin->id]);
-        \App\Models\Notifikasi::factory(3)->create(['user_id' => $admin->id]);
     }
 }

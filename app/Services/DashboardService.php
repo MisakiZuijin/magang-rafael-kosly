@@ -77,17 +77,38 @@ class DashboardService
     public function getMitraData(int $mitraId): array
     {
         $kosList = $this->kosRepository->getByMitra($mitraId);
+        $kosList->load('kamar.penghuniKamar.penghuni');
         $kosIds = $kosList->pluck('id');
 
-        $kamars = $this->kamarRepository->getAll()
-            ->whereIn('kos_id', $kosIds);
+        $kamars = $kosList->pluck('kamar')->flatten();
+
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        $pendapatanBulanIni = \App\Models\Pembayaran::whereHas('penghuniKamar.kamar', function ($q) use ($kosIds) {
+            $q->whereIn('kos_id', $kosIds);
+        })
+        ->where('status', 'terverifikasi')
+        ->where(function ($q) use ($startOfMonth, $endOfMonth) {
+            $q->whereBetween('tanggal_bayar', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+              ->orWhereBetween('tanggal_verifikasi', [$startOfMonth, $endOfMonth]);
+        })
+        ->sum('jumlah');
+
+        $pendapatanTotal = \App\Models\Pembayaran::whereHas('penghuniKamar.kamar', function ($q) use ($kosIds) {
+            $q->whereIn('kos_id', $kosIds);
+        })
+        ->where('status', 'terverifikasi')
+        ->sum('jumlah');
 
         return [
             'total_kos' => $kosList->count(),
             'total_kamar' => $kamars->count(),
             'kamar_kosong' => $kamars->where('status', 'kosong')->count(),
             'kamar_terisi' => $kamars->where('status', 'terisi')->count(),
-            'kos_list' => $kosList->load('kamar.penghuniKamar.penghuni'),
+            'pendapatan_bulan_ini' => (int)$pendapatanBulanIni,
+            'pendapatan_total' => (int)$pendapatanTotal,
+            'kos_list' => $kosList,
         ];
     }
 

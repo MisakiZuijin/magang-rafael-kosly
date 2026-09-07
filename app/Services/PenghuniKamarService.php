@@ -230,6 +230,17 @@ class PenghuniKamarService
      */
     public function periksaSemuaNotifikasiSewa(): array
     {
+        // Jalankan throttle agar tidak dieksekusi berulang-ulang di setiap HTTP request (dibatasi 1x per 5 menit)
+        $lockKey = 'periksa_notifikasi_sewa_throttle';
+        if (\Illuminate\Support\Facades\Cache::has($lockKey)) {
+            return [
+                'status' => 'cached',
+                'message' => 'Pemeriksaan notifikasi sewa baru saja dijalankan.',
+            ];
+        }
+
+        \Illuminate\Support\Facades\Cache::put($lockKey, true, now()->addMinutes(5));
+
         $h7 = $this->periksaDanKirimNotifikasiH7();
         $h3 = $this->periksaDanKirimNotifikasiH3();
         $jatuhTempo = $this->periksaDanKirimNotifikasiJatuhTempo();
@@ -300,6 +311,14 @@ class PenghuniKamarService
         // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
         $groupedByKamar = $h7List->groupBy('kamar_id');
 
+        $allActiveOccupants = $groupedByKamar->isNotEmpty()
+            ? PenghuniKamar::whereIn('kamar_id', $groupedByKamar->keys())
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get()
+                ->groupBy('kamar_id')
+            : collect();
+
         foreach ($groupedByKamar as $kamarId => $pks) {
             $firstPk = $pks->first();
             $kamar = $firstPk->kamar ?? null;
@@ -315,10 +334,7 @@ class PenghuniKamarService
             $sisaHari = max(1, (int)$now->diffInDays(\Carbon\Carbon::parse($firstPk->tanggal_keluar), false));
 
             // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
-            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
-                ->where('status', 'aktif')
-                ->with('penghuni')
-                ->get();
+            $allRoomOccupants = $allActiveOccupants->get($kamarId, collect());
             $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
             $combinedNames = $this->formatCombinedNames($names);
 
@@ -354,10 +370,16 @@ class PenghuniKamarService
             // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
+                    $mitra = $kamar->kos->mitra ?? null;
+                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
+                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
+
                     $whatsAppService->sendDirect(
                         $kamar->wa_group_id,
                         "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-7)",
-                        $waMessage
+                        $waMessage,
+                        $customToken,
+                        $customEndpoint
                     );
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-7 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
@@ -412,6 +434,14 @@ class PenghuniKamarService
         // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
         $groupedByKamar = $h3List->groupBy('kamar_id');
 
+        $allActiveOccupants = $groupedByKamar->isNotEmpty()
+            ? PenghuniKamar::whereIn('kamar_id', $groupedByKamar->keys())
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get()
+                ->groupBy('kamar_id')
+            : collect();
+
         foreach ($groupedByKamar as $kamarId => $pks) {
             $firstPk = $pks->first();
             $kamar = $firstPk->kamar ?? null;
@@ -427,10 +457,7 @@ class PenghuniKamarService
             $sisaHari = max(1, (int)$now->diffInDays(\Carbon\Carbon::parse($firstPk->tanggal_keluar), false));
 
             // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
-            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
-                ->where('status', 'aktif')
-                ->with('penghuni')
-                ->get();
+            $allRoomOccupants = $allActiveOccupants->get($kamarId, collect());
             $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
             $combinedNames = $this->formatCombinedNames($names);
 
@@ -466,10 +493,16 @@ class PenghuniKamarService
             // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
+                    $mitra = $kamar->kos->mitra ?? null;
+                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
+                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
+
                     $whatsAppService->sendDirect(
                         $kamar->wa_group_id,
                         "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-3)",
-                        $waMessage
+                        $waMessage,
+                        $customToken,
+                        $customEndpoint
                     );
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
@@ -524,6 +557,14 @@ class PenghuniKamarService
         // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
         $groupedByKamar = $expiredList->groupBy('kamar_id');
 
+        $allActiveOccupants = $groupedByKamar->isNotEmpty()
+            ? PenghuniKamar::whereIn('kamar_id', $groupedByKamar->keys())
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get()
+                ->groupBy('kamar_id')
+            : collect();
+
         foreach ($groupedByKamar as $kamarId => $pks) {
             $firstPk = $pks->first();
             $kamar = $firstPk->kamar ?? null;
@@ -538,10 +579,7 @@ class PenghuniKamarService
             $tglKeluarFormatted = $firstPk->tanggal_keluar ? $firstPk->tanggal_keluar->format('d/m/Y H:i') : '-';
 
             // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
-            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
-                ->where('status', 'aktif')
-                ->with('penghuni')
-                ->get();
+            $allRoomOccupants = $allActiveOccupants->get($kamarId, collect());
             $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
             $combinedNames = $this->formatCombinedNames($names);
 
@@ -574,10 +612,16 @@ class PenghuniKamarService
             // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
+                    $mitra = $kamar->kos->mitra ?? null;
+                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
+                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
+
                     $whatsAppService->sendDirect(
                         $kamar->wa_group_id,
                         "PERINGATAN JATUH TEMPO SEWA KAMAR {$kodeKamar}",
-                        $waMessage
+                        $waMessage,
+                        $customToken,
+                        $customEndpoint
                     );
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA jatuh tempo ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
@@ -641,6 +685,14 @@ class PenghuniKamarService
         // Kelompokkan per kamar agar WhatsApp hanya dikirim 1x per kamar ke ID Grup Kamar
         $groupedByKamar = $overdueList->groupBy('kamar_id');
 
+        $allActiveOccupants = $groupedByKamar->isNotEmpty()
+            ? PenghuniKamar::whereIn('kamar_id', $groupedByKamar->keys())
+                ->where('status', 'aktif')
+                ->with('penghuni')
+                ->get()
+                ->groupBy('kamar_id')
+            : collect();
+
         foreach ($groupedByKamar as $kamarId => $pks) {
             $firstPk = $pks->first();
             $kamar = $firstPk->kamar ?? null;
@@ -656,10 +708,7 @@ class PenghuniKamarService
             $terlewatHari = max(3, (int)\Carbon\Carbon::parse($firstPk->tanggal_keluar)->diffInDays($now));
 
             // Ambil seluruh penghuni aktif di kamar ini agar nama selalu lengkap
-            $allRoomOccupants = PenghuniKamar::where('kamar_id', $kamarId)
-                ->where('status', 'aktif')
-                ->with('penghuni')
-                ->get();
+            $allRoomOccupants = $allActiveOccupants->get($kamarId, collect());
             $names = $allRoomOccupants->map(fn($p) => $p->penghuni->nama ?? 'Penghuni')->filter()->values()->all();
             $combinedNames = $this->formatCombinedNames($names);
 
@@ -693,10 +742,16 @@ class PenghuniKamarService
             // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
+                    $mitra = $kamar->kos->mitra ?? null;
+                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
+                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
+
                     $whatsAppService->sendDirect(
                         $kamar->wa_group_id,
                         "HIMBAUAN PENYELESAIAN SEWA KAMAR {$kodeKamar} (H+3)",
-                        $waMessage
+                        $waMessage,
+                        $customToken,
+                        $customEndpoint
                     );
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H+3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());

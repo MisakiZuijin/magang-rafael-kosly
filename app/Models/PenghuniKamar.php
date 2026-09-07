@@ -59,13 +59,26 @@ class PenghuniKamar extends Model
         return $this->hasMany(Pembayaran::class, 'penghuni_kamar_id');
     }
 
+    public function getSisaHariAttribute(): ?float
+    {
+        if (!$this->tanggal_keluar) {
+            return null;
+        }
+        return (float) now()->diffInDays($this->tanggal_keluar, false);
+    }
+
+    public function scopeAktif($query)
+    {
+        return $query->where('status', 'aktif');
+    }
+
     /**
      * Menentukan status pembayaran penghuni:
      * 1. 'belum_bayar_awal' (Belum Bayar Biaya Awal)
      * 2. 'belum_bayar_perpanjangan' (Belum Bayar Perpanjangan)
      * 3. 'sudah_membayar' (Sudah Membayar)
      */
-    public function getStatusPembayaranInfo(): array
+    public function getStatusPembayaranInfo(?Kamar $kamar = null): array
     {
         // Pastikan relasi pembayaran telah dimuat
         $pembayarans = $this->relationLoaded('pembayaran') ? $this->pembayaran : $this->pembayaran()->get();
@@ -74,30 +87,40 @@ class PenghuniKamar extends Model
         $hasVerifiedPayment = $pembayarans->where('status', 'terverifikasi')->isNotEmpty();
 
         // Cek kondisi kamar berdua / berbagi (skema 50% 50%)
-        $kamar = $this->relationLoaded('kamar') ? $this->kamar : $this->kamar()->first();
+        $kamar = $kamar ?? ($this->relationLoaded('kamar') ? $this->kamar : $this->kamar()->first());
         $isBerbagi2Orang = false;
         $roommateUnpaidAwal = false;
         $roommateName = '';
 
         if ($kamar && ($kamar->tipe === 'berbagi' || $kamar->kapasitas >= 2)) {
-            $roommates = static::with(['penghuni', 'pembayaran'])
-                ->where('kamar_id', $this->kamar_id)
-                ->where('status', 'aktif')
-                ->where('id', '!=', $this->id)
-                ->get();
+            if ($kamar->relationLoaded('penghuniKamar')) {
+                $roommates = $kamar->penghuniKamar
+                    ->where('status', 'aktif')
+                    ->where('id', '!=', $this->id);
+            } else {
+                $roommates = static::with(['penghuni', 'pembayaran'])
+                    ->where('kamar_id', $this->kamar_id)
+                    ->where('status', 'aktif')
+                    ->where('id', '!=', $this->id)
+                    ->get();
+            }
 
             // Jika ada teman sekamar di kamar kapasitas 2 orang
             if ($roommates->count() === 1) {
                 $isBerbagi2Orang = true;
                 $roommate = $roommates->first();
 
+                $roommatePembayarans = $roommate->relationLoaded('pembayaran')
+                    ? $roommate->pembayaran
+                    : $roommate->pembayaran()->get();
+
                 // Cek apakah kamar sudah lunas 100% oleh salah satu pihak
                 $isRoomFullPaid = $pembayarans->where('status', 'terverifikasi')->where('porsi_bayar', 100)->isNotEmpty()
-                    || $roommate->pembayaran->where('status', 'terverifikasi')->where('porsi_bayar', 100)->isNotEmpty();
+                    || $roommatePembayarans->where('status', 'terverifikasi')->where('porsi_bayar', 100)->isNotEmpty();
 
                 if (!$isRoomFullPaid) {
                     // Jika membayar porsi 50% - 50%, kedua penghuni harus sudah melunasi biaya awal
-                    $roommateHasVerified = $roommate->pembayaran->where('status', 'terverifikasi')->isNotEmpty();
+                    $roommateHasVerified = $roommatePembayarans->where('status', 'terverifikasi')->isNotEmpty();
                     if (!$roommateHasVerified) {
                         $roommateUnpaidAwal = true;
                         $roommateName = $roommate->penghuni->nama ?? 'Rekan Sekamar';

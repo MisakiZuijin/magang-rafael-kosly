@@ -28,4 +28,14 @@ class PengumumanTarget extends Model
     {
         return $this->belongsTo(Pengumuman::class, 'pengumuman_id');
     }
+
+    public function kos()
+    {
+        return $this->belongsTo(Kos::class, 'target_id');
+    }
+
+    public function kamar()
+    {
+        return $this->belongsTo(Kamar::class, 'target_id');
+    }
 }

@@ -20,12 +20,12 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     public function getByRole(string $role): Collection
     {
-        return $this->model->where('role', $role)->latest()->get();
+        return $this->model->where('role', $role)->with('creator')->latest()->get();
     }
 
     public function getActiveByRole(string $role): Collection
     {
-        return $this->model->where('role', $role)->where('is_active', true)->latest()->get();
+        return $this->model->where('role', $role)->where('is_active', true)->with('creator')->latest()->get();
     }
 
     public function toggleActive(int $id): User

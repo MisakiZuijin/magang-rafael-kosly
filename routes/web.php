@@ -5,6 +5,13 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\Penghuni\PenghuniDashboardController;
 use App\Http\Controllers\Mitra\MitraDashboardController;
+use App\Http\Controllers\Mitra\MitraKosController;
+use App\Http\Controllers\Mitra\MitraPenggunaController;
+use App\Http\Controllers\Mitra\MitraPembayaranController;
+use App\Http\Controllers\Mitra\MitraWhatsAppController;
+use App\Http\Controllers\Mitra\MitraAturanController;
+use App\Http\Controllers\Mitra\MitraPengumumanController;
+use App\Http\Controllers\Mitra\MitraLaporanController;
 use App\Http\Controllers\Admin\AdminAturanController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminPenggunaController;
@@ -80,6 +87,58 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/kamar/{kamar}', [MitraDashboardController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{kamar}', [MitraDashboardController::class, 'updateKamar'])->name('kamar.update');
         Route::delete('/kamar/{kamar}/foto', [MitraDashboardController::class, 'deleteFotoKamar'])->name('kamar.foto.delete');
+
+        // FITUR KHUSUS MITRA PRO:
+        Route::middleware(['mitra.pro'])->group(function () {
+            // Kelola Kos & Kamar Mitra Pro
+            Route::get('/kos', [MitraKosController::class, 'index'])->name('kos.index');
+            Route::post('/kos', [MitraKosController::class, 'storeKos'])->name('kos.store');
+            Route::put('/kos/{kos}', [MitraKosController::class, 'updateKos'])->name('kos.update');
+            Route::delete('/kos/{kos}', [MitraKosController::class, 'destroyKos'])->name('kos.destroy');
+            Route::post('/kamar', [MitraKosController::class, 'storeKamar'])->name('kamar.store');
+            Route::get('/kos/kamar/{kamar}', [MitraKosController::class, 'showKamar'])->name('kos.kamar.show');
+            Route::put('/kos/kamar/{kamar}', [MitraKosController::class, 'updateKamar'])->name('kos.kamar.update');
+            Route::delete('/kos/kamar/{kamar}', [MitraKosController::class, 'destroyKamar'])->name('kos.kamar.destroy');
+            Route::delete('/kos/kamar/{kamar}/foto', [MitraKosController::class, 'deleteFotoKamar'])->name('kos.kamar.foto.delete');
+            Route::post('/daftar-penghuni', [MitraKosController::class, 'daftarPenghuni'])->name('penghuni.daftar');
+            Route::post('/kosongkan-kamar/{kamar}', [MitraKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
+            Route::post('/checkout-penghuni/{id}', [MitraKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
+
+            // Kelola & Pendaftaran Akun Penghuni
+            Route::get('/penghuni', [MitraPenggunaController::class, 'index'])->name('penghuni.index');
+            Route::get('/penghuni/create', [MitraPenggunaController::class, 'create'])->name('penghuni.create');
+            Route::post('/penghuni', [MitraPenggunaController::class, 'store'])->name('penghuni.store');
+            Route::get('/penghuni/{id}/edit', [MitraPenggunaController::class, 'edit'])->name('penghuni.edit');
+            Route::put('/penghuni/{id}', [MitraPenggunaController::class, 'update'])->name('penghuni.update');
+            Route::delete('/penghuni/{id}', [MitraPenggunaController::class, 'destroy'])->name('penghuni.destroy');
+            Route::post('/penghuni/{id}/toggle-active', [MitraPenggunaController::class, 'toggleActive'])->name('penghuni.toggle-active');
+
+            // Verifikasi Pembayaran
+            Route::get('/pembayaran', [MitraPembayaranController::class, 'index'])->name('pembayaran.index');
+            Route::post('/pembayaran/{id}/verify', [MitraPembayaranController::class, 'verify'])->name('pembayaran.verify');
+            Route::post('/pembayaran/{id}/reject', [MitraPembayaranController::class, 'reject'])->name('pembayaran.reject');
+
+            // Aturan Kos
+            Route::get('/aturan', [MitraAturanController::class, 'index'])->name('aturan.index');
+            Route::post('/aturan', [MitraAturanController::class, 'store'])->name('aturan.store');
+            Route::put('/aturan/{id}', [MitraAturanController::class, 'update'])->name('aturan.update');
+            Route::delete('/aturan/{id}', [MitraAturanController::class, 'destroy'])->name('aturan.destroy');
+
+            // Pengumuman
+            Route::get('/pengumuman', [MitraPengumumanController::class, 'index'])->name('pengumuman.index');
+            Route::get('/pengumuman/create', [MitraPengumumanController::class, 'create'])->name('pengumuman.create');
+            Route::post('/pengumuman', [MitraPengumumanController::class, 'store'])->name('pengumuman.store');
+
+            // Laporan & Export Excel/CSV
+            Route::get('/laporan', [MitraLaporanController::class, 'index'])->name('laporan.index');
+            Route::get('/laporan/filter', [MitraLaporanController::class, 'filter'])->name('laporan.filter');
+            Route::get('/laporan/export-csv', [MitraLaporanController::class, 'exportCsv'])->name('laporan.export');
+
+            // WhatsApp Gateway Pribadi (Fonnte)
+            Route::get('/whatsapp', [MitraWhatsAppController::class, 'index'])->name('whatsapp.index');
+            Route::post('/whatsapp', [MitraWhatsAppController::class, 'update'])->name('whatsapp.store');
+            Route::post('/whatsapp/test', [MitraWhatsAppController::class, 'testSend'])->name('whatsapp.test');
+        });
     });
 
     /*
@@ -107,7 +166,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kosongkan-kamar/{kamar}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
         Route::post('/checkout-penghuni/{id}', [AdminKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
         Route::put('/kos/{kos}', [AdminKosController::class, 'updateKos'])->name('kos.update');
-        Route::post('/kos/{kos}/toggle-lock', [AdminKosController::class, 'toggleLock'])->name('kos.toggle-lock');
         Route::get('/kamar/{kamar}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{kamar}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
         Route::delete('/kamar/{kamar}', [AdminKosController::class, 'destroyKamar'])->name('kamar.destroy');
@@ -190,7 +248,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/kosongkan-kamar/{kamar}', [AdminKosController::class, 'kosongkanKamar'])->name('kamar.kosongkan');
         Route::post('/checkout-penghuni/{id}', [AdminKosController::class, 'checkoutPenghuni'])->name('penghuni.checkout');
         Route::put('/kos/{kos}', [AdminKosController::class, 'updateKos'])->name('kos.update');
-        Route::post('/kos/{kos}/toggle-lock', [AdminKosController::class, 'toggleLock'])->name('kos.toggle-lock');
         Route::get('/kamar/{kamar}', [AdminKosController::class, 'showKamar'])->name('kamar.show');
         Route::put('/kamar/{kamar}', [AdminKosController::class, 'updateKamar'])->name('kamar.update');
         Route::delete('/kamar/{kamar}', [AdminKosController::class, 'destroyKamar'])->name('kamar.destroy');

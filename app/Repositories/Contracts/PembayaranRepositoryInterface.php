@@ -14,4 +14,8 @@ interface PembayaranRepositoryInterface extends BaseRepositoryInterface
     public function verify(int $id, array $data): Pembayaran;
     public function getByKos(int $kosId): Collection;
     public function getLaporanByDateRange(string $start, string $end): Collection;
+    public function getPendingByMitra(int $mitraId): Collection;
+    public function getTerverifikasiByMitra(int $mitraId): Collection;
+    public function getDitolakByMitra(int $mitraId): Collection;
+    public function getLaporanByMitraAndDateRange(int $mitraId, string $start, string $end): Collection;
 }

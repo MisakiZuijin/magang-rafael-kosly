@@ -19,6 +19,10 @@ class User extends Authenticatable
         'role',
         'foto_profile',
         'is_active',
+        'is_pro',
+        'created_by',
+        'wa_gateway_token',
+        'wa_gateway_endpoint',
     ];
 
     protected static function booted()
@@ -51,9 +55,15 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'is_pro' => 'boolean',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    public function isMitraPro(): bool
+    {
+        return $this->role === 'mitra' && (bool)$this->is_pro;
     }
 
     public function hasRole(string|array $roles): bool
@@ -108,5 +118,15 @@ class User extends Authenticatable
     public function pengumuman()
     {
         return $this->hasMany(Pengumuman::class, 'dibuat_oleh');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function createdUsers()
+    {
+        return $this->hasMany(User::class, 'created_by');
     }
 }
