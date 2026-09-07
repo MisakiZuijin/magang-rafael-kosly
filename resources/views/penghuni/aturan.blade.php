@@ -41,8 +41,19 @@
                 <div class="flex-1 min-w-0 pt-0.5">
                     <p class="text-xs text-gray-700 dark:text-gray-200 leading-relaxed line-clamp-3">{{ $aturan->isi_aturan }}</p>
                     <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
-                        <span class="text-[10px] text-gray-400 font-mono">Diperbarui {{ $aturan->created_at->diffForHumans() }}</span>
-                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline">🔍 Detail Aturan</span>
+                        <span class="text-[10px] text-gray-400 font-mono flex items-center gap-1">
+                            <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span>Diperbarui {{ $aturan->created_at->diffForHumans() }}</span>
+                        </span>
+                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <span>Detail Aturan</span>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -65,7 +76,11 @@
                     <div class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-xs" x-text="selectedNum"></div>
                     <h3 class="text-sm font-bold text-gray-900 dark:text-white leading-tight">Detail Aturan Kos</h3>
                 </div>
-                <button @click="showModal = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg font-bold">✕</button>
+                <button @click="showModal = false" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
 
             <div class="space-y-2">
@@ -87,9 +102,9 @@
     <div class="mt-4">
         <x-card class="bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-800/50">
             <div class="flex items-center gap-3">
-                <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/50 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div class="w-9 h-9 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-xl flex items-center justify-center flex-shrink-0">
                     <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                     </svg>
                 </div>
                 <div>
