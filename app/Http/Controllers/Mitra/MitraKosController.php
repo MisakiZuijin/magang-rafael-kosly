@@ -170,8 +170,8 @@ class MitraKosController extends Controller
             'harga_per_minggu' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric|min:1',
             'kapasitas' => 'required|integer|min:1',
-            'wa_group_id' => 'required|string|max:100',
-            'link_grup_wa' => 'required|url|max:255',
+            'wa_group_id' => 'nullable|string|max:100',
+            'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
         // Verifikasi kepemilikan kos
@@ -240,8 +240,8 @@ class MitraKosController extends Controller
             'harga_per_minggu' => 'nullable|numeric',
             'harga_per_bulan' => 'required|numeric|min:1',
             'kapasitas' => 'required|integer|min:1',
-            'wa_group_id' => 'required|string|max:100',
-            'link_grup_wa' => 'required|url|max:255',
+            'wa_group_id' => 'nullable|string|max:100',
+            'link_grup_wa' => 'nullable|url|max:255',
         ]);
 
         $fotoPaths = $kamar->foto ?? [];

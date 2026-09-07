@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Mitra;
 
 use App\Http\Controllers\Controller;
 use App\Models\Kamar;
+use App\Models\Kos;
+use App\Models\User;
 use App\Services\DashboardService;
 use App\Services\KamarService;
 use App\Services\LogAktivitasService;
@@ -27,8 +29,9 @@ class MitraDashboardController extends Controller
 
     public function kamar()
     {
+        /** @var User $user */
         $user = Auth::user();
-        $kosList = $user->kos()->with(['kamar.penghuniKamar.penghuni'])->get();
+        $kosList = Kos::where('mitra_id', $user->id)->with(['kamar.penghuniKamar.penghuni'])->get();
         $kamarData = $kosList->pluck('kamar')->flatten();
 
         return view('mitra.kamar', compact('kamarData', 'kosList'));
@@ -36,9 +39,15 @@ class MitraDashboardController extends Controller
 
     public function showKamar(string|int $id)
     {
+        /** @var User $user */
         $user = Auth::user();
-        $mitraKosIds = $user->kos->pluck('id');
-        $kamar = Kamar::with(['kos.mitra', 'penghuniKamar.penghuni'])
+        $mitraKosIds = Kos::where('mitra_id', $user->id)->pluck('id');
+        $kamar = Kamar::with([
+            'kos.mitra',
+            'penghuniKamar.penghuni',
+            'penghuniKamar.pembayaran',
+            'penghuniKamar.kamar.kos'
+        ])
             ->whereIn('kos_id', $mitraKosIds)
             ->where(function($q) use ($id) {
                 $q->where('kode_kamar', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0);
@@ -50,8 +59,9 @@ class MitraDashboardController extends Controller
 
     public function updateKamar(Request $request, string|int $id)
     {
+        /** @var User $user */
         $user = Auth::user();
-        $mitraKosIds = $user->kos->pluck('id');
+        $mitraKosIds = Kos::where('mitra_id', $user->id)->pluck('id');
         $kamar = Kamar::with('kos')
             ->whereIn('kos_id', $mitraKosIds)
             ->where(function($q) use ($id) {
@@ -107,8 +117,9 @@ class MitraDashboardController extends Controller
 
     public function deleteFotoKamar(Request $request, string|int $id)
     {
+        /** @var User $user */
         $user = Auth::user();
-        $mitraKosIds = $user->kos->pluck('id');
+        $mitraKosIds = Kos::where('mitra_id', $user->id)->pluck('id');
         $kamar = Kamar::with('kos')
             ->whereIn('kos_id', $mitraKosIds)
             ->where(function($q) use ($id) {

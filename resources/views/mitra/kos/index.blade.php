@@ -5,25 +5,25 @@ $user = Auth::user();
 $penghuniUsers = $activePenghunis ?? collect();
 
 $kosListJson = $kosList->map(function($k) {
-    return [
-        'id' => $k->id,
-        'nama' => $k->nama,
-        'alamat' => $k->alamat ?? ''
-    ];
+return [
+'id' => $k->id,
+'nama' => $k->nama,
+'alamat' => $k->alamat ?? ''
+];
 })->values();
 
 $allKamarsJson = $kosList->flatMap(function($k) {
-    return $k->kamar->map(function($km) use ($k) {
-        $isFull = $km->status === 'terisi';
-        return [
-            'id' => $km->id,
-            'kode_kamar' => $km->kode_kamar,
-            'kos_nama' => $k->nama,
-            'tipe' => $km->tipe,
-            'status' => $km->status,
-            'isFull' => $isFull,
-        ];
-    });
+return $k->kamar->map(function($km) use ($k) {
+$isFull = $km->status === 'terisi';
+return [
+'id' => $km->id,
+'kode_kamar' => $km->kode_kamar,
+'kos_nama' => $k->nama,
+'tipe' => $km->tipe,
+'status' => $km->status,
+'isFull' => $isFull,
+];
+});
 })->values();
 
 
@@ -307,6 +307,8 @@ return [
         $kosMeta = $allKosFilterData[$index] ?? [];
         $kamarFilterArray = $kosMeta['rooms'] ?? [];
         $kosSearchText = $kosMeta['searchText'] ?? '';
+        $kosongCount = $kos->kamar->where('status', 'kosong')->count();
+        $expiredCount = collect($kamarFilterArray)->where('statusMasaAktif', 'expired')->count();
         @endphp
         <div x-show="matchKos({{ $kos->id }}, @js($kamarFilterArray), @js($kosSearchText))"
             x-transition
@@ -333,11 +335,16 @@ return [
             <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 space-y-3">
                 {{-- Baris 1: Nama Kos, Badge Kamar & Dropdown Aksi --}}
                 <div class="flex flex-wrap items-center justify-between gap-2.5">
-                    <div class="flex items-center gap-2 min-w-0">
+                    <div class="flex items-center gap-2 min-w-0 flex-wrap">
                         <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
                         <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            {{ $kos->kamar->count() }} Kamar
+                            {{ $kos->kamar->count() }} Kamar ({{ $kosongCount }} kosong)
                         </span>
+                        @if($expiredCount > 0)
+                        <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                            {{ $expiredCount }} jatuh tempo
+                        </span>
+                        @endif
                     </div>
 
                     {{-- Dropdown Aksi Kos (Edit, Hapus) --}}
@@ -454,7 +461,7 @@ return [
                                     <span class="font-bold text-xs font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-2.5 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 shadow-2xs">
                                         Kamar {{ $kamar->kode_kamar }}
                                     </span>
-                                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800' }}">
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800' }}">
                                         {{ ucfirst($kamar->tipe) }}
                                     </span>
                                     <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $hasExpiredPenghuni ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800' : ($isTerisi ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800') }}">
@@ -621,7 +628,7 @@ return [
 
                                     @if($pk->penghuni && $pk->penghuni->no_hp)
                                     @php
-                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk);
+                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk, null, $kamar, $kos);
                                     @endphp
                                     <a href="{{ $waUrl }}" target="_blank"
                                         class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"
@@ -1020,12 +1027,12 @@ return [
 
             <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
                 <div>
-                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte) <span class="text-red-500">*</span></label>
-                    <input type="text" name="wa_group_id" required placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte) <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500 lowercase">(opsional)</span></label>
+                    <input type="text" name="wa_group_id" placeholder="120363xxx@g.us (Opsional)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-emerald-500 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar <span class="text-red-500">*</span></label>
-                    <input type="url" name="link_grup_wa" required placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500 lowercase">(opsional)</span></label>
+                    <input type="url" name="link_grup_wa" placeholder="https://chat.whatsapp.com/... (Opsional)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-emerald-500 rounded-xl text-xs text-gray-900 dark:text-white">
                 </div>
             </div>
 
@@ -1259,12 +1266,12 @@ return [
 
             <div class="grid grid-cols-1 gap-2 pt-1 border-t border-gray-100 dark:border-gray-800">
                 <div>
-                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte) <span class="text-red-500">*</span></label>
-                    <input type="text" name="wa_group_id" x-model="editKamarData.wa_group_id" required placeholder="120363xxx@g.us" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Target ID Grup WA (Fonnte) <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500 lowercase">(opsional)</span></label>
+                    <input type="text" name="wa_group_id" x-model="editKamarData.wa_group_id" placeholder="120363xxx@g.us (Opsional)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-emerald-500 rounded-xl text-xs font-mono text-gray-900 dark:text-white">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar <span class="text-red-500">*</span></label>
-                    <input type="url" name="link_grup_wa" x-model="editKamarData.link_grup_wa" required placeholder="https://chat.whatsapp.com/..." class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs text-gray-900 dark:text-white">
+                    <label class="block text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Link Join Grup WA Kamar <span class="text-[10px] font-normal text-gray-400 dark:text-gray-500 lowercase">(opsional)</span></label>
+                    <input type="url" name="link_grup_wa" x-model="editKamarData.link_grup_wa" placeholder="https://chat.whatsapp.com/... (Opsional)" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:border-emerald-500 rounded-xl text-xs text-gray-900 dark:text-white">
                 </div>
             </div>
 

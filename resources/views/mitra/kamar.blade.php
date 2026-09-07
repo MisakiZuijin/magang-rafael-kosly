@@ -176,6 +176,8 @@ return [
         $kosMeta = $allKosFilterData[$index] ?? [];
         $kamarFilterArray = $kosMeta['rooms'] ?? [];
         $kosSearchText = $kosMeta['searchText'] ?? '';
+        $kosongCount = $kos->kamar->where('status', 'kosong')->count();
+        $expiredCount = collect($kamarFilterArray)->where('statusMasaAktif', 'expired')->count();
         @endphp
         <div x-show="matchKos({{ $kos->id }}, @js($kamarFilterArray), @js($kosSearchText))"
             x-transition
@@ -202,11 +204,16 @@ return [
             <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 space-y-3">
                 {{-- Baris 1: Nama Kos & Badge Kamar --}}
                 <div class="flex flex-wrap items-center justify-between gap-2.5">
-                    <div class="flex items-center gap-2 min-w-0">
+                    <div class="flex items-center gap-2 min-w-0 flex-wrap">
                         <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
                         <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            {{ $kos->kamar->count() }} Kamar
+                            {{ $kos->kamar->count() }} Kamar ({{ $kosongCount }} kosong)
                         </span>
+                        @if($expiredCount > 0)
+                        <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                            {{ $expiredCount }} jatuh tempo
+                        </span>
+                        @endif
                     </div>
                 </div>
 
@@ -390,7 +397,7 @@ return [
 
                                     @if($pk->penghuni && $pk->penghuni->no_hp)
                                     @php
-                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk);
+                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk, null, $kamar, $kos);
                                     @endphp
                                     <a href="{{ $waUrl }}" target="_blank"
                                         class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"

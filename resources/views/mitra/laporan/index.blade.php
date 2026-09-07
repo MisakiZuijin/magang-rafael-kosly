@@ -315,9 +315,9 @@
     $kosPembayarans = $pembayarans->filter(fn($p) => ($p->penghuniKamar->kamar->kos_id ?? 0) === $kos->id);
     $pendapatanKos = $kosPembayarans->sum('jumlah');
     $trxCount = $kosPembayarans->count();
-    $searchKey = strtolower($kos->nama . ' ' . ($kos->alamat ?? ''));
+    $searchKey = addslashes(trim(preg_replace('/\s+/', ' ', strtolower($kos->nama . ' ' . ($kos->alamat ?? '')))));
     @endphp
-    <div x-show="!searchKos || '{{ addslashes($searchKey) }}'.includes(searchKos.toLowerCase().trim())"
+    <div x-show="!searchKos || '{{ $searchKey }}'.includes(searchKos.toLowerCase().trim())"
         x-data="{ expanded: false }"
         x-transition
         class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 p-4 sm:p-5 shadow-sm space-y-4 hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-all">
