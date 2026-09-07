@@ -28,13 +28,8 @@ class MitraDashboardController extends Controller
     public function kamar()
     {
         $user = Auth::user();
-        $kosList = $user->kos;
-
-        $kamarData = collect();
-        foreach ($kosList as $kos) {
-            $kamars = $this->kamarService->getByKosWithPenghuni($kos->id);
-            $kamarData = $kamarData->merge($kamars);
-        }
+        $kosList = $user->kos()->with(['kamar.penghuniKamar.penghuni'])->get();
+        $kamarData = $kosList->pluck('kamar')->flatten();
 
         return view('mitra.kamar', compact('kamarData', 'kosList'));
     }
@@ -63,10 +58,6 @@ class MitraDashboardController extends Controller
                 $q->where('kode_kamar', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0);
             })
             ->firstOrFail();
-
-        if ($kamar->kos->is_locked) {
-            return redirect()->back()->with('error', 'Akses edit kamar untuk kos ini sedang dikunci oleh Admin/SuperAdmin.');
-        }
 
         if ($request->has('harga_per_bulan')) {
             $request->merge(['harga_per_bulan' => preg_replace('/[^0-9]/', '', (string)$request->input('harga_per_bulan'))]);
@@ -124,10 +115,6 @@ class MitraDashboardController extends Controller
                 $q->where('kode_kamar', $id)->orWhere('id', is_numeric($id) ? (int)$id : 0);
             })
             ->firstOrFail();
-
-        if ($kamar->kos->is_locked) {
-            return redirect()->back()->with('error', 'Akses edit kamar untuk kos ini sedang dikunci oleh Admin/SuperAdmin.');
-        }
 
         $index = (int)$request->input('index');
         $fotos = $kamar->foto ?? [];
