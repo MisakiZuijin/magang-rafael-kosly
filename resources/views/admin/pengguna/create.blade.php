@@ -14,37 +14,56 @@
         <form action="{{ request()->is('superadmin*') ? route('superadmin.pengguna.store') : route('admin.pengguna.store') }}" method="POST" class="space-y-3.5">
             @csrf
 
-            <div>
+            <div x-data="{ selectedRole: '{{ old('role', 'mitra') }}' }">
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Pilih Role / Peran</label>
-                <div class="grid {{ Auth::user()->role === 'super_admin' ? 'grid-cols-3' : 'grid-cols-2' }} gap-2">
+                <div class="grid {{ Auth::user()->role === 'super_admin' ? 'grid-cols-3' : 'grid-cols-2' }} gap-2 mb-3">
 
                     {{-- Opsi Admin (Khusus jika pengguna saat ini Super Admin) --}}
                     @if(Auth::user()->role === 'super_admin')
-                    <label class="relative flex items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input type="radio" name="role" value="admin" class="sr-only peer" {{ old('role') === 'admin' ? 'checked' : '' }}>
-                        <div class="text-center peer-checked:text-blue-600 dark:peer-checked:text-blue-400">
+                    <label class="relative flex items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-blue-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        :class="selectedRole === 'admin' ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20' : ''">
+                        <input type="radio" name="role" value="admin" x-model="selectedRole" class="sr-only" {{ old('role') === 'admin' ? 'checked' : '' }}>
+                        <div class="text-center" :class="selectedRole === 'admin' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-300'">
                             <p class="text-xs font-bold">Admin</p>
                             <p class="text-[10px] text-gray-400">Pengelola System</p>
                         </div>
                     </label>
                     @endif
 
-                    <label class="relative flex items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-emerald-500 hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input type="radio" name="role" value="mitra" class="sr-only peer" {{ old('role', 'mitra') === 'mitra' ? 'checked' : '' }}>
-                        <div class="text-center peer-checked:text-emerald-600 dark:peer-checked:text-emerald-400">
+                    <label class="relative flex items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-emerald-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        :class="selectedRole === 'mitra' ? 'border-emerald-500 ring-2 ring-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20' : ''">
+                        <input type="radio" name="role" value="mitra" x-model="selectedRole" class="sr-only" {{ old('role', 'mitra') === 'mitra' ? 'checked' : '' }}>
+                        <div class="text-center" :class="selectedRole === 'mitra' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'">
                             <p class="text-xs font-bold">Mitra Kos</p>
                             <p class="text-[10px] text-gray-400">Pemilik Kos</p>
                         </div>
                     </label>
 
-                    <label class="relative flex items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-purple-500 hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <input type="radio" name="role" value="penghuni" class="sr-only peer" {{ old('role') === 'penghuni' ? 'checked' : '' }}>
-                        <div class="text-center peer-checked:text-purple-600 dark:peer-checked:text-purple-400">
+                    <label class="relative flex items-center justify-center p-3 rounded-xl border border-gray-200 dark:border-gray-700 cursor-pointer focus-within:ring-2 focus-within:ring-purple-500 hover:bg-gray-50 dark:hover:bg-gray-800"
+                        :class="selectedRole === 'penghuni' ? 'border-purple-500 ring-2 ring-purple-500/20 bg-purple-50/50 dark:bg-purple-950/20' : ''">
+                        <input type="radio" name="role" value="penghuni" x-model="selectedRole" class="sr-only" {{ old('role') === 'penghuni' ? 'checked' : '' }}>
+                        <div class="text-center" :class="selectedRole === 'penghuni' ? 'text-purple-600 dark:text-purple-400' : 'text-gray-700 dark:text-gray-300'">
                             <p class="text-xs font-bold">Penghuni Kos</p>
                             <p class="text-[10px] text-gray-400">Anak Kos</p>
                         </div>
                     </label>
                 </div>
+
+                {{-- Toggle Fitur Mitra Pro (Khusus Role Mitra) --}}
+                <div x-show="selectedRole === 'mitra'" x-transition class="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between gap-3 shadow-2xs">
+                    <div class="space-y-0.5 min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span class="px-1.5 py-0.5 bg-amber-500 text-white font-black text-[9px] rounded">PRO</span>
+                            <p class="text-xs font-bold text-gray-900 dark:text-white">Aktifkan Akses Mitra Pro</p>
+                        </div>
+                        <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Mitra Pro memiliki hak kelola mandiri kos, kamar, verifikasi bayar, gateway WA pribadi, dan laporan.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                        <input type="checkbox" name="is_pro" value="1" {{ old('is_pro') ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                </div>
+
                 @error('role') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
 
@@ -63,8 +82,8 @@
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">No. HP / WhatsApp</label>
-                <input type="text" name="no_hp" value="{{ old('no_hp') }}" placeholder="08xxxxxxxxxx"
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">No. HP / WhatsApp <span class="text-red-500">*</span></label>
+                <input type="text" name="no_hp" value="{{ old('no_hp') }}" required placeholder="08xxxxxxxxxx"
                     class="w-full px-3.5 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white focus:ring-emerald-500 focus:outline-none">
                 @error('no_hp') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>

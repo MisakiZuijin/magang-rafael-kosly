@@ -44,12 +44,17 @@ class AdminPenggunaController extends Controller
             'nama' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6|confirmed',
-            'no_hp' => 'nullable|string|max:20',
+            'no_hp' => 'required|string|max:20',
             'role' => 'required|' . $allowedRoles,
+            'is_pro' => 'nullable|boolean',
         ]);
 
+        $validated['is_pro'] = ($validated['role'] === 'mitra') ? $request->boolean('is_pro') : false;
+        $validated['created_by'] = Auth::id();
+
         $user = $this->userService->createUser($validated);
-        $this->logAktivitasService->log('tambah_pengguna', "Menambahkan akun pengguna baru: {$user->nama} ({$user->role})");
+        $roleLabel = $user->isMitraPro() ? 'Mitra Pro' : $user->role;
+        $this->logAktivitasService->log('tambah_pengguna', "Menambahkan akun pengguna baru: {$user->nama} ({$roleLabel})");
 
         $prefix = request()->is('superadmin*') ? 'superadmin.' : 'admin.';
         return redirect()->route($prefix . 'pengguna.index')->with('success', 'Pengguna berhasil dibuat.');
@@ -82,7 +87,12 @@ class AdminPenggunaController extends Controller
             'password' => 'nullable|min:6|confirmed',
             'no_hp' => 'nullable|string|max:20',
             'is_active' => 'boolean',
+            'is_pro' => 'nullable|boolean',
         ]);
+
+        if ($user->role === 'mitra') {
+            $validated['is_pro'] = $request->boolean('is_pro');
+        }
 
         $this->userService->updateUser($user->id, $validated);
         $this->logAktivitasService->log('update_pengguna', "Memperbarui data akun pengguna: {$validated['nama']}");

@@ -27,7 +27,7 @@ class AdminKosController extends Controller
     {
         $this->penghuniKamarService->periksaSemuaNotifikasiSewa();
         $kosList = $this->kosService->getWithKamarCount();
-        $mitras = $this->userService->getActiveByRole('mitra');
+        $mitras = User::where('role', 'mitra')->where('is_active', true)->where('is_pro', false)->latest()->get();
 
         $view = request()->is('superadmin*') ? 'superadmin.kos.index' : 'admin.kos.index';
         return view($view, compact('kosList', 'mitras'));
@@ -46,6 +46,11 @@ class AdminKosController extends Controller
             'bank' => 'required|string|max:50',
             'nama_pemilik_rekening' => 'required|string|max:100',
         ]);
+
+        $mitra = User::findOrFail($validated['mitra_id']);
+        if ($mitra->isMitraPro()) {
+            return redirect()->back()->with('error', 'Mitra Pro mengelola kos secara mandiri dan tidak dapat didaftarkan melalui form Admin.');
+        }
 
         if ($request->hasFile('foto')) {
             $validated['foto'] = $request->file('foto')->store('images/kos', 'public');
@@ -83,6 +88,11 @@ class AdminKosController extends Controller
             'link_grup_wa' => 'required|url|max:255',
         ]);
 
+        $kos = \App\Models\Kos::whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false))->find($validated['kos_id']);
+        if (!$kos) {
+            return redirect()->back()->with('error', 'Kos tidak ditemukan atau merupakan kos milik Mitra Pro yang dikelola mandiri.');
+        }
+
         $fotoPaths = [];
         if ($request->hasFile('foto')) {
             foreach ($request->file('foto') as $file) {
@@ -103,9 +113,32 @@ class AdminKosController extends Controller
 
     public function daftarPenghuni(Request $request)
     {
-        $kamar = $this->kamarService->getById($request->input('kamar_id'));
+        $kamar = Kamar::whereHas('kos', function ($q) {
+            $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+        })->find($request->input('kamar_id'));
+
         if (!$kamar) {
-            return redirect()->back()->with('error', 'Kamar tidak ditemukan.');
+            return redirect()->back()->with('error', 'Kamar tidak ditemukan atau merupakan milik Mitra Pro.');
+        }
+
+        $isPenghuniAllowed = fn($penghuniId) => User::where('id', $penghuniId)
+            ->where('role', 'penghuni')
+            ->where(function ($q) {
+                $q->whereNull('created_by')
+                  ->orWhereHas('creator', function ($c) {
+                      $c->whereIn('role', ['admin', 'super_admin']);
+                  });
+            })
+            ->exists();
+
+        if ($request->filled('penghuni_id') && !$isPenghuniAllowed($request->input('penghuni_id'))) {
+            return redirect()->back()->with('error', 'Penghuni ke-1 merupakan akun privat yang didaftarkan khusus oleh Mitra Pro.');
+        }
+        if ($request->filled('penghuni_id_2') && !$isPenghuniAllowed($request->input('penghuni_id_2'))) {
+            return redirect()->back()->with('error', 'Penghuni ke-2 merupakan akun privat yang didaftarkan khusus oleh Mitra Pro.');
+        }
+        if ($request->filled('penghuni_id_3') && !$isPenghuniAllowed($request->input('penghuni_id_3'))) {
+            return redirect()->back()->with('error', 'Penghuni ke-3 merupakan akun privat yang didaftarkan khusus oleh Mitra Pro.');
         }
 
         // Check if Penghuni 1 is already assigned to an active room
@@ -387,19 +420,6 @@ class AdminKosController extends Controller
         }
 
         return redirect()->back()->with('success', 'Foto kamar berhasil dihapus.');
-    }
-
-    public function toggleLock(string|int $id)
-    {
-        $kos = $this->kosService->toggleLock($id);
-        if (!$kos) {
-            return redirect()->back()->with('error', 'Kos tidak ditemukan.');
-        }
-
-        $statusText = $kos->is_locked ? 'dikunci (Mitra tidak bisa mengedit kamar)' : 'dibuka (Mitra dapat mengedit kamar)';
-        $this->logAktivitasService->log('toggle_lock_kos', "Akses edit kamar untuk Kos {$kos->nama} telah {$statusText}");
-
-        return redirect()->back()->with('success', "Akses edit kamar untuk Kos '{$kos->nama}' berhasil {$statusText}.");
     }
 
     public function destroyKos(string|int $id)

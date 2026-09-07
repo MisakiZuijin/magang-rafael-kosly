@@ -28,13 +28,14 @@ class AdminLaporanController extends Controller
 
     public function index()
     {
-        $totalKamar = $this->kamarService->getAll()->count();
-        $kamarTerisi = $this->kamarService->getTerisi()->count();
-        $kamarKosong = $this->kamarService->getKosong()->count();
-
         $pembayarans = $this->pembayaranService->getTerverifikasi();
         $kosList = $this->kosService->getWithKamar();
         $logs = $this->logAktivitasService->getLatest(100);
+
+        $allKamars = $kosList->flatMap->kamar;
+        $totalKamar = $allKamars->count();
+        $kamarTerisi = $allKamars->where('status', 'terisi')->count();
+        $kamarKosong = $allKamars->where('status', 'kosong')->count();
 
         $view = request()->is('superadmin*') ? 'superadmin.laporan.index' : 'admin.laporan.index';
         return view($view, compact(
