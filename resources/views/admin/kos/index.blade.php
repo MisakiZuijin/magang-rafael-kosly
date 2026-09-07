@@ -4,19 +4,8 @@
 $isSuperAdmin = request()->is('superadmin*');
 $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
-$penghuniUsers = \App\Models\User::where('role', 'penghuni')
-->where('is_active', true)
-->where(function($q) {
-$q->whereNull('created_by')
-->orWhereHas('creator', function($c) {
-$c->whereIn('role', ['admin', 'super_admin']);
-});
-})
-->with(['penghuniKamar' => function($q) {
-$q->where('status', 'aktif')->with('kamar');
-}])
-->get();
-$allKamars = \App\Models\Kamar::whereIn('kos_id', $kosList->pluck('id'))->with('kos')->get();
+$penghuniUsers = $penghuniUsers ?? collect();
+$allKamars = $kosList->flatMap->kamar;
 
 $mitrasJson = $mitras->filter(fn($m) => empty($m->is_pro))->map(function($m) {
 return [
@@ -35,16 +24,19 @@ return [
 ];
 })->values();
 
-$allKamarsJson = $allKamars->map(function($km) {
+$allKamarsJson = $kosList->flatMap(function($k) {
+return $k->kamar->map(function($km) use ($k) {
+$km->setRelation('kos', $k);
 $isFull = $km->status === 'terisi';
 return [
 'id' => $km->id,
 'kode_kamar' => $km->kode_kamar,
-'kos_nama' => $km->kos->nama ?? 'Kos',
+'kos_nama' => $k->nama ?? 'Kos',
 'tipe' => $km->tipe,
 'status' => $km->status,
 'isFull' => $isFull,
 ];
+});
 })->values();
 
 $penghuniUsersJson = $penghuniUsers->map(function($pu) {
@@ -324,6 +316,8 @@ return [
         $kosMeta = $allKosFilterData[$index] ?? [];
         $kamarFilterArray = $kosMeta['rooms'] ?? [];
         $kosSearchText = $kosMeta['searchText'] ?? '';
+        $kosongCount = $kos->kamar->where('status', 'kosong')->count();
+        $expiredCount = collect($kamarFilterArray)->where('statusMasaAktif', 'expired')->count();
         @endphp
         <div x-show="matchKos({{ $kos->id }}, @js($kamarFilterArray), @js($kosSearchText))"
             x-transition
@@ -353,8 +347,13 @@ return [
                     <div class="flex items-center gap-2 min-w-0 flex-wrap">
                         <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
                         <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                            {{ $kos->kamar->count() }} Kamar
+                            {{ $kos->kamar->count() }} Kamar ({{ $kosongCount }} kosong)
                         </span>
+                        @if($expiredCount > 0)
+                        <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                            {{ $expiredCount }} jatuh tempo
+                        </span>
+                        @endif
                     </div>
 
                     {{-- Dropdown Aksi Kos (Edit, Hapus) --}}
@@ -505,7 +504,7 @@ return [
                                     <span class="font-bold text-xs font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-2.5 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 shadow-2xs">
                                         Kamar {{ $kamar->kode_kamar }}
                                     </span>
-                                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800' }}">
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800' }}">
                                         {{ ucfirst($kamar->tipe) }}
                                     </span>
                                     <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $hasExpiredPenghuni ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800' : ($isTerisi ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800') }}">
@@ -672,7 +671,7 @@ return [
 
                                     @if($pk->penghuni && $pk->penghuni->no_hp)
                                     @php
-                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk);
+                                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($pk->penghuni, $pk, null, $kamar, $kos);
                                     @endphp
                                     <a href="{{ $waUrl }}" target="_blank"
                                         class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"
@@ -1416,21 +1415,7 @@ return [
     </x-modal>
 
     {{-- Modal Pendaftaran Penghuni ke Kamar --}}
-    @php
-    $penghuniUsers = \App\Models\User::where('role', 'penghuni')
-    ->where('is_active', true)
-    ->where(function($q) {
-    $q->whereNull('created_by')
-    ->orWhereHas('creator', function($c) {
-    $c->whereIn('role', ['admin', 'super_admin']);
-    });
-    })
-    ->with(['penghuniKamar' => function($q) {
-    $q->where('status', 'aktif')->with('kamar');
-    }])
-    ->get();
-    $allKamars = \App\Models\Kamar::whereIn('kos_id', $kosList->pluck('id'))->with('kos')->get();
-    @endphp
+
     <x-modal show="modalPenghuni" title="Daftarkan Penghuni ke Kamar">
         <form action="{{ route($p . 'penghuni.daftar') }}" method="POST" class="space-y-3.5" x-data="{ durasiSewa: 'bulanan' }">
             @csrf

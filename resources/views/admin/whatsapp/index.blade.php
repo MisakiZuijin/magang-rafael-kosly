@@ -24,12 +24,12 @@ $testRoute = $isSuperAdmin ? route('superadmin.whatsapp.test') : route('admin.wh
 
     {{-- Card Status Device WA Realtime --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div class="grid grid-cols-1 gap-2">
             <div class="flex items-center gap-2">
                 <div class="w-2.5 h-2.5 rounded-full {{ $deviceInfo['connected'] ? 'bg-emerald-500 animate-pulse' : 'bg-red-500' }}"></div>
                 <h2 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Status Koneksi Device WhatsApp</h2>
             </div>
-            <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg text-center self-start sm:self-auto {{ $deviceInfo['connected'] ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }}">
+            <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg text-center {{ $deviceInfo['connected'] ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' }}">
                 {{ $deviceInfo['status_text'] }}
             </span>
         </div>

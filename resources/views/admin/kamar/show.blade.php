@@ -321,7 +321,7 @@ return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
 
                     @if($penghuniUser && $penghuniUser->no_hp)
                     @php
-                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($penghuniUser, $pk);
+                    $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($penghuniUser, $pk, null, $kamar, $kamar->kos);
                     @endphp
                     <a href="{{ $waUrl }}" target="_blank" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 active:scale-95 transition-transform shadow-xs" title="Kirim Pesan WhatsApp ke {{ $penghuniUser->nama }}">
                         <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
