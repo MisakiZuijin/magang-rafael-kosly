@@ -613,84 +613,110 @@ $riwayat = $pembayarans->whereIn('status', ['terverifikasi', 'ditolak']);
 <div class="space-y-3">
     @foreach($riwayat as $p)
     @php
+    $isVerified = $p->status === 'terverifikasi';
     $isCoveredByRoommate = $p->catatan_verifikasi && str_contains($p->catatan_verifikasi, 'Lunas (Dibayar');
     $uploaderName = $isCoveredByRoommate ? trim(preg_replace('/^Lunas \(Dibayar (?:Full|Tarif 2 Orang|Tarif 3 Orang|Tarif 1 Kamar) oleh (.+)\)$/', '$1', $p->catatan_verifikasi)) : null;
     $tglTampil = $p->tanggal_bayar ? $p->tanggal_bayar->format('d M Y') : null;
     $waktuVerifTolak = $p->tanggal_verifikasi ? $p->tanggal_verifikasi->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : ($p->updated_at ? $p->updated_at->locale('id')->isoFormat('D MMMM Y, HH:mm') . ' WIB' : null);
+    $currentKamar = $p->penghuniKamar->kamar ?? null;
     @endphp
-    <div class="grid grid-cols-1 sm:grid-cols-6 gap-2 bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200 dark:border-gray-800 shadow-sm">
-        <div class="col-span-5 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
-                        {{ $p->status === 'terverifikasi' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600' : 'bg-red-100 dark:bg-red-900/30 text-red-600' }}">
-                @if($p->status === 'terverifikasi')
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                @else
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                @endif
-            </div>
-            <div>
-                <div class="grid grid-cols-1 gap-1 mb-1">
-                    <p class="text-sm font-bold dark:text-white">
-                        Rp {{ number_format($p->jumlah, 0, ',', '.') }}
-                    </p>
-                    @if($isCoveredByRoommate)
-                    <span class="text-[10px] text-center font-semibold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-1.5 py-0.5 rounded">Dibayar oleh {{ $uploaderName }}</span>
-                    @elseif($isKamarBerbagi)
-                    @php
-                    $badgeInfo = $p->getTarifBadgeInfo();
-                    @endphp
-                    <span class="text-[10px] text-center font-semibold {{ $badgeInfo['class'] }} px-1.5 py-0.5 rounded">{{ $badgeInfo['text'] }}</span>
-                    @endif
-                </div>
-
-                <p class="text-xs text-gray-500 dark:text-gray-400">Periode: {{ $p->periode_mulai ? $p->periode_mulai->format('d M Y') : '-' }} s/d {{ $p->periode_selesai ? $p->periode_selesai->format('d M Y') : '-' }}</p>
-
-                @if($isCoveredByRoommate)
-                <p class="text-xs text-blue-600 dark:text-blue-400 font-medium mt-1">
-                    👤 Pembayaran diwakilkan oleh <strong>{{ $uploaderName }}</strong> {{ $waktuVerifTolak ? "(Diverifikasi: {$waktuVerifTolak})" : '' }}
-                </p>
-                @else
-                <div class="space-y-0.5 mt-1 text-xs">
-                    @if($p->status === 'terverifikasi')
-                    <p class="text-emerald-700 dark:text-emerald-400 font-medium">
-                        ✓ Diverifikasi pada: <strong>{{ $waktuVerifTolak ?: '-' }}</strong>
-                    </p>
-                    @if($tglTampil)
-                    <p class="text-gray-400 dark:text-gray-500 font-mono text-[11px]">
-                        📅 Tanggal Bayar: {{ $tglTampil }}
-                    </p>
-                    @endif
+    <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border {{ $isVerified ? 'border-gray-200 dark:border-gray-800' : 'border-red-200/80 dark:border-red-900/50 bg-red-50/10' }} shadow-sm space-y-3">
+        {{-- Header Card: Nominal, Badge Skema & Status --}}
+        <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 {{ $isVerified ? 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400' : 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400' }}">
+                    @if($isVerified)
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
                     @else
-                    <p class="text-red-600 dark:text-red-400 font-medium">
-                        ✕ Ditolak pada: <strong>{{ $waktuVerifTolak ?: '-' }}</strong>
-                    </p>
-                    @endif
-                    @if($p->catatan_verifikasi)
-                    <p class="text-xs {{ $p->status === 'ditolak' ? 'text-red-500' : 'text-emerald-600 dark:text-emerald-400 font-medium' }}">
-                        {{ $p->catatan_verifikasi }}
-                    </p>
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                     @endif
                 </div>
-                @endif
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <p class="text-base font-bold text-gray-900 dark:text-white font-mono leading-tight">
+                            Rp {{ number_format($p->jumlah, 0, ',', '.') }}
+                        </p>
+                        @if($isCoveredByRoommate)
+                        <span class="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 px-2 py-0.5 rounded-lg">
+                            Dibayar oleh {{ $uploaderName }}
+                        </span>
+                        @elseif($isKamarBerbagi)
+                        @php
+                        $badgeInfo = $p->getTarifBadgeInfo($currentKamar, $activePenghuniCount ?? 2);
+                        @endphp
+                        <span class="text-[10px] font-bold {{ $badgeInfo['class'] }} px-2 py-0.5 rounded-lg">
+                            {{ $badgeInfo['text'] }}
+                        </span>
+                        @endif
+                    </div>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5 flex items-center gap-1 font-medium">
+                        <span>🗓️ Periode:</span>
+                        <span>{{ $p->periode_mulai ? $p->periode_mulai->format('d M Y') : '-' }} s/d {{ $p->periode_selesai ? $p->periode_selesai->format('d M Y') : '-' }}</span>
+                    </p>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center justify-end">
-            <x-badge type="{{ $p->status === 'terverifikasi' ? 'success' : 'danger' }}">
-                {{ $p->status === 'terverifikasi' ? 'Lunas' : 'Ditolak' }}
+
+            <x-badge type="{{ $isVerified ? 'success' : 'danger' }}" class="flex-shrink-0">
+                {{ $isVerified ? 'Lunas' : 'Ditolak' }}
             </x-badge>
         </div>
 
-        <div class="grid col-start-2 col-span-4 items-center">
-            @if($p->status === 'terverifikasi')
-            <a href="{{ route('pembayaran.nota', $p->kode_invoice ?? $p->id) }}" class="px-2.5 py-1 text-center bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold transition-all gap-1">
-                <span>Download Nota</span>
-            </a>
+        {{-- Detail Status & Catatan Box --}}
+        <div class="p-2.5 rounded-xl {{ $isVerified ? 'bg-gray-50 dark:bg-gray-800/40 border border-gray-100 dark:border-gray-800' : 'bg-red-50/80 dark:bg-red-950/40 border border-red-100 dark:border-red-900/40' }} space-y-1.5 text-xs">
+            @if($isCoveredByRoommate)
+            <div class="flex items-start gap-1.5 text-blue-700 dark:text-blue-300 font-medium">
+                <span class="flex-shrink-0">👥</span>
+                <span>Pembayaran kamar telah diselesaikan & diwakilkan oleh <strong>{{ $uploaderName }}</strong> {{ $waktuVerifTolak ? "({$waktuVerifTolak})" : '' }}.</span>
+            </div>
+            @else
+                @if($isVerified)
+                <div class="flex items-center justify-between flex-wrap gap-2 text-gray-600 dark:text-gray-300">
+                    <span class="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span>Diverifikasi: {{ $waktuVerifTolak ?: '-' }}</span>
+                    </span>
+                    @if($tglTampil)
+                    <span class="text-gray-400 dark:text-gray-500 font-mono text-[11px]">
+                        📅 Tgl Bayar: {{ $tglTampil }}
+                    </span>
+                    @endif
+                </div>
+                @else
+                <div class="text-red-700 dark:text-red-400 font-medium space-y-1">
+                    <div class="flex items-center gap-1 font-bold">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        <span>Ditolak: {{ $waktuVerifTolak ?: '-' }}</span>
+                    </div>
+                    @if($p->catatan_verifikasi)
+                    <p class="text-[11px] text-red-600 dark:text-red-300/90 pl-4.5 italic bg-white/60 dark:bg-black/20 p-1.5 rounded-lg border border-red-200/60 dark:border-red-800/40">
+                        Alasan: "{{ $p->catatan_verifikasi }}"
+                    </p>
+                    @endif
+                </div>
+                @endif
             @endif
         </div>
+
+        {{-- Action Button (Download Nota) --}}
+        @if($isVerified)
+        <div class="flex justify-end pt-1">
+            <a href="{{ route('pembayaran.nota', $p->kode_invoice ?? $p->id) }}"
+                class="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-2xs">
+                <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Unduh Nota Pembayaran</span>
+            </a>
+        </div>
+        @endif
     </div>
     @endforeach
 </div>

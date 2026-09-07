@@ -29,12 +29,12 @@ class PenghuniDashboardController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
-        if ($penghuniKamar) {
-            $this->pembayaranService->checkAndGenerateAutoBilling($penghuniKamar);
+        $data = $this->dashboardService->getPenghuniData($user->id);
+
+        if (!empty($data['penghuni_kamar'])) {
+            $this->pembayaranService->checkAndGenerateAutoBilling($data['penghuni_kamar']);
         }
 
-        $data = $this->dashboardService->getPenghuniData($user->id);
         return view('penghuni.dashboard', compact('data'));
     }
 
@@ -42,9 +42,9 @@ class PenghuniDashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos'])->where('status', 'aktif')->first();
+        $penghuniKamar = $user->activePenghuniKamar ? $user->activePenghuniKamar->loadMissing('kamar.kos') : $user->activePenghuniKamar()->with('kamar.kos')->first();
 
-        if (!$penghuniKamar) {
+        if (!$penghuniKamar || !$penghuniKamar->kamar) {
             return redirect()->back()->with('error', 'Anda belum terdaftar di kamar manapun.');
         }
 
@@ -58,9 +58,9 @@ class PenghuniDashboardController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->penghuniKamar()->with(['kamar.kos', 'pembayaran'])->where('status', 'aktif')->first();
+        $penghuniKamar = $user->activePenghuniKamar ? $user->activePenghuniKamar->loadMissing('kamar.kos') : $user->activePenghuniKamar()->with('kamar.kos')->first();
 
-        if (!$penghuniKamar) {
+        if (!$penghuniKamar || !$penghuniKamar->kamar) {
             return view('penghuni.pembayaran', [
                 'pembayarans' => collect(),
                 'rekening' => null,
@@ -106,19 +106,16 @@ class PenghuniDashboardController extends Controller
             $roommatePks = \App\Models\PenghuniKamar::where('kamar_id', $kamar->id)
                 ->where('status', 'aktif')
                 ->where('id', '!=', $penghuniKamar->id)
-                ->with('penghuni')
+                ->with(['penghuni', 'pembayaran'])
                 ->get();
 
             // 1. Cek apakah ada pembayaran FULL (100%) yang diunggah oleh teman sekamar dan sedang PENDING
-            // PENTING: Jika ada teman sekamar yang sudah upload bukti full, tampilkan info bahwa sedang menunggu verifikasi admin
             if (!$myPendingWithProof) {
                 foreach ($roommatePks as $rPk) {
-                    $rPendingFull = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                    $rPendingFull = $rPk->pembayaran
                         ->where('status', 'pending')
-                        ->whereNotNull('bukti_transfer_url')
-                        ->where('bukti_transfer_url', '!=', '')
-                        ->where('porsi_bayar', 100)
-                        ->latest()
+                        ->filter(fn($pb) => !empty($pb->bukti_transfer_url) && (int)$pb->porsi_bayar === 100)
+                        ->sortByDesc('created_at')
                         ->first();
 
                     if ($rPendingFull) {
@@ -142,12 +139,11 @@ class PenghuniDashboardController extends Controller
             }
 
             // 2. Cek apakah pelunasan penuh terverifikasi dari teman sekamar HANYA jika TIDAK ADA tagihan pending baru!
-            // Jika ada tagihan pending baru (misal tagihan perpanjangan sewa), seluruh teman sekamar bisa melihat form dan membayarnya!
             if (!$myPending && !$myPendingWithProof && !$roommateFullPending) {
-                $coveredPayment = \App\Models\Pembayaran::where('penghuni_kamar_id', $penghuniKamar->id)
+                $coveredPayment = $pembayarans
                     ->where('status', 'terverifikasi')
-                    ->where('catatan_verifikasi', 'LIKE', 'Lunas (Dibayar%oleh%')
-                    ->latest()
+                    ->filter(fn($pb) => $pb->catatan_verifikasi && str_starts_with($pb->catatan_verifikasi, 'Lunas (Dibayar'))
+                    ->sortByDesc('created_at')
                     ->first();
 
                 if ($coveredPayment) {
@@ -160,12 +156,10 @@ class PenghuniDashboardController extends Controller
             // 3. Cek apakah ada teman sekamar yang sedang membayar SETENGAH (50%) dan pending di kamar isi 2 orang
             if ($activePenghuniCount <= 2 && !$roommateFullPaid && !$roommateFullPending && !$myPendingWithProof) {
                 foreach ($roommatePks as $rPk) {
-                    $rHalf = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
+                    $rHalf = $rPk->pembayaran
                         ->where('status', 'pending')
-                        ->whereNotNull('bukti_transfer_url')
-                        ->where('bukti_transfer_url', '!=', '')
-                        ->where('porsi_bayar', 50)
-                        ->latest()
+                        ->filter(fn($pb) => !empty($pb->bukti_transfer_url) && (int)$pb->porsi_bayar === 50)
+                        ->sortByDesc('created_at')
                         ->first();
 
                     if ($rHalf) {
@@ -187,9 +181,7 @@ class PenghuniDashboardController extends Controller
 
         if ($isKamarBerbagi && $activePenghuniCount <= 2) {
             foreach ($roommatePks as $rPk) {
-                $rHasVerified = \App\Models\Pembayaran::where('penghuni_kamar_id', $rPk->id)
-                    ->where('status', 'terverifikasi')
-                    ->exists();
+                $rHasVerified = $rPk->pembayaran->where('status', 'terverifikasi')->isNotEmpty();
 
                 if (!$rHasVerified) {
                     $roommateUnpaidInitial = true;
