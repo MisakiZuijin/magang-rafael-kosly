@@ -1,8 +1,11 @@
 @auth
 @if(Auth::user()->role === 'penghuni')
 @php
-    $penghuniKamar = Auth::user()->penghuniKamar()->where('status', 'aktif')->with('kamar.kos')->first();
-    $kamar = $penghuniKamar->kamar ?? null;
+    $user = Auth::user();
+    $penghuniKamar = $user->relationLoaded('activePenghuniKamar') 
+        ? $user->activePenghuniKamar 
+        : $user->activePenghuniKamar()->with('kamar')->first();
+    $kamar = $penghuniKamar ? $penghuniKamar->kamar : null;
     $linkGrupWa = $kamar->link_grup_wa ?? null;
     $namaKamar = $kamar->kode_kamar ?? '';
 @endphp

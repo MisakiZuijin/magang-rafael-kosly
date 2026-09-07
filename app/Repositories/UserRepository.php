@@ -20,12 +20,38 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
 
     public function getByRole(string $role): Collection
     {
-        return $this->model->where('role', $role)->with('creator')->latest()->get();
+        $query = $this->model->where('role', $role)->with('creator');
+
+        if ($role === 'penghuni') {
+            $query->with([
+                'penghuniKamar.kamar.kos',
+                'penghuniKamar.pembayaran',
+            ]);
+        } elseif ($role === 'mitra') {
+            $query->with([
+                'kos.kamar',
+            ]);
+        }
+
+        return $query->latest()->get();
     }
 
     public function getActiveByRole(string $role): Collection
     {
-        return $this->model->where('role', $role)->where('is_active', true)->with('creator')->latest()->get();
+        $query = $this->model->where('role', $role)->where('is_active', true)->with('creator');
+
+        if ($role === 'penghuni') {
+            $query->with([
+                'penghuniKamar.kamar.kos',
+                'penghuniKamar.pembayaran',
+            ]);
+        } elseif ($role === 'mitra') {
+            $query->with([
+                'kos.kamar',
+            ]);
+        }
+
+        return $query->latest()->get();
     }
 
     public function toggleActive(int $id): User

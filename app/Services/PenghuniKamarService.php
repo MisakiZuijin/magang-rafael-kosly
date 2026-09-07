@@ -367,7 +367,12 @@ class PenghuniKamarService
                 . "Jika Anda berencana selesai/checkout pada akhir periode ini, mohon konfirmasi kepada pihak pengelola.\n"
                 . "Terima kasih atas kerja sama Anda!";
 
-            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
+            // Selalu catat bahwa kamar ini sudah diproses untuk notifikasi H-7 periode ini
+            $kamar->update([
+                'notif_h7_sent_at' => $now,
+            ]);
+
+            // 3. Kirim ke Grup WhatsApp Kamar (Jika ada nomor/id grup WA)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
@@ -384,10 +389,6 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-7 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-
-                $kamar->update([
-                    'notif_h7_sent_at' => $now,
-                ]);
             } else {
                 \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} masuk H-7 namun wa_group_id kosong.");
             }
@@ -490,7 +491,12 @@ class PenghuniKamarService
                 . "Jika Anda berencana selesai/checkout pada akhir periode ini, mohon segera konfirmasi kepada pihak pengelola.\n"
                 . "Terima kasih atas kerja sama Anda!";
 
-            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
+            // Selalu catat bahwa kamar ini sudah diproses untuk notifikasi H-3 periode ini
+            $kamar->update([
+                'notif_h3_sent_at' => $now,
+            ]);
+
+            // 3. Kirim ke Grup WhatsApp Kamar (Jika ada nomor/id grup WA)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
@@ -507,10 +513,6 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-
-                $kamar->update([
-                    'notif_h3_sent_at' => $now,
-                ]);
             } else {
                 \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} masuk H-3 namun wa_group_id kosong.");
             }
@@ -609,7 +611,12 @@ class PenghuniKamarService
                 . "2. Jika Anda *SUDAH SELESAI / CHECKOUT*, silakan konfirmasi kepada pihak pengelola/admin kos.\n\n"
                 . "Terima kasih atas kerja sama Anda!";
 
-            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
+            // Selalu catat bahwa kamar ini sudah diproses untuk notifikasi Jatuh Tempo periode ini
+            $kamar->update([
+                'notif_jatuh_tempo_sent_at' => $now,
+            ]);
+
+            // 3. Kirim ke Grup WhatsApp Kamar (Jika ada nomor/id grup WA)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
@@ -626,16 +633,12 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA jatuh tempo ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-
-                $kamar->update([
-                    'notif_jatuh_tempo_sent_at' => $now,
-                ]);
             } else {
                 \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} jatuh tempo namun wa_group_id kosong.");
             }
 
-            // 4. Kirim Notifikasi Web ke Mitra Kos
-            if ($kos && $kos->mitra) {
+            // 4. Kirim Notifikasi Web ke Mitra Kos (Hanya jika Mitra Pro, karena Mitra Biasa tidak mengelola teknis harian)
+            if ($kos && $kos->mitra && $kos->mitra->is_pro) {
                 \App\Models\Notifikasi::create([
                     'user_id' => $kos->mitra->id,
                     'judul' => "Masa Sewa Penghuni Kamar {$kodeKamar} Jatuh Tempo",
@@ -739,7 +742,12 @@ class PenghuniKamarService
                 . "2. Jika *TIDAK MEMPERPANJANG SEWA*, mohon segera lakukan proses checkout / pengosongan kamar dan konfirmasi kepada pihak pengelola/admin kos.\n\n"
                 . "Mohon kerja samanya agar pengelolaan kamar dapat berjalan tertib dan lancar. Terima kasih!";
 
-            // 3. Kirim ke Grup WhatsApp Kamar (Cukup 1x kirim ke ID Grup Kamar)
+            // Selalu catat bahwa kamar ini sudah diproses untuk notifikasi H+3 periode ini
+            $kamar->update([
+                'notif_hplus3_sent_at' => $now,
+            ]);
+
+            // 3. Kirim ke Grup WhatsApp Kamar (Jika ada nomor/id grup WA)
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
@@ -756,16 +764,12 @@ class PenghuniKamarService
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H+3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
-
-                $kamar->update([
-                    'notif_hplus3_sent_at' => $now,
-                ]);
             } else {
                 \Illuminate\Support\Facades\Log::warning("Kamar {$kodeKamar} masuk H+3 namun wa_group_id kosong.");
             }
 
-            // 4. Kirim Notifikasi Web ke Mitra Kos
-            if ($kos && $kos->mitra) {
+            // 4. Kirim Notifikasi Web ke Mitra Kos (Hanya jika Mitra Pro)
+            if ($kos && $kos->mitra && $kos->mitra->is_pro) {
                 \App\Models\Notifikasi::create([
                     'user_id' => $kos->mitra->id,
                     'judul' => "Himbauan: Sewa Kamar {$kodeKamar} Terlewat 3 Hari",

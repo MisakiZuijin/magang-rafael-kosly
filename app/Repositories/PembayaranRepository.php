@@ -11,7 +11,6 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
     protected array $defaultWith = [
         'penghuniKamar.penghuni',
         'penghuniKamar.kamar.kos.mitra',
-        'penghuniKamar.kamar.penghuniKamar.pembayaran',
         'diverifikasiOleh',
     ];
 
@@ -23,7 +22,7 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
     public function getByPenghuniKamar(int $penghuniKamarId): Collection
     {
         return $this->model->where('penghuni_kamar_id', $penghuniKamarId)
-            ->with($this->defaultWith)
+            ->with(['penghuniKamar.kamar'])
             ->latest()
             ->get();
     }

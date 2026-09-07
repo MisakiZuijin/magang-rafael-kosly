@@ -43,18 +43,18 @@ if (in_array($role, ['admin', 'super_admin'])) {
 $p = $role === 'super_admin' ? 'superadmin.' : 'admin.';
 $menus[] = ['icon' => $iconDashboard, 'label' => 'Dashboard', 'route' => $p . 'dashboard'];
 $menus[] = ['icon' => $iconPengguna, 'label' => 'Pengguna', 'route' => $p . 'pengguna.index'];
-if ($role === 'super_admin') {
-$menus[] = ['icon' => $iconMap, 'label' => 'Lokasi Kantor', 'route' => 'superadmin.kantor.index'];
-}
 $menus[] = ['icon' => $iconKamar, 'label' => 'Kos & Kamar', 'route' => $p . 'kos.index'];
 $menus[] = ['icon' => $iconBayar, 'label' => 'Verifikasi Bayar', 'route' => $p . 'pembayaran.index'];
 $menus[] = ['icon' => $iconPengumuman, 'label' => 'Pengumuman', 'route' => $p . 'pengumuman.index'];
 $menus[] = ['icon' => $iconAturan, 'label' => 'Aturan', 'route' => $p . 'aturan.index'];
-$menus[] = ['icon' => $iconMap, 'label' => 'Map', 'route' => $p . 'map.index'];
 $menus[] = ['icon' => $iconLaporan, 'label' => 'Laporan', 'route' => $p . 'laporan.index'];
 if ($role === 'super_admin'){
 $menus[] = ['icon' => $iconPencairan, 'label' => 'Pencairan Biaya', 'route' => 'superadmin.pencairan.index'];
 }
+if ($role === 'super_admin') {
+$menus[] = ['icon' => $iconMap, 'label' => 'Lokasi Kantor', 'route' => 'superadmin.kantor.index'];
+}
+$menus[] = ['icon' => $iconMap, 'label' => 'Map', 'route' => $p . 'map.index'];
 $menus[] = ['icon' => $iconWAGateway, 'label' => 'WA Gateway', 'route' => $p . 'whatsapp.index'];
 if ($role === 'super_admin') {
 $menus[] = ['icon' => $iconPengaturan, 'label' => 'Pengaturan Web', 'route' => 'superadmin.pengaturan.index'];

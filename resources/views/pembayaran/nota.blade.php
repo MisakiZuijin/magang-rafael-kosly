@@ -72,13 +72,16 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
                 </div>
             </div>
 
-            {{-- Data Kos & Mitra (Bawah di Web, Kanan di PDF) --}}
+            {{-- Data Lokasi Hunian (Bawah di Web, Kanan di PDF) --}}
             <div class="space-y-1 print:pl-2">
-                <span class="text-[9px] font-bold text-gray-400 print:text-gray-600 uppercase tracking-wider block">🏠 Lokasi Kos & Pengelola</span>
+                <span class="text-[9px] font-bold text-gray-400 print:text-gray-600 uppercase tracking-wider block">🏠 {{ $userRole === 'mitra' ? 'Lokasi Kos' : 'Lokasi Hunian' }}</span>
+                @if($userRole === 'mitra')
                 <p class="font-bold text-sm text-gray-900 dark:text-white print:text-black">{{ $pembayaran->penghuniKamar->kamar->kos->nama ?? '-' }} <span class="text-emerald-600 dark:text-emerald-400 font-mono text-xs">(Kamar {{ $pembayaran->penghuniKamar->kamar->kode_kamar ?? '-' }})</span></p>
+                @else
+                <p class="font-bold text-sm text-gray-900 dark:text-white print:text-black">Kamar {{ $pembayaran->penghuniKamar->kamar->kode_kamar ?? '-' }}</p>
+                @endif
                 <div class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400 print:text-gray-700">
                     <p class="text-[11px] leading-relaxed">{{ $pembayaran->penghuniKamar->kamar->kos->alamat ?? 'Alamat Kos' }}</p>
-                    <p class="text-[11px] pt-0.5">Mitra: <strong class="text-gray-700 dark:text-gray-300 print:text-black">{{ $pembayaran->penghuniKamar->kamar->kos->mitra->nama ?? '-' }}</strong> ({{ $pembayaran->penghuniKamar->kamar->kos->mitra->no_hp ?? '-' }})</p>
                 </div>
             </div>
         </div>
@@ -177,7 +180,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
             <div class="text-right">
                 <span class="text-[10px] text-gray-500 font-mono hidden print:inline-block">Halaman 2 / 2</span>
                 <a href="{{ $buktiImg }}" target="_blank" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline print:hidden flex items-center gap-1">
-                    <span>Buka Foto ↗</span>
+                    <span>Buka Foto</span>
                 </a>
             </div>
         </div>
