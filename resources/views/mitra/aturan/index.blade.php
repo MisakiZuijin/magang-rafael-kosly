@@ -164,7 +164,7 @@
                 @else
                 <div class="space-y-3">
                     @foreach($kos->aturanKos as $index => $aturan)
-                    <div x-show="matchRule('{{ addslashes($aturan->isi_aturan) }}')"
+                    <div x-show="matchRule('{{ addslashes(trim(preg_replace('/\s+/', ' ', $aturan->isi_aturan))) }}')"
                         class="p-4 bg-gray-50/70 dark:bg-gray-800/40 rounded-2xl border border-gray-100 dark:border-gray-800 hover:border-emerald-200 dark:hover:border-emerald-800/50 transition-all space-y-3">
 
                         {{-- Isi Aturan & Nomor --}}
