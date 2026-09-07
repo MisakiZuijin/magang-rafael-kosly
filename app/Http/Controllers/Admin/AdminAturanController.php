@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AturanKos;
+use App\Models\Kos;
 use App\Services\AturanKosService;
 use App\Services\KosService;
 use App\Services\LogAktivitasService;
@@ -19,8 +20,15 @@ class AdminAturanController extends Controller
 
     public function index()
     {
-        $kosList = $this->kosService->getAll();
-        $aturans = AturanKos::with('kos')->latest()->get();
+        $kosList = Kos::where(function ($q) {
+            $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+        })->with(['aturanKos' => function ($q) {
+            $q->latest();
+        }])->latest()->get();
+
+        $aturans = AturanKos::whereHas('kos', function ($q) {
+            $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+        })->with('kos')->latest()->get();
 
         $view = request()->is('superadmin*') ? 'superadmin.aturan.index' : 'admin.aturan.index';
         return view($view, compact('kosList', 'aturans'));

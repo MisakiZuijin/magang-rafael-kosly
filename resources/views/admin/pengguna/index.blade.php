@@ -143,8 +143,8 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                 </button>
                 <button type="button"
                     @click="confirmDelete({{ $adm->id }}, '{{ addslashes($adm->nama) }}', '{{ addslashes($adm->email) }}', 'Admin', '{{ route('superadmin.pengguna.destroy', $adm->slug ?? $adm->id) }}')"
-                    class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
-                    🗑️ Hapus
+                    class="flex-1 min-h-[36px] py-1 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
+                    Hapus
                 </button>
             </div>
         </div>
@@ -165,7 +165,12 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                         {{ substr($m->nama, 0, 1) }}
                     </div>
                     <div class="min-w-0">
-                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ $m->nama }}</p>
+                        <div class="flex items-center gap-1.5">
+                            <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ $m->nama }}</p>
+                            @if($m->is_pro)
+                            <span class="px-1.5 py-0.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black text-[9px] rounded-md shadow-2xs tracking-wider">PRO</span>
+                            @endif
+                        </div>
                         <p class="text-xs text-gray-500 font-mono truncate">{{ $m->email }}</p>
                         @if($m->no_hp)
                         <p class="text-[11px] text-gray-400 mt-0.5">HP: {{ $m->no_hp }}</p>
@@ -189,8 +194,8 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                 @if($isSuperAdmin)
                 <button type="button"
                     @click="confirmDelete({{ $m->id }}, '{{ addslashes($m->nama) }}', '{{ addslashes($m->email) }}', 'Mitra', '{{ request()->is('superadmin*') ? route('superadmin.pengguna.destroy', $m->slug ?? $m->id) : route('admin.pengguna.destroy', $m->slug ?? $m->id) }}')"
-                    class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
-                    🗑️ Hapus
+                    class="flex-1 min-h-[36px] py-1 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
+                    Hapus
                 </button>
                 @endif
             </div>
@@ -213,9 +218,16 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                     <div class="min-w-0">
                         <p class="text-sm font-bold text-gray-900 dark:text-white truncate">{{ $p->nama }}</p>
                         <p class="text-xs text-gray-500 font-mono truncate">{{ $p->email }}</p>
-                        @if($p->no_hp)
-                        <p class="text-[11px] text-gray-400 mt-0.5">HP: {{ $p->no_hp }}</p>
-                        @endif
+                        <div class="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] text-gray-400">
+                            @if($p->no_hp)
+                            <span>HP: {{ $p->no_hp }}</span>
+                            @endif
+                            @if($p->creator)
+                            <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300">
+                                <span>Pendaftar: {{ $p->creator->isMitraPro() ? 'Mitra Pro ' . $p->creator->nama : $p->creator->nama }}</span>
+                            </span>
+                            @endif
+                        </div>
                     </div>
                 </div>
                 <x-badge type="{{ $p->is_active ? 'success' : 'danger' }}">
@@ -235,8 +247,8 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                 @if($isSuperAdmin)
                 <button type="button"
                     @click="confirmDelete({{ $p->id }}, '{{ addslashes($p->nama) }}', '{{ addslashes($p->email) }}', 'Anak Kos', '{{ request()->is('superadmin*') ? route('superadmin.pengguna.destroy', $p->slug ?? $p->id) : route('admin.pengguna.destroy', $p->slug ?? $p->id) }}')"
-                    class="p-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
-                    🗑️ Hapus
+                    class="flex-1 min-h-[36px] py-1 px-3 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/50 text-red-600 dark:text-red-400 rounded-xl transition-all font-bold text-xs" title="Hapus User Permanen">
+                    Hapus
                 </button>
                 @endif
             </div>

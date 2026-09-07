@@ -120,19 +120,25 @@
             <button type="button" @click="mode = 'rute'"
                 class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 :class="mode === 'rute' ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'">
-                <span>🚗</span>
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
                 <span>Rute</span>
             </button>
             <button type="button" @click="mode = 'kantor'"
                 class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 :class="mode === 'kantor' ? 'bg-white dark:bg-gray-900 text-blue-600 dark:text-blue-400 shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'">
-                <span>🏢</span>
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
                 <span>Titik Kantor</span>
             </button>
             <button type="button" @click="mode = 'kos'"
                 class="flex-1 py-1.5 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5"
                 :class="mode === 'kos' ? 'bg-white dark:bg-gray-900 text-emerald-600 dark:text-emerald-400 shadow-xs' : 'text-gray-500 hover:text-gray-900 dark:hover:text-white'">
-                <span>🏡</span>
+                <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
                 <span>Titik Kos</span>
             </button>
         </div>
@@ -142,12 +148,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {{-- Input Ketik Kantor --}}
                 <div class="relative">
-                    <label class="grid grid-cols-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 items-center">
-                        <span class="items-center gap-1">
-                            <span class="text-blue-500 font-bold">🅰️</span>
-                            <span>Titik Asal: Kantor Admin</span>
-                        </span>
-                        <span class="text-[10px] text-gray-400 font-normal text-center">Ketik / pilih</span>
+                    <label class="flex items-center gap-2 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                        <span class="w-4 h-4 rounded-full bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-400 text-[10px] font-black inline-flex items-center justify-center flex-shrink-0">A</span>
+                        <div class="flex flex-col">
+                            <span class="text-gray-700 dark:text-gray-300 font-bold leading-tight">Titik Asal: Kantor Admin</span>
+                            <span class="text-[10px] text-gray-400 font-normal leading-tight">Ketik / pilih</span>
+                        </div>
                     </label>
                     <div class="relative">
                         <input type="text"
@@ -174,10 +180,12 @@
                                 :class="selectedOfficeId == item.id ? 'bg-blue-50/80 dark:bg-blue-950/60 font-bold' : ''">
                                 <div class="min-w-0 pr-2">
                                     <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                                        <span>🏢</span>
+                                        <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                        </svg>
                                         <span x-text="item.nama"></span>
                                     </div>
-                                    <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.alamat"></div>
+                                    <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate pl-5" x-text="item.alamat"></div>
                                 </div>
                                 <template x-if="selectedOfficeId == item.id">
                                     <span class="text-blue-600 dark:text-blue-400 text-xs font-bold">✓</span>
@@ -189,12 +197,12 @@
 
                 {{-- Input Ketik Kos --}}
                 <div class="relative">
-                    <label class="grid grid-cols-1 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 items-center">
-                        <span class="items-center gap-1">
-                            <span class="text-emerald-500 font-bold">🅱️</span>
-                            <span>Titik Tujuan: Kos</span>
-                        </span>
-                        <span class="text-[10px] text-gray-400 font-normal text-center">Ketik / pilih</span>
+                    <label class="flex items-center gap-2 text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">
+                        <span class="w-4 h-4 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-black inline-flex items-center justify-center flex-shrink-0">B</span>
+                        <div class="flex flex-col">
+                            <span class="text-gray-700 dark:text-gray-300 font-bold leading-tight">Titik Tujuan: Kos</span>
+                            <span class="text-[10px] text-gray-400 font-normal leading-tight">Ketik / pilih</span>
+                        </div>
                     </label>
                     <div class="relative">
                         <input type="text"
@@ -221,10 +229,12 @@
                                 :class="selectedKosId == item.id ? 'bg-emerald-50/80 dark:bg-emerald-950/60 font-bold' : ''">
                                 <div class="min-w-0 pr-2">
                                     <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                                        <span>🏡</span>
+                                        <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                        </svg>
                                         <span x-text="item.nama"></span>
                                     </div>
-                                    <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.alamat"></div>
+                                    <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate pl-5" x-text="item.alamat"></div>
                                 </div>
                                 <template x-if="selectedKosId == item.id">
                                     <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">✓</span>
@@ -238,23 +248,41 @@
             {{-- Banner Preview Rute --}}
             <div class="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50 space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div class="p-2 bg-white/80 dark:bg-gray-900/80 rounded-lg border border-emerald-100 dark:border-emerald-900/30 space-y-0.5">
-                        <span class="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider block">🏢 Titik Asal (Kantor)</span>
-                        <p class="font-bold text-gray-900 dark:text-white truncate" x-text="selectedOffice ? selectedOffice.nama : '-'"></p>
+                    <div class="p-2.5 bg-white/80 dark:bg-gray-900/80 rounded-xl border border-blue-100 dark:border-blue-900/30 space-y-1">
+                        <div class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <span class="text-[10px] font-bold uppercase tracking-wider">Titik Asal (Kantor)</span>
+                        </div>
+                        <p class="font-bold text-gray-900 dark:text-white truncate text-xs" x-text="selectedOffice ? selectedOffice.nama : '-'"></p>
                         <p class="text-[11px] text-gray-500 truncate" x-text="selectedOffice ? (selectedOffice.alamat || 'Alamat tidak tersedia') : ''"></p>
                         <template x-if="selectedOffice && selectedOffice.link_gmaps">
-                            <a :href="selectedOffice.link_gmaps" target="_blank" class="text-[10px] text-blue-600 dark:text-blue-400 font-semibold hover:underline flex items-center gap-1 pt-0.5">
-                                <span>📍 Lihat Titik Asal di Maps</span>
+                            <a :href="selectedOffice.link_gmaps" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-blue-600 dark:text-blue-400 font-semibold hover:underline pt-0.5">
+                                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span>Buka Titik di Maps</span>
                             </a>
                         </template>
                     </div>
-                    <div class="p-2 bg-white/80 dark:bg-gray-900/80 rounded-lg border border-emerald-100 dark:border-emerald-900/30 space-y-0.5">
-                        <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">🏡 Titik Tujuan (Kos)</span>
-                        <p class="font-bold text-gray-900 dark:text-white truncate" x-text="selectedKos ? selectedKos.nama : '-'"></p>
+                    <div class="p-2.5 bg-white/80 dark:bg-gray-900/80 rounded-xl border border-emerald-100 dark:border-emerald-900/30 space-y-1">
+                        <div class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                            </svg>
+                            <span class="text-[10px] font-bold uppercase tracking-wider">Titik Tujuan (Kos)</span>
+                        </div>
+                        <p class="font-bold text-gray-900 dark:text-white truncate text-xs" x-text="selectedKos ? selectedKos.nama : '-'"></p>
                         <p class="text-[11px] text-gray-500 truncate" x-text="selectedKos ? (selectedKos.alamat || 'Alamat tidak tersedia') : ''"></p>
                         <template x-if="selectedKos && selectedKos.link_gmaps">
-                            <a :href="selectedKos.link_gmaps" target="_blank" class="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline flex items-center gap-1 pt-0.5">
-                                <span>📍 Lihat Titik Kos di Maps</span>
+                            <a :href="selectedKos.link_gmaps" target="_blank" class="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline pt-0.5">
+                                <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                <span>Buka Titik di Maps</span>
                             </a>
                         </template>
                     </div>
@@ -274,7 +302,12 @@
         <div x-show="mode === 'kantor'" class="space-y-3" x-cloak>
             <div class="relative">
                 <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Pilih / Ketik Kantor Admin</span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
+                        <span>Pilih / Ketik Kantor Admin</span>
+                    </span>
                     <span class="text-[10px] text-gray-400 font-normal">Ketik untuk mencari</span>
                 </label>
                 <div class="relative">
@@ -302,10 +335,12 @@
                             :class="selectedOfficeId == item.id ? 'bg-blue-50/80 dark:bg-blue-950/60 font-bold' : ''">
                             <div class="min-w-0 pr-2">
                                 <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                                    <span>🏢</span>
+                                    <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
                                     <span x-text="item.nama"></span>
                                 </div>
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.alamat"></div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate pl-5" x-text="item.alamat"></div>
                             </div>
                             <template x-if="selectedOfficeId == item.id">
                                 <span class="text-blue-600 dark:text-blue-400 text-xs font-bold">✓</span>
@@ -318,12 +353,19 @@
             <div class="p-3.5 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-100 dark:border-blue-900/50 space-y-3">
                 <div class="space-y-1">
                     <p class="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
-                        <span>🏢</span>
+                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
                         <span x-text="selectedOffice ? selectedOffice.nama : 'Pilih Kantor'"></span>
                     </p>
                     <p class="text-[11px] text-gray-600 dark:text-gray-400" x-text="selectedOffice ? (selectedOffice.alamat || 'Alamat tidak tersedia') : ''"></p>
                     <template x-if="selectedOffice && selectedOffice.no_telp">
-                        <p class="text-[11px] text-gray-500 font-mono" x-text="'📞 ' + selectedOffice.no_telp"></p>
+                        <div class="flex items-center gap-1.5 text-[11px] text-gray-500 font-mono pt-0.5">
+                            <svg class="w-3.5 h-3.5 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span x-text="selectedOffice.no_telp"></span>
+                        </div>
                     </template>
                 </div>
 
@@ -342,7 +384,12 @@
         <div x-show="mode === 'kos'" class="space-y-3" x-cloak>
             <div class="relative">
                 <label class="block text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-                    <span>Pilih / Ketik Lokasi Kos</span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        <span>Pilih / Ketik Lokasi Kos</span>
+                    </span>
                     <span class="text-[10px] text-gray-400 font-normal">Ketik untuk mencari</span>
                 </label>
                 <div class="relative">
@@ -370,10 +417,12 @@
                             :class="selectedKosId == item.id ? 'bg-emerald-50/80 dark:bg-emerald-950/60 font-bold' : ''">
                             <div class="min-w-0 pr-2">
                                 <div class="font-bold text-gray-900 dark:text-white flex items-center gap-1.5 truncate">
-                                    <span>🏡</span>
+                                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                                    </svg>
                                     <span x-text="item.nama"></span>
                                 </div>
-                                <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate" x-text="item.alamat"></div>
+                                <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate pl-5" x-text="item.alamat"></div>
                             </div>
                             <template x-if="selectedKosId == item.id">
                                 <span class="text-emerald-600 dark:text-emerald-400 text-xs font-bold">✓</span>
@@ -386,7 +435,9 @@
             <div class="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50 space-y-3">
                 <div class="space-y-1">
                     <p class="text-xs font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
-                        <span>🏡</span>
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
                         <span x-text="selectedKos ? selectedKos.nama : 'Pilih Kos'"></span>
                     </p>
                     <p class="text-[11px] text-gray-600 dark:text-gray-400" x-text="selectedKos ? (selectedKos.alamat || 'Alamat tidak tersedia') : ''"></p>
@@ -411,7 +462,9 @@
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
         <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
             <h2 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <span class="text-base">🏢</span>
+                <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
                 <span>Daftar Titik Kantor Admin ({{ $kantors->count() }})</span>
             </h2>
         </div>
@@ -420,14 +473,21 @@
             @forelse($kantors as $kan)
             <div class="p-3 bg-gray-50/80 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-start gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold text-lg flex-shrink-0">
-                        🏢
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200/70 dark:border-blue-800/60 flex items-center justify-center text-blue-600 dark:text-blue-400 font-bold flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
                     </div>
                     <div class="min-w-0 space-y-0.5">
                         <h3 class="font-bold text-xs text-gray-900 dark:text-white truncate">{{ $kan->nama }}</h3>
                         <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">{{ $kan->alamat ?? 'Alamat belum diatur' }}</p>
                         @if(!empty($kan->no_telp))
-                        <p class="text-[11px] text-gray-600 dark:text-gray-300 font-mono">📞 {{ $kan->no_telp }}</p>
+                        <div class="flex items-center gap-1 text-[11px] text-gray-600 dark:text-gray-300 font-mono pt-0.5">
+                            <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span>{{ $kan->no_telp }}</span>
+                        </div>
                         @endif
                     </div>
                 </div>
@@ -456,7 +516,9 @@
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
         <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2.5">
             <h2 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <span class="text-base">🏡</span>
+                <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
                 <span>Daftar Titik Kos & Kontak Mitra ({{ $locations->count() }})</span>
             </h2>
         </div>
@@ -465,8 +527,10 @@
             @forelse($locations as $loc)
             <div class="p-3 bg-gray-50/80 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div class="flex items-start gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-lg flex-shrink-0">
-                        🏡
+                    <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200/70 dark:border-emerald-800/60 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold flex-shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
                     </div>
                     <div class="min-w-0 space-y-0.5">
                         <h3 class="font-bold text-xs text-gray-900 dark:text-white truncate">{{ $loc->nama }}</h3>
@@ -475,11 +539,14 @@
                             <span class="font-semibold text-emerald-700 dark:text-emerald-400">Mitra: {{ $loc->mitra->nama ?? '-' }}</span>
                             @if(!empty($loc->mitra->no_hp))
                             <span class="text-gray-400">•</span>
-                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $loc->mitra->no_hp) }}" target="_blank" class="font-mono text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
-                                📞 {{ $loc->mitra->no_hp }}
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $loc->mitra->no_hp) }}" target="_blank" class="font-mono text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                <span>{{ $loc->mitra->no_hp }}</span>
                             </a>
                             @else
-                            <span class="text-gray-400">• 📞 Telepon tidak tersedia</span>
+                            <span class="text-gray-400">• Telepon tidak tersedia</span>
                             @endif
                         </div>
                     </div>

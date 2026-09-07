@@ -6,13 +6,19 @@ $p = $isSuperAdmin ? 'superadmin.' : 'admin.';
 
 $penghuniUsers = \App\Models\User::where('role', 'penghuni')
 ->where('is_active', true)
+->where(function($q) {
+$q->whereNull('created_by')
+->orWhereHas('creator', function($c) {
+$c->whereIn('role', ['admin', 'super_admin']);
+});
+})
 ->with(['penghuniKamar' => function($q) {
 $q->where('status', 'aktif')->with('kamar');
 }])
 ->get();
-$allKamars = \App\Models\Kamar::with('kos')->get();
+$allKamars = \App\Models\Kamar::whereIn('kos_id', $kosList->pluck('id'))->with('kos')->get();
 
-$mitrasJson = $mitras->map(function($m) {
+$mitrasJson = $mitras->filter(fn($m) => empty($m->is_pro))->map(function($m) {
 return [
 'id' => $m->id,
 'nama' => $m->nama,
@@ -193,43 +199,30 @@ return [
 
     {{-- Action Buttons Bar --}}
     <div class="grid grid-cols-3 gap-2">
-        <button @click="modalKos = true" class="flex flex-col items-center justify-center p-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl shadow-sm active:scale-95 transition-all text-center">
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <span class="text-xs font-bold leading-tight">Kos Baru</span>
+        <button @click="modalKos = true" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs active:scale-95 transition-all text-center truncate">
+            Tambah Kos
         </button>
 
-        <button @click="modalKamar = true" class="flex flex-col items-center justify-center p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-sm active:scale-95 transition-all text-center">
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-            </svg>
-            <span class="text-xs font-bold leading-tight">Kamar Baru</span>
+        <button @click="modalKamar = true" class="py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs active:scale-95 transition-all text-center truncate">
+            Tambah Kamar
         </button>
 
-        <button @click="selectedKamarIdForPenghuni = ''; selectedKamarTipe = 'standar'; modalPenghuni = true" class="flex flex-col items-center justify-center p-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl shadow-sm active:scale-95 transition-all text-center">
-            <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            <span class="text-xs font-bold leading-tight">Penghuni</span>
+        <button @click="selectedKamarIdForPenghuni = ''; selectedKamarTipe = 'standar'; modalPenghuni = true" class="py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl shadow-xs active:scale-95 transition-all text-center truncate">
+            Tambah Penghuni
         </button>
     </div>
 
     {{-- Filter Bar: Search, Kos, Tipe Kamar, Tipe Sewa & Status Masa Aktif --}}
     @if(!$kosList->isEmpty())
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
-        <div class="grid grid-cols-1 gap-2 pb-2 border-b border-gray-100 dark:border-gray-800">
-            <div>
-                <label class="block text-[11px] font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                    Filter &amp; Pencarian Kos / Kamar
-                </label>
-                <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 font-mono"
-                    x-text="(filterKosId === 'all' ? 'Semua Kos' : 'Kos Terpilih') + ' · ' + (filterTipeKamar === 'all' ? 'Semua Tipe Kamar' : (filterTipeKamar === 'standar' ? 'Standar' : 'Berbagi')) + ' · ' + (filterTipeSewa === 'all' ? 'Semua Tipe Sewa' : (filterTipeSewa === 'bulan' ? 'Bulanan' : (filterTipeSewa === 'minggu' ? 'Mingguan' : 'Harian'))) + ' · ' + (filterMasaAktif === 'all' ? 'Semua Status' : (filterMasaAktif === 'expired' ? 'Jatuh Tempo' : (filterMasaAktif === 'aktif' ? 'Masih Aktif' : 'Kamar Kosong')))"></span>
-            </div>
+        <div class="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-800">
+            <label class="block text-[11px] py-0.5 font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                Filter & Pencarian Kos / Kamar
+            </label>
             <button type="button"
                 @click="filterKosId = 'all'; filterTipeKamar = 'all'; filterMasaAktif = 'all'; filterTipeSewa = 'all'; search = ''"
                 x-show="filterKosId !== 'all' || filterTipeKamar !== 'all' || filterMasaAktif !== 'all' || filterTipeSewa !== 'all' || search !== ''"
-                class="text-[10px] w-[75px] font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 px-2.5 py-1 rounded-lg transition-all self-start sm:self-auto">
+                class="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 px-2.5 py-0.5 rounded-lg transition-all">
                 Reset Filter
             </button>
         </div>
@@ -270,9 +263,9 @@ return [
                 <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Tipe Sewa (Durasi):</label>
                 <select x-model="filterTipeSewa" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800 border border-blue-200 dark:border-blue-800/60 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-blue-500">
                     <option value="all">-- Semua Tipe Sewa --</option>
-                    <option value="bulan">📅 Sewa Bulanan</option>
-                    <option value="minggu">📆 Sewa Mingguan</option>
-                    <option value="hari">⏱️ Sewa Harian</option>
+                    <option value="bulan">Sewa Bulanan</option>
+                    <option value="minggu">Sewa Mingguan</option>
+                    <option value="hari">Sewa Harian</option>
                 </select>
             </div>
 
@@ -281,9 +274,9 @@ return [
                 <label class="block text-[10px] font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Status Masa Aktif:</label>
                 <select x-model="filterMasaAktif" class="w-full py-1.5 px-2 bg-gray-50 dark:bg-gray-800 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-amber-500">
                     <option value="all">-- Semua Status Sewa --</option>
-                    <option value="expired">⚠️ Jatuh Tempo / Masa Aktif Habis</option>
-                    <option value="aktif">✅ Masih Aktif (Belum Jatuh Tempo)</option>
-                    <option value="kosong">🏠 Kamar Kosong</option>
+                    <option value="expired">Jatuh Tempo / Masa Aktif Habis</option>
+                    <option value="aktif">Masih Aktif (Belum Jatuh Tempo)</option>
+                    <option value="kosong">Kamar Kosong</option>
                 </select>
             </div>
         </div>
@@ -344,110 +337,129 @@ return [
                     alt="{{ $kos->nama }}"
                     class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300 opacity-90 group-hover:opacity-100">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-bold text-white flex items-center gap-1 shadow-sm group-hover:bg-emerald-600 transition-colors">
-                    <span>🔍 Klik untuk Perbesar Foto Kos</span>
+                <div class="absolute bottom-2.5 right-2.5 px-2.5 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[10px] font-medium text-white flex items-center gap-1.5 shadow-sm group-hover:bg-emerald-600 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
+                    </svg>
+                    <span>Perbesar Foto</span>
                 </div>
             </div>
             @endif
 
-            <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-800/30 space-y-2">
-                {{-- Baris Atas: Info Mitra (Kiri) & Tombol Aksi (Kanan) --}}
-                <div class="flex flex-wrap items-start justify-between gap-2">
-                    {{-- Sisi Kiri: Nama Mitra & (di bawahnya) Kontak WA / Telepon --}}
-                    <div class="flex flex-col gap-1 min-w-0">
-                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
-                            Mitra: {{ $kos->mitra->nama ?? '-' }}
-                        </span>
-                        @if($kos->mitra && $kos->mitra->no_hp)
-                        @php
-                        $cleanHp = preg_replace('/[^0-9]/', '', $kos->mitra->no_hp);
-                        $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
-                        @endphp
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <a href="https://wa.me/{{ $waHp }}"
-                                target="_blank"
-                                class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-800/50 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 rounded-md transition-all active:scale-95 shadow-2xs"
-                                title="Kirim WhatsApp ke Mitra">
-                                <span class="[&>svg]:h-3 [&>svg]:w-3">
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        fill="currentColor"
-                                        viewBox="0 0 448 512">
-                                        <path
-                                            d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
-                                    </svg>
-                                </span>
-                                <span>WhatsApp</span>
-                            </a>
-                            <a href="tel:{{ $kos->mitra->no_hp }}"
-                                class="inline-flex items-center gap-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-800/50 border border-blue-200 dark:border-blue-800 text-[10px] font-bold text-blue-700 dark:text-blue-300 rounded-md transition-all active:scale-95 shadow-2xs"
-                                title="Telepon Langsung Mitra">
-                                <span>📞</span>
-                                <span>Telepon</span>
-                            </a>
-                        </div>
-                        @endif
-                    </div>
-
-                    {{-- Sisi Kanan: Action Badges & Buttons --}}
-                    <div class="flex items-center gap-1.5 flex-shrink-0">
-                        {{-- Jumlah Kamar Badge --}}
-                        <span class="inline-flex items-center justify-center px-2.5 py-1 text-[10px] font-bold rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            {{-- Header Kos Card --}}
+            <div class="p-4 border-b border-gray-100 dark:border-gray-800 bg-gray-50/60 dark:bg-gray-800/40 space-y-3">
+                {{-- Baris 1: Nama Kos, Badge Kamar & Dropdown Aksi --}}
+                <div class="flex flex-wrap items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2 min-w-0 flex-wrap">
+                        <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
+                        <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-semibold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
                             {{ $kos->kamar->count() }} Kamar
                         </span>
+                    </div>
 
-                        {{-- Toggle Lock / Unlock Edit Kamar Mitra --}}
-                        <form action="{{ route($p . 'kos.toggle-lock', $kos->slug ?? $kos->id) }}" method="POST" class="inline-flex m-0">
-                            @csrf
-                            @if($kos->is_locked)
-                            <button type="submit"
-                                class="px-2.5 py-1 text-[10px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100 hover:bg-rose-200 dark:bg-rose-900/40 dark:hover:bg-rose-900/60 rounded-lg transition-all active:scale-95 inline-flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
-                                title="Status Edit Kamar oleh Mitra: TERKUNCI. Klik untuk Membuka Kunci.">
-                                <span>🔒</span>
-                                <span>Lock</span>
-                            </button>
-                            @else
-                            <button type="submit"
-                                class="px-2.5 py-1 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 hover:bg-emerald-200 dark:bg-emerald-900/40 dark:hover:bg-emerald-900/60 rounded-lg transition-all active:scale-95 inline-flex items-center justify-center gap-1 shadow-2xs cursor-pointer"
-                                title="Status Edit Kamar oleh Mitra: TERBUKA. Klik untuk Mengunci Edit Kamar.">
-                                <span>🔓</span>
-                                <span>Unlock</span>
-                            </button>
-                            @endif
-                        </form>
-
-                        {{-- Tombol Edit Kos --}}
+                    {{-- Dropdown Aksi Kos (Edit, Hapus) --}}
+                    <div x-data="{ openKosDropdown: false }" class="relative flex-shrink-0" @click.outside="openKosDropdown = false">
                         <button type="button"
-                            @click="openEditKosModal(@js($kos))"
-                            class="px-2.5 py-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 hover:bg-amber-200 dark:hover:bg-amber-800/50 dark:bg-amber-900/40 dark:hover:bg-amber-900/60 rounded-lg transition-all inline-flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-2xs">
-                            <span>✏️</span>
-                            <span>Edit</span>
+                            @click="openKosDropdown = !openKosDropdown"
+                            class="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-2xs transition-colors cursor-pointer"
+                            title="Menu Aksi Kos">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                            </svg>
                         </button>
 
-                        {{-- Tombol Hapus Kos --}}
-                        <form action="{{ route($p . 'kos.destroy', $kos->slug ?? $kos->id) }}" method="POST" class="inline-flex m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Kos {{ addslashes($kos->nama) }}? Seluruh kamar dan data di dalamnya juga akan terhapus.')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                class="px-2.5 py-1 text-[10px] font-bold text-red-700 dark:text-red-300 bg-red-100 hover:bg-red-200 dark:hover:bg-red-800/50 dark:bg-red-900/40 dark:hover:bg-red-900/60 rounded-lg transition-all inline-flex items-center justify-center gap-1 active:scale-95 cursor-pointer shadow-2xs"
-                                title="Hapus Kos">
-                                <span>🗑️</span>
-                                <span>Hapus</span>
+                        <div x-show="openKosDropdown"
+                            x-transition:enter="transition ease-out duration-100"
+                            x-transition:enter-start="transform opacity-0 scale-95"
+                            x-transition:enter-end="transform opacity-100 scale-100"
+                            x-transition:leave="transition ease-in duration-75"
+                            x-transition:leave-start="transform opacity-100 scale-100"
+                            x-transition:leave-end="transform opacity-0 scale-95"
+                            class="absolute right-0 mt-1 w-44 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-30"
+                            x-cloak>
+
+                            {{-- Tombol Edit Kos --}}
+                            <button type="button"
+                                @click="openKosDropdown = false; openEditKosModal(@js($kos))"
+                                class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-amber-50 dark:hover:bg-amber-950/50 hover:text-amber-700 dark:hover:text-amber-300 transition-colors cursor-pointer text-left">
+                                <svg class="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                </svg>
+                                <span>Edit Kos</span>
                             </button>
-                        </form>
+
+                            <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
+                            {{-- Tombol Hapus Kos --}}
+                            <form action="{{ route($p . 'kos.destroy', $kos->slug ?? $kos->id) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Kos {{ addslashes($kos->nama) }}? Seluruh kamar dan data di dalamnya juga akan terhapus.')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit"
+                                    class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer text-left">
+                                    <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                    <span>Hapus Kos</span>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
 
-                {{-- Baris Bawah: Nama Kos, Alamat & Info Rekening --}}
-                <div class="pt-0.5">
-                    <h3 class="font-bold text-base text-gray-900 dark:text-white leading-snug truncate">{{ $kos->nama }}</h3>
-                    <p class="text-xs text-gray-500 mt-0.5 truncate">{{ $kos->alamat ?? 'Alamat tidak diisi' }}</p>
+                {{-- Baris 2: Alamat & Rekening --}}
+                <div class="flex flex-col gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                    <div class="flex items-start gap-1.5">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span class="leading-relaxed">{{ $kos->alamat ?? 'Alamat tidak diisi' }}</span>
+                    </div>
+
                     @if($kos->bank && $kos->no_rekening)
-                    <p class="text-[11px] font-mono text-gray-400 mt-1 truncate">
-                        Rekening: {{ $kos->bank }} - {{ $kos->no_rekening }} (a.n {{ $kos->nama_pemilik_rekening ?? '-' }})
-                    </p>
+                    <div class="flex items-center gap-1.5 text-[11px] font-mono text-gray-500 dark:text-gray-400">
+                        <svg class="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <span>{{ $kos->bank }} <strong class="text-gray-800 dark:text-gray-200">{{ $kos->no_rekening }}</strong> (a.n {{ $kos->nama_pemilik_rekening ?? '-' }})</span>
+                    </div>
                     @endif
                 </div>
+
+                {{-- Baris 3: Info Mitra Pemilik (Khusus Admin / Super Admin) --}}
+                @if($kos->mitra)
+                <div class="pt-2 border-t border-gray-200/60 dark:border-gray-700/60 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400">Mitra Pemilik:</span>
+                        <span class="text-xs font-bold text-gray-800 dark:text-gray-200">{{ $kos->mitra->nama ?? '-' }}</span>
+                    </div>
+                    @if($kos->mitra->no_hp)
+                    @php
+                    $cleanHp = preg_replace('/[^0-9]/', '', $kos->mitra->no_hp);
+                    $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
+                    @endphp
+                    <div class="flex items-center gap-1.5">
+                        <a href="https://wa.me/{{ $waHp }}"
+                            target="_blank"
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 text-[11px] font-medium text-emerald-700 dark:text-emerald-300 rounded-md transition-all active:scale-95"
+                            title="WhatsApp Mitra">
+                            <svg class="w-3.5 h-3.5 fill-current text-emerald-600 dark:text-emerald-400" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                            </svg>
+                            <span>WhatsApp</span>
+                        </a>
+                        <a href="tel:{{ $kos->mitra->no_hp }}"
+                            class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 text-[11px] font-medium text-blue-700 dark:text-blue-300 rounded-md transition-all active:scale-95"
+                            title="Telepon Mitra">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            <span>Telepon</span>
+                        </a>
+                    </div>
+                    @endif
+                </div>
+                @endif
             </div>
 
             {{-- Rooms List in this Kos --}}
@@ -455,12 +467,12 @@ return [
                 @if($kos->kamar->isEmpty())
                 <div class="p-3 text-center">
                     <p class="text-xs text-gray-400">Belum ada kamar di kos ini.</p>
-                    <button @click="selectedKosIdForKamar = '{{ $kos->id }}'; modalKamar = true" class="text-xs font-bold text-emerald-600 mt-1 inline-block">
-                        + Tambah Kamar
+                    <button @click="selectedKosIdForKamar = '{{ $kos->id }}'; modalKamar = true" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 mt-1 inline-block">
+                        Tambah Kamar
                     </button>
                 </div>
                 @else
-                <div class="grid grid-cols-1 gap-4">
+                <div class="grid grid-cols-1 gap-3">
                     @foreach($kos->kamar as $kIndex => $kamar)
                     @php
                     $kamarMeta = $kamarFilterArray[$kIndex] ?? [];
@@ -474,126 +486,159 @@ return [
 
                     <div x-show="matchKamar(@js($kamarMeta), @js($kosSearchText))"
                         x-transition
-                        class="p-3.5 sm:p-4 rounded-2xl border {{ $hasExpiredPenghuni ? 'bg-red-50/40 dark:bg-red-950/20 border-red-200 dark:border-red-900/50' : ($isTerisi ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/50' : 'bg-gray-50/80 dark:bg-gray-800/40 border-gray-200/80 dark:border-gray-800') }} space-y-2.5 shadow-2xs">
+                        class="p-3.5 sm:p-4 rounded-xl border {{ $hasExpiredPenghuni ? 'bg-red-50/30 dark:bg-red-950/20 border-red-200 dark:border-red-900/40' : ($isTerisi ? 'bg-emerald-50/20 dark:bg-emerald-950/10 border-emerald-200/70 dark:border-emerald-900/40' : 'bg-gray-50/50 dark:bg-gray-800/30 border-gray-200/80 dark:border-gray-800') }} space-y-3 shadow-2xs">
 
-                        {{-- Baris Header Kamar & Status --}}
-                        <div class="grid grid-cols-[1fr_auto] items-center gap-2 border-b border-gray-200/50 dark:border-gray-700/40 pb-2">
-                            <div class="grid grid-flow-col auto-cols-max items-center gap-1.5">
-                                <span class="font-bold text-xs font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-gray-800">
-                                    Kamar {{ $kamar->kode_kamar }}
-                                </span>
-                                <span class="px-1.5 py-0.5 text-[8px] uppercase font-bold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' }}">
-                                    {{ ucfirst($kamar->tipe) }}
-                                </span>
-                                <x-badge type="{{ $hasExpiredPenghuni ? 'danger' : ($isTerisi ? 'success' : 'warning') }}" size="xs">
-                                    {{ $hasExpiredPenghuni ? 'Jatuh Tempo' : ($isTerisi ? 'Terisi' : 'Kosong') }}
-                                </x-badge>
+                        {{-- Baris Header Kamar & Dropdown Aksi --}}
+                        <div class="flex items-start justify-between gap-2 border-b border-gray-200/60 dark:border-gray-700/60 pb-2.5">
+                            {{-- Info Kamar & WhatsApp di Bawah Kode Kamar --}}
+                            <div class="flex flex-col gap-1.5 min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="font-bold text-xs font-mono text-gray-900 dark:text-white bg-white dark:bg-gray-900 px-2.5 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 shadow-2xs">
+                                        Kamar {{ $kamar->kode_kamar }}
+                                    </span>
+                                    <span class="px-2 py-0.5 text-[10px] font-semibold rounded-md {{ $kamar->tipe === 'berbagi' ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200 dark:border-purple-800' : 'bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-800' }}">
+                                        {{ ucfirst($kamar->tipe) }}
+                                    </span>
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $hasExpiredPenghuni ? 'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800' : ($isTerisi ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' : 'bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800') }}">
+                                        {{ $hasExpiredPenghuni ? 'Jatuh Tempo' : ($isTerisi ? 'Terisi (' . $activePenghunis->count() . '/' . $kamar->kapasitas . ')' : 'Kosong') }}
+                                    </span>
+                                </div>
+
+                                {{-- Link WhatsApp / Grup WhatsApp ditaruh di bawah kode kamar --}}
+                                @if($kamar->link_grup_wa)
+                                <div class="flex items-center">
+                                    <a href="{{ $kamar->link_grup_wa }}" target="_blank"
+                                        class="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-semibold rounded-md text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 transition-all active:scale-95 shadow-2xs">
+                                        <svg class="w-3 h-3 fill-current text-emerald-600 dark:text-emerald-400" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                                        </svg>
+                                        <span>Grup WhatsApp</span>
+                                    </a>
+                                </div>
+                                @elseif($kamar->wa_group_id)
+                                <div class="flex items-center">
+                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-mono text-gray-500 bg-gray-100 dark:bg-gray-800 rounded-md" title="ID Grup Fonnte: {{ $kamar->wa_group_id }}">
+                                        WA Group Registered
+                                    </span>
+                                </div>
+                                @endif
                             </div>
 
-                            <div class="grid grid-cols-1 sm:grid-cols-2 items-center gap-1.5">
-                                <a href="{{ route($p . 'kamar.show', $kamar->kode_kamar ?? $kamar->id) }}"
-                                    class="col-span-1 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 hover:bg-emerald-200 dark:hover:bg-emerald-800/50 dark:bg-emerald-900/50 rounded-md transition-all active:scale-95">
-                                    <span>Detail</span>
-                                </a>
+                            {{-- Dropdown Aksi (Detail, Edit, Hapus) --}}
+                            <div x-data="{ openDropdown: false }" class="relative flex-shrink-0" @click.outside="openDropdown = false">
                                 <button type="button"
-                                    @click="openEditKamarModal(@js($kamar))"
-                                    class="col-span-1 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-100/90 hover:bg-blue-200 dark:hover:bg-blue-800/50 dark:bg-blue-900/50 rounded-md transition-all active:scale-95 cursor-pointer">
-                                    <span>Edit</span>
+                                    @click="openDropdown = !openDropdown"
+                                    class="p-1.5 rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 bg-white dark:bg-gray-900 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-2xs transition-colors cursor-pointer"
+                                    title="Menu Aksi Kamar">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                                    </svg>
                                 </button>
-                                <form action="{{ route($p . 'kamar.destroy', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Kamar {{ addslashes($kamar->kode_kamar) }}?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                        class="px-2 py-0.5 text-[10px] font-bold text-red-700 dark:text-red-300 bg-red-100 hover:bg-red-200 dark:hover:bg-red-800/50 dark:bg-red-900/40 dark:hover:bg-red-900/60 rounded-md transition-all active:scale-95 cursor-pointer"
-                                        title="Hapus Kamar">
-                                        <span>Hapus</span>
+
+                                <div x-show="openDropdown"
+                                    x-transition:enter="transition ease-out duration-100"
+                                    x-transition:enter-start="transform opacity-0 scale-95"
+                                    x-transition:enter-end="transform opacity-100 scale-100"
+                                    x-transition:leave="transition ease-in duration-75"
+                                    x-transition:leave-start="transform opacity-100 scale-100"
+                                    x-transition:leave-end="transform opacity-0 scale-95"
+                                    class="absolute right-0 mt-1 w-32 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-30"
+                                    x-cloak>
+                                    <a href="{{ route($p . 'kamar.show', $kamar->kode_kamar ?? $kamar->id) }}"
+                                        class="flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                        </svg>
+                                        <span>Detail</span>
+                                    </a>
+                                    <button type="button"
+                                        @click="openDropdown = false; openEditKamarModal(@js($kamar))"
+                                        class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-200 hover:bg-blue-50 dark:hover:bg-blue-950/50 hover:text-blue-700 dark:hover:text-blue-300 transition-colors cursor-pointer text-left">
+                                        <svg class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                        </svg>
+                                        <span>Edit</span>
                                     </button>
-                                </form>
+                                    <div class="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                                    <form action="{{ route($p . 'kamar.destroy', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" class="m-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus Kamar {{ addslashes($kamar->kode_kamar) }}?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit"
+                                            class="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/50 transition-colors cursor-pointer text-left">
+                                            <svg class="w-3.5 h-3.5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                            <span>Hapus</span>
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- Detail Perabotan / Fasilitas --}}
+                        {{-- Fasilitas / Perabotan (List Kiri Kanan) --}}
                         @php
-                        $getFacilityIcon = function($name) {
-                        $lower = strtolower($name);
-                        if (str_contains($lower, 'kasur') || str_contains($lower, 'bed') || str_contains($lower, 'matras')) return '🛏️';
-                        if (str_contains($lower, 'lemari') || str_contains($lower, 'wardrobe') || str_contains($lower, 'kabinet')) return '🗄️';
-                        if (str_contains($lower, 'meja') || str_contains($lower, 'kursi') || str_contains($lower, 'desk')) return '🪑';
-                        if (str_contains($lower, 'kipas') || str_contains($lower, 'fan')) return '🪭';
-                        if (str_contains($lower, 'mandi') || str_contains($lower, 'toilet') || str_contains($lower, 'wc')) return '🚿';
-                        if (str_contains($lower, 'ac') || str_contains($lower, 'pendingin')) return '❄️';
-                        if (str_contains($lower, 'wifi') || str_contains($lower, 'internet')) return '📶';
-                        if (str_contains($lower, 'dapur') || str_contains($lower, 'masak')) return '🍳';
-                        if (str_contains($lower, 'tv') || str_contains($lower, 'televisi')) return '📺';
-                        return '📦';
-                        };
                         $detailsList = array_filter(array_map('trim', explode(',', $kamar->detail ?? '')));
                         @endphp
-                        <div class="text-[11px] font-medium text-gray-700 dark:text-gray-300 bg-white/80 dark:bg-gray-900/60 p-2 sm:p-2.5 rounded-xl border border-gray-200/70 dark:border-gray-700/60 flex flex-wrap items-center gap-1.5">
-                            <span class="font-bold text-amber-600 dark:text-amber-400 mr-0.5">📦 Perabotan:</span>
-                            @if(empty($kamar->detail) || strtolower(trim($kamar->detail)) === 'kosong')
-                            <span class="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-400 rounded-lg text-[10px] italic">
-                                Kosong (Tanpa Perabotan)
+                        <div class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-gray-500 dark:text-gray-400 block">Fasilitas:</span>
+                            @if(empty($detailsList) || (count($detailsList) === 1 && strtolower(trim($detailsList[0])) === 'kosong'))
+                            <span class="text-[11px] text-gray-400 dark:text-gray-500 italic block">
+                                Tanpa perabotan / kosong
                             </span>
                             @else
-                            @foreach($detailsList as $item)
-                            @php
-                            $icon = $getFacilityIcon($item);
-                            @endphp
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/70 dark:border-amber-800/50 rounded-lg text-[10px] font-bold">
-                                <span>{{ $icon }}</span>
-                                <span>{{ $item }}</span>
-                            </span>
-                            @endforeach
+                            <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-700 dark:text-gray-300">
+                                @foreach($detailsList as $item)
+                                <div class="flex items-center gap-1.5 min-w-0">
+                                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span class="truncate text-[11px] font-medium">{{ $item }}</span>
+                                </div>
+                                @endforeach
+                            </div>
                             @endif
                         </div>
 
-                        {{-- Rincian Biaya & Link WA Group --}}
-                        <div class="grid gap-2 p-3 bg-white/60 dark:bg-gray-900/40 rounded-xl border border-gray-200/50 dark:border-gray-800">
+                        {{-- Rincian Biaya (Grid 3 Box Rapi) --}}
+                        <div class="pt-2 border-t border-gray-100 dark:border-gray-800">
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                {{-- Bulanan --}}
+                                <div class="flex items-center justify-between sm:flex-col sm:items-start px-2.5 py-1.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60">
+                                    <span class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">Bulanan</span>
+                                    <span class="text-xs font-bold text-emerald-800 dark:text-emerald-200">
+                                        Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }}
+                                    </span>
+                                </div>
 
-                            {{-- Badge Harga --}}
-                            <div class="grid grid-cols-[repeat(auto-fit,minmax(0,max-content))] gap-2">
-                                <span class="grid place-items-center w-max px-2 py-1 text-[10px] font-bold rounded text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40">
-                                    Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }}/bln
-                                </span>
+                                {{-- Mingguan --}}
+                                <div class="flex items-center justify-between sm:flex-col sm:items-start px-2.5 py-1.5 rounded-lg bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/80 dark:border-purple-800/60">
+                                    <span class="text-[10px] font-semibold text-purple-700 dark:text-purple-400">Mingguan</span>
+                                    <span class="text-xs font-bold text-purple-800 dark:text-purple-200">
+                                        {{ $kamar->harga_per_minggu ? 'Rp ' . number_format($kamar->harga_per_minggu, 0, ',', '.') : '-' }}
+                                    </span>
+                                </div>
 
-                                @if($kamar->harga_per_minggu)
-                                <span class="grid place-items-center w-max px-2 py-1 text-[10px] font-bold rounded text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/40">
-                                    Rp {{ number_format($kamar->harga_per_minggu, 0, ',', '.') }}/minggu
-                                </span>
-                                @endif
-
-                                @if($kamar->harga_per_hari)
-                                <span class="grid place-items-center w-max px-2 py-1 text-[10px] font-bold rounded text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40">
-                                    Rp {{ number_format($kamar->harga_per_hari, 0, ',', '.') }}/hari
-                                </span>
-                                @endif
+                                {{-- Harian --}}
+                                <div class="flex items-center justify-between sm:flex-col sm:items-start px-2.5 py-1.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/60">
+                                    <span class="text-[10px] font-semibold text-blue-700 dark:text-blue-400">Harian</span>
+                                    <span class="text-xs font-bold text-blue-800 dark:text-blue-200">
+                                        {{ $kamar->harga_per_hari ? 'Rp ' . number_format($kamar->harga_per_hari, 0, ',', '.') : '-' }}
+                                    </span>
+                                </div>
                             </div>
-
-                            {{-- WhatsApp Group --}}
-                            <div class="grid">
-                                @if($kamar->link_grup_wa)
-                                <a href="{{ $kamar->link_grup_wa }}" target="_blank"
-                                    class="grid grid-flow-col auto-cols-max items-center gap-1.5 w-max px-2.5 py-1 text-[10px] font-bold text-center rounded-md text-emerald-700 dark:text-emerald-300 bg-emerald-100/90 dark:bg-emerald-900/50 hover:underline transition-colors">
-                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
-                                    </svg>
-                                    <span>WhatsApp Group</span>
-                                </a>
-                                @elseif($kamar->wa_group_id)
-                                <span class="grid place-items-start w-max px-2 py-1 text-xs font-mono text-gray-400 bg-gray-100 dark:bg-gray-800 rounded" title="ID Grup Fonnte: {{ $kamar->wa_group_id }}">
-                                    WhatsApp Group Registered
-                                </span>
-                                @endif
-                            </div>
-
                         </div>
 
-                        {{-- Penghuni --}}
+                        {{-- Penghuni Aktif --}}
                         @if($activePenghunis->isNotEmpty())
-                        <div class="mt-2 pt-2 border-t border-emerald-200/60 dark:border-emerald-900/40 space-y-1.5">
-                            <div class="grid grid-cols-1 items-center text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-                                <span>👥 PENGHUNI AKTIF ({{ $activePenghunis->count() }}/{{ $kamar->kapasitas }})</span>
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700/80 space-y-2">
+                            <div class="flex items-center justify-between text-xs font-semibold text-gray-600 dark:text-gray-400">
+                                <div class="flex items-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span>Penghuni Aktif ({{ $activePenghunis->count() }}/{{ $kamar->kapasitas }})</span>
+                                </div>
                             </div>
 
                             @foreach($activePenghunis as $pk)
@@ -602,85 +647,108 @@ return [
                             $isPkExpired = $targetKeluar && $targetKeluar->isPast();
                             $overdueDays = $isPkExpired ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
                             $tglKeluarStr = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
-                            $pkDaysLeft = $targetKeluar ? round(now()->diffInDays($targetKeluar, false)) : null;
-                            $isPkDueSoon = $isPkExpired || ($pkDaysLeft !== null && $pkDaysLeft <= 3);
-                                $paymentStatus=$pk->getStatusPembayaranInfo();
-                                @endphp
-                                <div class="p-2.5 rounded-xl border {{ $isPkExpired ? 'bg-red-50/80 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-white dark:bg-gray-900/90 border-emerald-100 dark:border-emerald-900/40' }} space-y-1.5 shadow-xs">
-                                    {{-- Baris 1: Status Pembayaran, Masa Sewa & Tgl Masuk --}}
-                                    <div class="flex items-center justify-between gap-1.5 flex-wrap">
-                                        <div class="flex items-center gap-1.5 flex-wrap">
-                                            <span class="px-2 py-0.5 text-[9px] font-bold rounded-md {{ $paymentStatus['badge_class'] }}">
-                                                {{ $paymentStatus['label'] }}
-                                            </span>
-                                            <span class="px-2 py-0.5 text-[9px] font-bold rounded-md {{ $isPkExpired ? 'bg-red-200 text-red-800 dark:bg-red-900/80 dark:text-red-200' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' }}">
-                                                {{ $isPkExpired ? "⚠️ Terlewat {$overdueDays} Hari ({$tglKeluarStr})" : "Sewa s/d {$tglKeluarStr}" }}
-                                            </span>
+                            $paymentStatus = $pk->getStatusPembayaranInfo($kamar);
+                            @endphp
+                            <div class="p-3 rounded-xl border {{ $isPkExpired ? 'bg-red-50/70 dark:bg-red-950/40 border-red-200 dark:border-red-900/60' : 'bg-gray-50/70 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700/60' }} space-y-2 shadow-2xs">
+                                {{-- Baris 1: Nama Penghuni & Tombol Chat WhatsApp --}}
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="min-w-0 flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full {{ $isPkExpired ? 'bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' }} flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                                            {{ strtoupper(substr($pk->penghuni->nama ?? 'P', 0, 1)) }}
                                         </div>
-                                        <span class="text-[9px] font-mono text-gray-500 dark:text-gray-400">
-                                            Masuk: {{ $pk->tanggal_masuk ? \Carbon\Carbon::parse($pk->tanggal_masuk)->format('d M Y') : '-' }} ({{ ucfirst($pk->durasi) }})
+                                        <span class="font-bold text-gray-900 dark:text-white text-xs truncate" title="{{ $pk->penghuni->nama ?? '-' }}">
+                                            {{ $pk->penghuni->nama ?? '-' }}
                                         </span>
                                     </div>
 
-                                    {{-- Baris 2: Nama Penghuni & Tombol Link WhatsApp --}}
-                                    <div class="flex items-center justify-between gap-2 pt-1 border-t border-gray-100 dark:border-gray-800/80">
-                                        <div class="min-w-0 flex items-center gap-1.5">
-                                            <span class="text-xs">👤</span>
-                                            <span class="font-bold text-gray-900 dark:text-white text-xs truncate" title="{{ $pk->penghuni->nama ?? '-' }}">
-                                                {{ $pk->penghuni->nama ?? '-' }}
-                                            </span>
-                                        </div>
-
-                                        @if($pk->penghuni && $pk->penghuni->no_hp)
-                                        @php
-                                            $cleanHp = preg_replace('/[^0-9]/', '', $pk->penghuni->no_hp);
-                                            $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
-                                        @endphp
-                                        <a href="https://wa.me/{{ $waHp }}" target="_blank"
-                                            class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1 flex-shrink-0 active:scale-95 transition-all"
-                                            title="Chat WhatsApp ke {{ $pk->penghuni->nama }} ({{ $pk->penghuni->no_hp }})">
-                                            <svg class="w-3 h-3 fill-emerald-600 dark:fill-emerald-400" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                                                <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
-                                            </svg>
-                                            <span class="font-mono">{{ $pk->penghuni->no_hp }}</span>
-                                        </a>
-                                        @endif
-                                    </div>
-                                </div>
-                                @endforeach
-
-                                {{-- Tombol Aksi Bawah Kamar (Kirim Pengumuman & Kosongkan Kamar) --}}
-                                <div class="pt-1.5 flex items-center justify-end gap-2 flex-wrap">
-                                    @if($hasExpiredPenghuni)
+                                    @if($pk->penghuni && $pk->penghuni->no_hp)
                                     @php
-                                    $pengumumanRoute = route($p . 'pengumuman.create', ['kamar_id' => $kamar->id]);
+                                    $cleanHp = preg_replace('/[^0-9]/', '', $pk->penghuni->no_hp);
+                                    $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
                                     @endphp
-                                    <a href="{{ $pengumumanRoute }}" class="px-2.5 py-1 text-[10px] font-bold text-amber-800 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 rounded-lg border border-amber-300 dark:border-amber-800 flex items-center gap-1 active:scale-95 transition-all animate-pulse" title="Kirim Pengumuman Jatuh Tempo ke Kamar {{ $kamar->kode_kamar }}">
-                                        <span>📢 Pengumuman Jatuh Tempo</span>
+                                    <a href="https://wa.me/{{ $waHp }}" target="_blank"
+                                        class="px-2 py-0.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 dark:hover:bg-emerald-900/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 rounded-lg text-[10px] font-semibold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"
+                                        title="Chat WhatsApp ke {{ $pk->penghuni->nama }} ({{ $pk->penghuni->no_hp }})">
+                                        <svg class="w-3 h-3 fill-current text-emerald-600 dark:text-emerald-400" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                                        </svg>
+                                        <span class="font-mono">{{ $pk->penghuni->no_hp }}</span>
                                     </a>
                                     @endif
-
-                                    <form action="{{ route($p . 'kamar.kosongkan', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" onsubmit="return confirm('Kosongkan Kamar {{ $kamar->kode_kamar }} dan selesaikan sewa penghuni?')">
-                                        @csrf
-                                        <button type="submit" class="px-2.5 py-1 text-[10px] font-bold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-900/50 flex items-center gap-1 active:scale-95 transition-all">
-                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                            </svg>
-                                            <span>Kosongkan Kamar</span>
-                                        </button>
-                                    </form>
                                 </div>
+
+                                {{-- Baris 2: Badge Status Pembayaran & Status Jatuh Tempo --}}
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $paymentStatus['badge_class'] }}">
+                                        {{ $paymentStatus['label'] }}
+                                    </span>
+                                    @if($isPkExpired)
+                                    <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/80 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800 rounded-md font-bold text-[10px] flex items-center gap-1">
+                                        <svg class="w-3 h-3 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        <span>Terlewat {{ $overdueDays }} Hari</span>
+                                    </span>
+                                    @else
+                                    <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 rounded-md font-bold text-[10px]">
+                                        Masa Sewa Aktif
+                                    </span>
+                                    @endif
+                                </div>
+
+                                {{-- Baris 3: Periode Sewa & Durasi --}}
+                                <div class="pt-1.5 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-[11px] {{ $isPkExpired ? 'text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-400' }} flex-wrap gap-1">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-3.5 h-3.5 {{ $isPkExpired ? 'text-red-500' : 'text-gray-400' }} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        <span class="font-medium">
+                                            {{ $pk->tanggal_masuk ? \Carbon\Carbon::parse($pk->tanggal_masuk)->format('d M Y') : '-' }} s/d {{ $tglKeluarStr }}
+                                        </span>
+                                    </div>
+                                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                        {{ ucfirst($pk->durasi) }}
+                                    </span>
+                                </div>
+                            </div>
+                            @endforeach
+
+                            {{-- Action Buttons at bottom of Occupied Room --}}
+                            <div class="pt-2 border-t border-gray-100 dark:border-gray-800 flex items-center gap-2">
+                                @if($hasExpiredPenghuni)
+                                @php
+                                $pengumumanRoute = route($p . 'pengumuman.create', ['kamar_id' => $kamar->id]);
+                                @endphp
+                                <a href="{{ $pengumumanRoute }}" class="flex-1 min-w-0 px-2.5 py-1.5 text-[10px] font-semibold text-amber-800 dark:text-amber-200 bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/80 dark:hover:bg-amber-900 rounded-xl border border-amber-300 dark:border-amber-800 inline-flex items-center justify-center gap-1.5 active:scale-95 transition-all animate-pulse text-center shadow-2xs" title="Kirim Pengumuman Jatuh Tempo ke Kamar {{ $kamar->kode_kamar }}">
+                                    <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                                    </svg>
+                                    <span class="truncate">Pengumuman Jatuh Tempo</span>
+                                </a>
+                                @endif
+
+                                <form action="{{ route($p . 'kamar.kosongkan', $kamar->kode_kamar ?? $kamar->id) }}" method="POST" onsubmit="return confirm('Kosongkan Kamar {{ $kamar->kode_kamar }} dan selesaikan sewa penghuni?')" class="{{ $hasExpiredPenghuni ? 'flex-1 min-w-0' : 'w-full' }}">
+                                    @csrf
+                                    <button type="submit" class="w-full px-2.5 py-1.5 text-[10px] font-semibold text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 rounded-xl border border-red-200 dark:border-red-900/50 inline-flex items-center justify-center gap-1.5 active:scale-95 transition-all text-center shadow-2xs">
+                                        <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                        </svg>
+                                        <span class="truncate">Kosongkan Kamar</span>
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                         @else
-                        <div class="mt-2 pt-2 border-t border-gray-200/60 dark:border-gray-700/60 grid grid-cols-[1fr_auto] items-center text-xs">
-                            <span class="text-amber-600 font-bold text-[11px]">🏠 Belum Ada Penghuni</span>
+                        {{-- Empty Room State --}}
+                        <div class="mt-3 pt-3 border-t border-dashed border-gray-200 dark:border-gray-700 flex items-center justify-between gap-2">
+                            <span class="text-xs font-medium text-gray-500 dark:text-gray-400">Belum Ada Penghuni</span>
                             <button @click="
                                         selectedKamarIdForPenghuni = '{{ $kamar->id }}'; 
                                         selectedKamarTipe = '{{ $kamar->tipe }}'; 
                                         modalPenghuni = true;
                                     "
-                                class="px-2.5 py-1 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-bold text-[10px] rounded-lg transition-all active:scale-95">
-                                + Daftarkan Penghuni
+                                class="px-2.5 py-1 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/50 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 font-semibold text-xs rounded-lg transition-all active:scale-95">
+                                Tambah Penghuni
                             </button>
                         </div>
                         @endif
@@ -902,7 +970,7 @@ return [
             @csrf
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Upload Foto Kamar (Opsional, Bisa Pilih Beberapa)</label>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Upload Foto Kamar</label>
                 <input type="file" name="foto[]" multiple accept="image/*" class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs text-gray-900 dark:text-white">
                 <p class="text-[10px] text-gray-400 mt-0.5 italic">* Pilih beberapa file gambar (JPG, PNG, WEBP) untuk foto galeri kamar ini.</p>
             </div>
@@ -1322,11 +1390,17 @@ return [
     @php
     $penghuniUsers = \App\Models\User::where('role', 'penghuni')
     ->where('is_active', true)
+    ->where(function($q) {
+    $q->whereNull('created_by')
+    ->orWhereHas('creator', function($c) {
+    $c->whereIn('role', ['admin', 'super_admin']);
+    });
+    })
     ->with(['penghuniKamar' => function($q) {
     $q->where('status', 'aktif')->with('kamar');
     }])
     ->get();
-    $allKamars = \App\Models\Kamar::with('kos')->get();
+    $allKamars = \App\Models\Kamar::whereIn('kos_id', $kosList->pluck('id'))->with('kos')->get();
     @endphp
     <x-modal show="modalPenghuni" title="Daftarkan Penghuni ke Kamar">
         <form action="{{ route($p . 'penghuni.daftar') }}" method="POST" class="space-y-3.5" x-data="{ durasiSewa: 'bulanan' }">

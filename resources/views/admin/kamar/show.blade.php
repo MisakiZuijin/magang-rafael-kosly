@@ -188,19 +188,22 @@ return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
             $cleanHp = preg_replace('/[^0-9]/', '', $kamar->kos->mitra->no_hp);
             $waHp = str_starts_with($cleanHp, '0') ? '62' . substr($cleanHp, 1) : $cleanHp;
             @endphp
-            <div class="grid grid-cols-2 items-center gap-1">
+            <div class="flex items-center gap-1.5 flex-shrink-0">
                 <a href="https://wa.me/{{ $waHp }}" target="_blank"
-                    class="grid grid-flow-col auto-cols-max items-center gap-1 px-1.5 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-800/50 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold text-emerald-700 dark:text-emerald-300 rounded-md transition-all active:scale-95"
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 border border-emerald-200 dark:border-emerald-800 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300 rounded-md transition-all active:scale-95"
                     title="Kirim WhatsApp ke Mitra">
-                    <svg class="w-3 h-3 text-emerald-600 dark:text-emerald-400 fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                    <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
                         <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
                     </svg>
                     <span>WhatsApp</span>
                 </a>
                 <a href="tel:{{ $kamar->kos->mitra->no_hp }}"
-                    class="grid grid-flow-col auto-cols-max items-center gap-1 px-1.5 py-0.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-800/50 border border-blue-200 dark:border-blue-800 text-[10px] font-bold text-blue-700 dark:text-blue-300 rounded-md transition-all active:scale-95"
+                    class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 dark:hover:bg-blue-900/60 border border-blue-200 dark:border-blue-800 text-[11px] font-semibold text-blue-700 dark:text-blue-300 rounded-md transition-all active:scale-95"
                     title="Telepon Langsung Mitra">
-                    <span>📞 Telp</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                    <span>Telepon</span>
                 </a>
             </div>
             @endif
@@ -213,45 +216,33 @@ return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
     </div>
 
     {{-- Card 2: Perabotan & Fasilitas Kamar --}}
-    <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2">
-        <div class="grid grid-cols-[auto_1fr] items-center gap-1.5 border-b border-gray-100 dark:border-gray-800 pb-2">
-            <span class="text-amber-500 text-sm">📦</span>
-            <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Detail Perabotan &amp; Fasilitas</h3>
+    <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-3">
+        <div class="flex items-center gap-1.5 border-b border-gray-100 dark:border-gray-800 pb-2">
+            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+            </svg>
+            <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Detail Perabotan & Fasilitas</h3>
         </div>
 
         @php
-        $getFacilityIcon = function($name) {
-        $lower = strtolower($name);
-        if (str_contains($lower, 'kasur') || str_contains($lower, 'bed') || str_contains($lower, 'matras')) return '🛏️';
-        if (str_contains($lower, 'lemari') || str_contains($lower, 'wardrobe') || str_contains($lower, 'kabinet')) return '🗄️';
-        if (str_contains($lower, 'meja') || str_contains($lower, 'kursi') || str_contains($lower, 'desk')) return '🪑';
-        if (str_contains($lower, 'kipas') || str_contains($lower, 'fan')) return '🪭';
-        if (str_contains($lower, 'mandi') || str_contains($lower, 'toilet') || str_contains($lower, 'wc')) return '🚿';
-        if (str_contains($lower, 'ac') || str_contains($lower, 'pendingin')) return '❄️';
-        if (str_contains($lower, 'wifi') || str_contains($lower, 'internet')) return '📶';
-        if (str_contains($lower, 'dapur') || str_contains($lower, 'masak')) return '🍳';
-        if (str_contains($lower, 'tv') || str_contains($lower, 'televisi')) return '📺';
-        return '📦';
-        };
         $detailsList = array_filter(array_map('trim', explode(',', $kamar->detail ?? '')));
         @endphp
         <div class="p-3 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 text-xs">
-            @if(empty($kamar->detail) || strtolower(trim($kamar->detail)) === 'kosong')
+            @if(empty($kamar->detail) || strtolower(trim($kamar->detail)) === 'kosong' || empty($detailsList))
             <div class="text-center py-1">
-                <span class="px-2.5 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-400 text-[11px] italic font-semibold rounded-lg inline-block">
-                    Kosong (Tanpa Perabotan)
+                <span class="text-gray-400 dark:text-gray-500 text-[11px] italic font-semibold">
+                    Tanpa perabotan / kosong
                 </span>
             </div>
             @else
-            <div class="flex flex-wrap items-center gap-1.5">
+            <div class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-gray-700 dark:text-gray-300">
                 @foreach($detailsList as $item)
-                @php
-                $icon = $getFacilityIcon($item);
-                @endphp
-                <span class="inline-flex items-center gap-1 px-2.5 py-1 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-200/70 dark:border-amber-800/50 rounded-lg text-xs font-bold">
-                    <span>{{ $icon }}</span>
-                    <span>{{ $item }}</span>
-                </span>
+                <div class="flex items-center gap-2 min-w-0">
+                    <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    <span class="truncate text-xs font-medium">{{ $item }}</span>
+                </div>
                 @endforeach
             </div>
             @endif
@@ -260,29 +251,31 @@ return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
 
     {{-- Card 3: Rincian Tarif Biaya Sewa --}}
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2.5">
-        <div class="grid grid-cols-[auto_1fr] items-center gap-1.5 border-b border-gray-100 dark:border-gray-800 pb-2">
-            <span class="text-emerald-500 text-sm">💰</span>
+        <div class="flex items-center gap-1.5 border-b border-gray-100 dark:border-gray-800 pb-2">
+            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
             <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Tarif Biaya Sewa</h3>
         </div>
 
-        <div class="grid grid-cols-1 gap-2 text-xs">
-            <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 grid grid-cols-[1fr_auto] items-center">
-                <span class="font-bold text-emerald-800 dark:text-emerald-300">Bulanan</span>
-                <span class="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-sm">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <div class="p-3 bg-emerald-50/70 dark:bg-emerald-950/40 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40 flex items-center justify-between sm:flex-col sm:items-start gap-1">
+                <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Bulanan</span>
+                <span class="font-mono font-bold text-emerald-700 dark:text-emerald-300 text-xs">
                     Rp {{ number_format($kamar->harga_per_bulan, 0, ',', '.') }}
                 </span>
             </div>
 
-            <div class="p-3 bg-purple-50/70 dark:bg-purple-950/40 rounded-xl border border-purple-200/60 dark:border-purple-900/40 grid grid-cols-[1fr_auto] items-center">
-                <span class="font-bold text-purple-800 dark:text-purple-300">Mingguan</span>
-                <span class="font-mono font-bold text-purple-700 dark:text-purple-300">
+            <div class="p-3 bg-purple-50/70 dark:bg-purple-950/40 rounded-xl border border-purple-200/60 dark:border-purple-900/40 flex items-center justify-between sm:flex-col sm:items-start gap-1">
+                <span class="text-xs font-bold text-purple-800 dark:text-purple-300">Mingguan</span>
+                <span class="font-mono font-bold text-purple-700 dark:text-purple-300 text-xs">
                     {{ $kamar->harga_per_minggu ? 'Rp ' . number_format($kamar->harga_per_minggu, 0, ',', '.') : '-' }}
                 </span>
             </div>
 
-            <div class="p-3 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-200/60 dark:border-blue-900/40 grid grid-cols-[1fr_auto] items-center">
-                <span class="font-bold text-blue-800 dark:text-blue-300">Harian</span>
-                <span class="font-mono font-bold text-blue-700 dark:text-blue-300">
+            <div class="p-3 bg-blue-50/70 dark:bg-blue-950/40 rounded-xl border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-between sm:flex-col sm:items-start gap-1">
+                <span class="text-xs font-bold text-blue-800 dark:text-blue-300">Harian</span>
+                <span class="font-mono font-bold text-blue-700 dark:text-blue-300 text-xs">
                     {{ $kamar->harga_per_hari ? 'Rp ' . number_format($kamar->harga_per_hari, 0, ',', '.') : '-' }}
                 </span>
             </div>
@@ -315,36 +308,65 @@ return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
             $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
             $isExpiredPenghuni = $targetKeluar && $targetKeluar->isPast();
             $overdueDays = $isExpiredPenghuni ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
-            $paymentStatus = $pk->getStatusPembayaranInfo();
+            $paymentStatus = $pk->getStatusPembayaranInfo($kamar);
             @endphp
-            <div class="p-3 rounded-xl border {{ $isExpiredPenghuni ? 'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/50' : 'bg-emerald-50/40 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900/50' }} grid grid-cols-[1fr_auto] items-center gap-2 text-xs">
-                <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-1.5">
+            <div class="p-3 rounded-xl border {{ $isExpiredPenghuni ? 'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/50' : 'bg-gray-50/70 border-gray-200 dark:bg-gray-800/50 dark:border-gray-800' }} space-y-2 text-xs shadow-2xs">
+                {{-- Baris 1: Nama & Chat WA --}}
+                <div class="flex items-center justify-between gap-2">
+                    <div class="min-w-0 flex items-center gap-2">
+                        <div class="w-6 h-6 rounded-full {{ $isExpiredPenghuni ? 'bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' }} flex items-center justify-center flex-shrink-0 text-xs font-bold">
+                            {{ strtoupper(substr($penghuniUser->nama ?? 'P', 0, 1)) }}
+                        </div>
                         <span class="font-bold text-gray-900 dark:text-white text-xs truncate">{{ $penghuniUser->nama ?? 'Penghuni' }}</span>
-                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase {{ $isExpiredPenghuni ? 'bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300' }}">
-                            {{ $isExpiredPenghuni ? "Terlewat {$overdueDays} Hari" : 'Aktif' }}
-                        </span>
-                        <span class="px-1.5 py-0.5 text-[9px] font-bold rounded uppercase {{ $paymentStatus['badge_class'] }}">
-                            {{ $paymentStatus['label'] }}
-                        </span>
                     </div>
-                    <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5">
-                        Sewa {{ ucfirst($pk->durasi) }} · s/d {{ $tglKeluar }} (Batas Checkout 14.00 WIB)
-                    </p>
+
+                    @if($penghuniUser && $penghuniUser->no_hp)
+                    @php
+                    $cleanHpP = preg_replace('/[^0-9]/', '', $penghuniUser->no_hp);
+                    $waHpP = str_starts_with($cleanHpP, '0') ? '62' . substr($cleanHpP, 1) : $cleanHpP;
+                    @endphp
+                    <a href="https://wa.me/{{ $waHpP }}" target="_blank" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 active:scale-95 transition-transform shadow-xs">
+                        <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
+                        </svg>
+                        <span>WhatsApp</span>
+                    </a>
+                    @endif
                 </div>
 
-                @if($penghuniUser && $penghuniUser->no_hp)
-                @php
-                $cleanHpP = preg_replace('/[^0-9]/', '', $penghuniUser->no_hp);
-                $waHpP = str_starts_with($cleanHpP, '0') ? '62' . substr($cleanHpP, 1) : $cleanHpP;
-                @endphp
-                <a href="https://wa.me/{{ $waHpP }}" target="_blank" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] grid grid-flow-col auto-cols-max items-center gap-1 active:scale-95 transition-transform">
-                    <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z" />
-                    </svg>
-                    <span>WhatsApp</span>
-                </a>
-                @endif
+                {{-- Baris 2: Badge Status Pembayaran & Status Jatuh Tempo --}}
+                <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $paymentStatus['badge_class'] }}">
+                        {{ $paymentStatus['label'] }}
+                    </span>
+                    @if($isExpiredPenghuni)
+                    <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/80 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800 rounded-md font-bold text-[10px] flex items-center gap-1">
+                        <svg class="w-3 h-3 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Terlewat {{ $overdueDays }} Hari</span>
+                    </span>
+                    @else
+                    <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 rounded-md font-bold text-[10px]">
+                        Masa Sewa Aktif
+                    </span>
+                    @endif
+                </div>
+
+                {{-- Baris 3: Periode Sewa & Checkout --}}
+                <div class="pt-1.5 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-[11px] {{ $isExpiredPenghuni ? 'text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-400' }} flex-wrap gap-1">
+                    <div class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 {{ $isExpiredPenghuni ? 'text-red-500' : 'text-gray-400' }} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="font-medium">
+                            {{ $tglMasuk }} s/d {{ $tglKeluar }}
+                        </span>
+                    </div>
+                    <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-200/70 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                        {{ ucfirst($pk->durasi) }} · Batas Checkout 14.00 WIB
+                    </span>
+                </div>
             </div>
             @endforeach
         </div>

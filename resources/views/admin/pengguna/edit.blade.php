@@ -31,6 +31,23 @@ $updateRoute = $isSuperAdmin ? route('superadmin.pengguna.update', $user->slug ?
                 </x-badge>
             </div>
 
+            @if($user->role === 'mitra')
+            {{-- Toggle Fitur Mitra Pro (Khusus Role Mitra) --}}
+            <div class="p-3.5 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-200/80 dark:border-amber-900/60 flex items-center justify-between gap-3 shadow-2xs">
+                <div class="space-y-0.5 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="px-1.5 py-0.5 bg-amber-500 text-white font-black text-[9px] rounded">PRO</span>
+                        <p class="text-xs font-bold text-gray-900 dark:text-white">Akses Fitur Mitra Pro</p>
+                    </div>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Mitra Pro memiliki hak kelola mandiri kos, kamar, verifikasi bayar, gateway WA pribadi, dan laporan.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                    <input type="checkbox" name="is_pro" value="1" {{ old('is_pro', $user->is_pro) ? 'checked' : '' }} class="sr-only peer">
+                    <div class="w-10 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                </label>
+            </div>
+            @endif
+
             <div>
                 <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1">Nama Lengkap</label>
                 <input type="text" name="nama" value="{{ old('nama', $user->nama) }}" required 

@@ -33,7 +33,8 @@ class AdminPengumumanController extends Controller
 
     public function create()
     {
-        $kosList = $this->kosService->getAll();
+        $kosList = \App\Models\Kos::with('mitra')->latest()->get();
+        $allKamars = \App\Models\Kamar::with('kos')->get();
 
         $selectedKamarId = request()->query('kamar_id');
         $selectedKamarIdsStr = request()->query('kamar_ids');
@@ -53,7 +54,7 @@ class AdminPengumumanController extends Controller
         }
 
         $view = request()->is('superadmin*') ? 'superadmin.pengumuman.create' : 'admin.pengumuman.create';
-        return view($view, compact('kosList', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar'));
+        return view($view, compact('kosList', 'allKamars', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar'));
     }
 
     public function store(Request $request)

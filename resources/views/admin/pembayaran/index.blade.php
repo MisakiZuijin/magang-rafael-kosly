@@ -166,8 +166,11 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
                         showReviewModal = true;
                         showRejectReason = false;
                     "
-                    class="!py-2 !px-4 text-xs font-bold shadow-xs hover:scale-[1.02] active:scale-95 transition-all">
-                    🔍 Tinjau &amp; Verifikasi Bukti
+                    class="!py-2 !px-4 text-xs font-bold shadow-xs hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                    <span>Tinjau & Verifikasi Bukti</span>
                 </x-btn>
             </div>
         </div>
@@ -289,14 +292,20 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
                     </p>
                 </div>
 
-                <div class="col-span-6 grid grid-cols-1 items-center gap-3">
+                <div class="col-span-6 flex items-center gap-2">
                     @if($buktiUrl && !$isCoveredByRoommate)
-                    <button type="button" @click="selectedPenghuni = '{{ addslashes($penghuniNama) }}'; selectedBuktiUrl = '{{ $buktiUrl }}'; openFullscreen();" class="items-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 font-bold bg-gray-100 dark:bg-gray-800 px-3 py-1.5 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shadow-2xs">
-                        <span class="text-center">🔍 Bukti Transfer</span>
+                    <button type="button" @click="selectedPenghuni = '{{ addslashes($penghuniNama) }}'; selectedBuktiUrl = '{{ $buktiUrl }}'; openFullscreen();" class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs text-gray-700 dark:text-gray-300 font-bold bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all shadow-2xs text-center">
+                        <svg class="w-3.5 h-3.5 text-gray-500 dark:text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>Bukti Transfer</span>
                     </button>
                     @endif
-                    <a href="{{ route('pembayaran.nota', $p->kode_invoice ?? $p->id) }}" class="items-center text-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1.5 rounded-xl border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all shadow-2xs">
-                        <span>📄 Nota Pembayaran</span>
+                    <a href="{{ route('pembayaran.nota', $p->kode_invoice ?? $p->id) }}" class="flex-1 inline-flex items-center justify-center gap-1.5 text-xs text-emerald-700 dark:text-emerald-300 font-bold bg-emerald-50 dark:bg-emerald-950/60 px-3 py-2 rounded-xl border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 transition-all shadow-2xs text-center">
+                        <svg class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Nota Pembayaran</span>
                     </a>
                 </div>
             </div>
@@ -393,7 +402,7 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
     </div>
 
     {{-- Modal Tinjau Bukti Pembayaran --}}
-    <x-modal show="showReviewModal" title="Tinjau Bukti Pembayaran">
+    <x-modal show="showReviewModal" title="Tinjau & Verifikasi Bukti Pembayaran">
         <div class="space-y-5">
             {{-- Display Gambar Bukti Pembayaran --}}
             <div class="bg-gray-50 dark:bg-gray-800/70 rounded-2xl p-3 border border-gray-200/80 dark:border-gray-700 text-center overflow-hidden relative shadow-inner">
@@ -404,7 +413,7 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7" />
                             </svg>
-                            <span>🔍 Klik untuk Perbesar / Zoom</span>
+                            <span>Klik untuk Perbesar / Zoom</span>
                         </div>
                     </div>
                 </template>
@@ -422,7 +431,7 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
                     <span class="font-bold text-gray-900 dark:text-white" x-text="selectedPenghuni"></span>
                 </div>
                 <div class="flex justify-between items-center py-0.5 border-t border-gray-200/50 dark:border-gray-700/50">
-                    <span class="text-gray-500 dark:text-gray-400 font-semibold">Kamar &amp; Kos</span>
+                    <span class="text-gray-500 dark:text-gray-400 font-semibold">Kamar & Kos</span>
                     <span class="font-mono text-gray-800 dark:text-gray-200" x-text="selectedKosKamar"></span>
                 </div>
                 <div class="flex justify-between items-center py-0.5 border-t border-gray-200/50 dark:border-gray-700/50">
