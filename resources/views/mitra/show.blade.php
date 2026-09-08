@@ -11,6 +11,12 @@ $todayDate = \Carbon\Carbon::now()->startOfDay();
 $hasExpiredPenghuni = $activePenghunis->contains(function($pk) {
     return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
 });
+$kamarOverdueDays = $hasExpiredPenghuni ? ($activePenghunis->filter(function($pk) {
+    return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
+})->map(function($pk) {
+    return max(1, (int) \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->diffInDays(now()));
+})->max() ?: 0) : 0;
+
 $fotos = is_array($kamar->foto) ? array_values($kamar->foto) : [];
 $fotoUrls = array_map(function($f) {
     return str_starts_with($f, 'http') ? $f : asset('storage/' . $f);
@@ -74,7 +80,7 @@ $hHariRaw = (string)($kamar->harga_per_hari ?? '');
                 Tipe {{ ucfirst($kamar->tipe) }}
             </span>
             <x-badge type="{{ $hasExpiredPenghuni ? 'danger' : ($isTerisi ? 'success' : 'warning') }}" size="xs">
-                {{ $hasExpiredPenghuni ? 'Jatuh Tempo' : ($isTerisi ? 'Terisi (' . $activePenghunis->count() . '/' . $kamar->kapasitas . ')' : 'Kosong') }}
+                {{ $hasExpiredPenghuni ? 'Jatuh Tempo (Terlewat ' . $kamarOverdueDays . ' Hari)' : ($isTerisi ? 'Terisi (' . $activePenghunis->count() . '/' . $kamar->kapasitas . ')' : 'Kosong') }}
             </x-badge>
         </div>
     </x-page-header>
@@ -243,11 +249,45 @@ $hHariRaw = (string)($kamar->harga_per_hari ?? '');
     </div>
 
     {{-- Card 4: Penghuni Terdaftar saat ini --}}
+    @php
+    $kamarPaymentStatuses = $activePenghunis->map(function($pk) use ($kamar) {
+        return $pk->getStatusPembayaranInfo($kamar);
+    });
+    $kamarMainPaymentStatus = null;
+    if ($kamarPaymentStatuses->isNotEmpty()) {
+        if ($kamarPaymentStatuses->contains(function($s) { return $s['status'] === 'belum_bayar_awal'; })) {
+            $kamarMainPaymentStatus = [
+                'label' => 'Belum Bayar Biaya Awal',
+                'badge_class' => 'bg-red-100 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-900/50'
+            ];
+        } elseif ($kamarPaymentStatuses->contains(function($s) { return ($s['unpaid_type'] ?? null) === 'roommate'; })) {
+            $kamarMainPaymentStatus = [
+                'label' => 'Sudah Membayar (1/2)',
+                'badge_class' => 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'
+            ];
+        } elseif ($kamarPaymentStatuses->contains(function($s) { return $s['status'] === 'belum_bayar_perpanjangan'; })) {
+            $kamarMainPaymentStatus = [
+                'label' => 'Belum Bayar Perpanjangan',
+                'badge_class' => 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-900/50'
+            ];
+        } else {
+            $kamarMainPaymentStatus = [
+                'label' => 'Lunas',
+                'badge_class' => 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/50'
+            ];
+        }
+    }
+    @endphp
     <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-2.5">
-        <div class="grid grid-cols-[1fr_auto] items-center border-b border-gray-100 dark:border-gray-800 pb-2">
-            <div class="grid grid-cols-[auto_1fr] items-center gap-1.5">
+        <div class="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-2">
+            <div class="flex items-center gap-2 flex-wrap">
                 <span class="text-purple-500 text-sm">👥</span>
-                <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Penghuni Terdaftar</h3>
+                <h3 class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">Penghuni Terdaftar ({{ $activePenghunis->count() }}/{{ $kamar->kapasitas }})</h3>
+                @if($kamarMainPaymentStatus)
+                <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $kamarMainPaymentStatus['badge_class'] }}">
+                    {{ $kamarMainPaymentStatus['label'] }}
+                </span>
+                @endif
             </div>
             <span class="text-[11px] font-mono font-bold text-gray-400">
                 {{ $activePenghunis->count() }}/{{ $kamar->kapasitas }} Orang
@@ -268,24 +308,32 @@ $hHariRaw = (string)($kamar->harga_per_hari ?? '');
             $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
             $isExpiredPenghuni = $targetKeluar && $targetKeluar->isPast();
             $overdueDays = $isExpiredPenghuni ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
-            $paymentStatus = $pk->getStatusPembayaranInfo($kamar);
             @endphp
-            <div class="p-3 rounded-xl border {{ $isExpiredPenghuni ? 'bg-red-50/70 border-red-200 dark:bg-red-950/30 dark:border-red-900/50' : 'bg-gray-50/70 border-gray-200 dark:bg-gray-800/50 dark:border-gray-800' }} space-y-2 text-xs shadow-2xs">
-                {{-- Baris 1: Nama & Chat WA --}}
-                <div class="flex items-center justify-between gap-2">
-                    <div class="min-w-0 flex items-center gap-2">
-                        <div class="w-6 h-6 rounded-full {{ $isExpiredPenghuni ? 'bg-red-100 dark:bg-red-900/60 text-red-700 dark:text-red-300' : 'bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300' }} flex items-center justify-center flex-shrink-0 text-xs font-bold">
+            <div class="p-3 rounded-xl border bg-gray-50/70 border-gray-200 dark:bg-gray-800/50 dark:border-gray-800 space-y-2 text-xs shadow-2xs">
+                {{-- Baris 1: Profil Penghuni (Avatar, Nama, No HP) & Tombol WhatsApp --}}
+                <div class="flex items-center justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        <div class="w-8 h-8 rounded-xl bg-emerald-100 dark:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 flex items-center justify-center flex-shrink-0 text-xs font-extrabold shadow-2xs">
                             {{ strtoupper(substr($penghuniUser->nama ?? 'P', 0, 1)) }}
                         </div>
-                        <span class="font-bold text-gray-900 dark:text-white text-xs truncate">{{ $penghuniUser->nama ?? 'Penghuni' }}</span>
+                        <div class="min-w-0">
+                            <p class="font-bold text-gray-900 dark:text-white text-xs truncate leading-tight" title="{{ $penghuniUser->nama ?? '-' }}">
+                                {{ $penghuniUser->nama ?? '-' }}
+                            </p>
+                            <p class="text-[10px] text-gray-500 dark:text-gray-400 font-mono mt-0.5 truncate">
+                                {{ $penghuniUser->no_hp ?? '-' }}
+                            </p>
+                        </div>
                     </div>
 
                     @if($penghuniUser && $penghuniUser->no_hp)
                     @php
                     $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($penghuniUser, $pk, null, $kamar, $kamar->kos);
                     @endphp
-                    <a href="{{ $waUrl }}" target="_blank" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[10px] flex items-center gap-1 active:scale-95 transition-transform shadow-xs" title="Kirim Pesan WhatsApp ke {{ $penghuniUser->nama }}">
-                        <svg class="w-3 h-3 text-white fill-current" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
+                    <a href="{{ $waUrl }}" target="_blank"
+                        class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[10px] font-bold flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-all shadow-xs"
+                        title="Chat WhatsApp ke {{ $penghuniUser->nama }}">
+                        <svg class="w-3 h-3 fill-current text-white" viewBox="0 0 448 512" xmlns="http://www.w3.org/2000/svg">
                             <path d="M380.9 97.1C339 55.1 283.2 32 223.9 32c-122.4 0-222 99.6-222 222 0 39.1 10.2 77.3 29.6 111L0 480l117.7-30.9c32.4 17.7 68.9 27 106.1 27h.1c122.3 0 224.1-99.6 224.1-222 0-59.3-25.2-115-67.1-157zm-157 341.6c-33.2 0-65.7-8.9-94-25.7l-6.7-4-69.8 18.3L72 359.2l-4.4-7c-18.5-29.4-28.2-63.3-28.2-98.2 0-101.7 82.8-184.5 184.6-184.5 49.3 0 95.6 19.2 130.4 54.1 34.8 34.9 56.2 81.2 56.1 130.5 0 101.8-84.9 184.6-186.6 184.6zm101.2-138.2c-5.5-2.8-32.8-16.2-37.9-18-5.1-1.9-8.8-2.8-12.5 2.8-3.7 5.6-14.3 18-17.6 21.8-3.2 3.7-6.5 4.2-12 1.4-32.6-16.3-54-29.1-75.5-66-5.7-9.8 5.7-9.1 16.3-30.3 1.8-3.7 .9-6.9-.5-9.7-1.4-2.8-12.5-30.1-17.1-41.2-4.5-10.8-9.1-9.3-12.5-9.5-3.2-.2-6.9-.2-10.6-.2-3.7 0-9.7 1.4-14.8 6.9-5.1 5.6-19.4 19-19.4 46.3 0 27.3 19.9 53.7 22.6 57.4 2.8 3.7 39.1 59.7 94.8 83.8 35.2 15.2 49 16.5 66.6 13.9 10.7-1.6 32.8-13.4 37.4-26.4 4.6-13 4.6-24.1 3.2-26.4-1.3-2.5-5-3.9-10.5-6.6z"/>
                         </svg>
                         <span>WhatsApp</span>
@@ -293,29 +341,10 @@ $hHariRaw = (string)($kamar->harga_per_hari ?? '');
                     @endif
                 </div>
 
-                {{-- Baris 2: Badge Status Pembayaran & Status Jatuh Tempo --}}
-                <div class="flex items-center gap-1.5 flex-wrap">
-                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-md {{ $paymentStatus['badge_class'] }}">
-                        {{ $paymentStatus['label'] }}
-                    </span>
-                    @if($isExpiredPenghuni)
-                    <span class="px-2 py-0.5 bg-red-100 dark:bg-red-900/80 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-800 rounded-md font-bold text-[10px] flex items-center gap-1">
-                        <svg class="w-3 h-3 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span>Terlewat {{ $overdueDays }} Hari</span>
-                    </span>
-                    @else
-                    <span class="px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 rounded-md font-bold text-[10px]">
-                        Masa Sewa Aktif
-                    </span>
-                    @endif
-                </div>
-
-                {{-- Baris 3: Periode Sewa & Checkout --}}
-                <div class="pt-1.5 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-[11px] {{ $isExpiredPenghuni ? 'text-red-700 dark:text-red-300' : 'text-gray-600 dark:text-gray-400' }} flex-wrap gap-1">
+                {{-- Baris 2: Periode Sewa & Checkout --}}
+                <div class="pt-1.5 border-t border-gray-200/60 dark:border-gray-700/60 flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400 flex-wrap gap-1">
                     <div class="flex items-center gap-1.5">
-                        <svg class="w-3.5 h-3.5 {{ $isExpiredPenghuni ? 'text-red-500' : 'text-gray-400' }} flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span class="font-medium">
