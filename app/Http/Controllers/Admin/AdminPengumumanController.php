@@ -33,8 +33,8 @@ class AdminPengumumanController extends Controller
 
     public function create()
     {
-        $kosList = \App\Models\Kos::with('mitra')->latest()->get();
-        $allKamars = \App\Models\Kamar::with('kos')->get();
+        $kosList = $this->kosService->getAll();
+        $allKamars = $this->kamarService->getAll();
 
         $selectedKamarId = request()->query('kamar_id');
         $selectedKamarIdsStr = request()->query('kamar_ids');
@@ -50,7 +50,7 @@ class AdminPengumumanController extends Controller
 
         $prefilledKamar = null;
         if (!empty($selectedKamarId)) {
-            $prefilledKamar = \App\Models\Kamar::with('kos')->find($selectedKamarId);
+            $prefilledKamar = $allKamars->firstWhere('id', (int)$selectedKamarId);
         }
 
         $view = request()->is('superadmin*') ? 'superadmin.pengumuman.create' : 'admin.pengumuman.create';
@@ -104,7 +104,10 @@ class AdminPengumumanController extends Controller
         $textAturan = $validated['judul'] . ': ' . $validated['isi'];
 
         if ($validated['target_tipe'] === 'semua') {
-            $kosIds = \App\Models\Kos::pluck('id');
+            $kosIds = \App\Models\Kos::where(function ($q) {
+                $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })->pluck('id');
+
             foreach ($kosIds as $kosId) {
                 \App\Models\AturanKos::create([
                     'kos_id' => $kosId,
@@ -155,13 +158,16 @@ class AdminPengumumanController extends Controller
         $userIds = [];
 
         if ($validated['target_tipe'] === 'semua') {
-            $userIds = \App\Models\User::pluck('id')->toArray();
+            $userIds = \App\Models\PenghuniKamar::whereHas('kamar.kos', function ($q) {
+                $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })->where('status', 'aktif')->pluck('penghuni_id')->unique()->toArray();
         } elseif ($validated['target_tipe'] === 'kos') {
             $userIds = \App\Models\PenghuniKamar::whereHas('kamar', function ($q) use ($validated) {
                 $q->whereIn('kos_id', $validated['target_ids'] ?? []);
-            })->pluck('penghuni_id')->unique()->toArray();
+            })->where('status', 'aktif')->pluck('penghuni_id')->unique()->toArray();
         } elseif ($validated['target_tipe'] === 'kamar') {
             $userIds = \App\Models\PenghuniKamar::whereIn('kamar_id', $validated['target_ids'] ?? [])
+                ->where('status', 'aktif')
                 ->pluck('penghuni_id')->unique()->toArray();
         }
 
@@ -193,7 +199,10 @@ class AdminPengumumanController extends Controller
                     ->where('wa_group_id', '!=', '-')
                     ->get();
             } elseif ($validated['target_tipe'] === 'semua') {
-                $targetedKamars = \App\Models\Kamar::with('kos')
+                $targetedKamars = \App\Models\Kamar::whereHas('kos', function ($q) {
+                    $q->whereNull('mitra_id')->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+                })
+                    ->with('kos')
                     ->whereNotNull('wa_group_id')
                     ->where('wa_group_id', '!=', '')
                     ->where('wa_group_id', '!=', '-')
