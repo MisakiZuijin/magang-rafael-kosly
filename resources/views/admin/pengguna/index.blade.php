@@ -240,7 +240,7 @@ $totalNonaktif = ($isSuperAdmin ? $admins->where('is_active', false)->count() : 
                             @if($p->no_hp)
                             @php
                             $activePk = $p->penghuniKamar ? $p->penghuniKamar->where('status', 'aktif')->first() : null;
-                            $waUrlP = \App\Services\WhatsAppService::generatePenghuniUrl($p, $activePk);
+                            $waUrlP = \App\Services\WhatsAppService::generatePenghuniUrl($p, $activePk, null, $activePk?->kamar, $activePk?->kamar?->kos);
                             @endphp
                             <div>
                                 <a href="{{ $waUrlP }}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] text-emerald-600 dark:text-emerald-400 font-mono hover:underline font-bold group" title="Chat WhatsApp ke {{ $p->nama }}">

@@ -126,7 +126,7 @@ $kosListTolak = $ditolak->map(fn($p) => $p->penghuniKamar->kamar->kos->nama ?? n
                         <h3 class="font-bold text-base text-gray-900 dark:text-white pt-0.5">{{ $penghuniNama }}</h3>
                         @if($p->penghuniKamar && $p->penghuniKamar->penghuni && $p->penghuniKamar->penghuni->no_hp)
                         @php
-                        $waUrlP = \App\Services\WhatsAppService::generatePenghuniUrl($p->penghuniKamar->penghuni, $p->penghuniKamar);
+                        $waUrlP = \App\Services\WhatsAppService::generatePenghuniUrl($p->penghuniKamar->penghuni, $p->penghuniKamar, null, $p->penghuniKamar?->kamar, $p->penghuniKamar?->kamar?->kos);
                         @endphp
                         <a href="{{ $waUrlP }}" target="_blank" class="px-2 py-0.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold inline-flex items-center gap-1 shadow-xs group" title="Chat WhatsApp ke {{ $penghuniNama }}">
                             <svg class="w-3.5 h-3.5 fill-current text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform flex-shrink-0" viewBox="0 0 24 24">

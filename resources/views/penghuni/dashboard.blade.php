@@ -154,23 +154,27 @@
         $now = \Carbon\Carbon::now();
         $targetKeluar = $data['tanggal_keluar'];
         $isExpired = $now->gt($targetKeluar);
-        $overdueDays = $isExpired ? max(1, (int) $targetKeluar->diffInDays($now)) : 0;
+        $overdueDays = $isExpired ? (int) $targetKeluar->diffInDays($now) : 0;
 
         if ($isExpired) {
-        $initialText = "⚠️ Masa Sewa Terlewat {$overdueDays} Hari";
+            if ($overdueDays === 0) {
+                $initialText = "⚠️ Masa Sewa Jatuh Tempo Hari Ini";
+            } else {
+                $initialText = "⚠️ Masa Sewa Terlewat {$overdueDays} Hari";
+            }
         } else {
-        $diffInSeconds = $now->diffInSeconds($targetKeluar);
-        $d = intdiv($diffInSeconds, 86400);
-        $h = intdiv($diffInSeconds % 86400, 3600);
-        $m = intdiv($diffInSeconds % 3600, 60);
+            $diffInSeconds = $now->diffInSeconds($targetKeluar);
+            $d = intdiv($diffInSeconds, 86400);
+            $h = intdiv($diffInSeconds % 86400, 3600);
+            $m = intdiv($diffInSeconds % 3600, 60);
 
-        if ($d > 0) {
-        $initialText = "{$d} hari {$h} jam {$m} menit";
-        } elseif ($h > 0) {
-        $initialText = "{$h} jam {$m} menit";
-        } else {
-        $initialText = "{$m} menit";
-        }
+            if ($d > 0) {
+                $initialText = "{$d} hari {$h} jam {$m} menit";
+            } elseif ($h > 0) {
+                $initialText = "{$h} jam {$m} menit";
+            } else {
+                $initialText = "{$m} menit";
+            }
         }
         @endphp
 
@@ -248,8 +252,12 @@
                         update() {
                             const distance = this.target - Date.now();
                             if (distance < 0) { 
-                                const days = Math.max(1, Math.floor(Math.abs(distance) / (1000*60*60*24)));
-                                this.formatted = `⚠️ Masa Sewa Terlewat ${days} Hari`; 
+                                const days = Math.floor(Math.abs(distance) / (1000*60*60*24));
+                                if (days === 0) {
+                                    this.formatted = '⚠️ Masa Sewa Jatuh Tempo Hari Ini';
+                                } else {
+                                    this.formatted = `⚠️ Masa Sewa Terlewat ${days} Hari`;
+                                }
                                 this.isOverdue = true;
                                 clearInterval(this.timer); 
                                 return; 

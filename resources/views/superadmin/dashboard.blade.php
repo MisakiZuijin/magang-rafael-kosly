@@ -194,9 +194,10 @@
             <div class="space-y-2 max-h-48 overflow-y-auto no-scrollbar">
                 @foreach($data['penghuni_aktif']->take(5) as $pk)
                 @php
-                $tglKeluarTarget = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
-                $isExpired = $tglKeluarTarget && $tglKeluarTarget->isPast();
-                $daysLeft = $tglKeluarTarget ? round(now()->diffInDays($tglKeluarTarget, false)) : null;
+                $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
+                $isExpired = $targetKeluar && $targetKeluar->isPast();
+                $overdueDays = $isExpired ? (int) $targetKeluar->diffInDays(now()) : 0;
+                $daysLeft = ($targetKeluar && !$isExpired) ? (int) ceil(now()->diffInHours($targetKeluar) / 24) : 0;
                 @endphp
                 <div class="p-2.5 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-2">
                     <div class="min-w-0">
@@ -206,7 +207,7 @@
                     <div class="text-right flex-shrink-0 flex items-center gap-2">
                         <div>
                             <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : ($daysLeft !== null && $daysLeft <= 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
-                                {{ $isExpired ? 'Expired' : ($daysLeft == 0 ? 'Hari Ini' : ($daysLeft . ' Hr')) }}
+                                {{ $isExpired ? ($overdueDays > 0 ? 'Lewat ' . $overdueDays . ' Hr' : 'Jatuh Tempo Hari Ini') : ($daysLeft . ' Hr Lagi') }}
                             </span>
                         </div>
 

@@ -2,9 +2,17 @@
 @if(Auth::user()->role === 'penghuni')
 @php
     $user = Auth::user();
-    $penghuniKamar = $user->relationLoaded('activePenghuniKamar') 
-        ? $user->activePenghuniKamar 
-        : $user->activePenghuniKamar()->with('kamar')->first();
+    $penghuniKamar = $penghuniKamar ?? ($data['penghuni_kamar'] ?? null);
+    if (!$penghuniKamar) {
+        if ($user->relationLoaded('activePenghuniKamar')) {
+            $penghuniKamar = $user->activePenghuniKamar;
+        } else {
+            $penghuniKamar = $user->activePenghuniKamar()->with('kamar')->first();
+            if ($penghuniKamar) {
+                $user->setRelation('activePenghuniKamar', $penghuniKamar);
+            }
+        }
+    }
     $kamar = $penghuniKamar ? $penghuniKamar->kamar : null;
     $linkGrupWa = $kamar->link_grup_wa ?? null;
     $namaKamar = $kamar->kode_kamar ?? '';

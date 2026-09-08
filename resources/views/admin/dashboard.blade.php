@@ -137,9 +137,10 @@
             <div class="space-y-2.5">
                 @foreach($data['penghuni_aktif']->take(6) as $pk)
                 @php
-                $tglKeluarTarget = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
-                $isExpired = $tglKeluarTarget && $tglKeluarTarget->isPast();
-                $daysLeft = $tglKeluarTarget ? round(now()->diffInDays($tglKeluarTarget, false)) : null;
+                $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
+                $isExpired = $targetKeluar && $targetKeluar->isPast();
+                $overdueDays = $isExpired ? (int) $targetKeluar->diffInDays(now()) : 0;
+                $daysLeft = ($targetKeluar && !$isExpired) ? (int) ceil(now()->diffInHours($targetKeluar) / 24) : 0;
                 @endphp
                 <div class="p-3 bg-gray-50 dark:bg-gray-800/40 rounded-xl border border-gray-100 dark:border-gray-800 flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
@@ -158,7 +159,7 @@
                         <div>
                             @if($pk->tanggal_keluar)
                             <span class="px-2 py-0.5 text-[10px] font-bold rounded-lg {{ $isExpired ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300' : ($daysLeft <= 3 ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300') }}">
-                                {{ $isExpired ? 'Sudah Expired' : ($daysLeft == 0 ? 'Hari Ini' : $daysLeft . ' Hari Lagi') }}
+                                {{ $isExpired ? ($overdueDays > 0 ? 'Terlewat ' . $overdueDays . ' Hari' : 'Jatuh Tempo Hari Ini') : $daysLeft . ' Hari Lagi' }}
                             </span>
                             <p class="text-[10px] text-gray-400 font-mono mt-0.5">{{ $pk->tanggal_keluar->format('d M Y') }}</p>
                             @else

@@ -359,7 +359,7 @@
 
                                 @if($penghuniUser->no_hp)
                                 @php
-                                $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($penghuniUser, $activePenghuni);
+                                $waUrl = \App\Services\WhatsAppService::generatePenghuniUrl($penghuniUser, $activePenghuni, null, $kamar, $kos);
                                 @endphp
                                 <a href="{{ $waUrl }}"
                                     target="_blank"

@@ -11,6 +11,7 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
     protected array $defaultWith = [
         'penghuniKamar.penghuni',
         'penghuniKamar.kamar.kos.mitra',
+        'penghuniKamar.pembayaran',
         'diverifikasiOleh',
     ];
 
@@ -22,7 +23,17 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
     public function getByPenghuniKamar(int $penghuniKamarId): Collection
     {
         return $this->model->where('penghuni_kamar_id', $penghuniKamarId)
-            ->with(['penghuniKamar.kamar'])
+            ->latest()
+            ->get();
+    }
+
+    public function getAllForAdmin(): Collection
+    {
+        return $this->model->whereHas('penghuniKamar.kamar.kos', function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
+            ->with($this->defaultWith)
             ->latest()
             ->get();
     }
@@ -100,6 +111,16 @@ class PembayaranRepository extends BaseRepository implements PembayaranRepositor
             ->with($this->defaultWith)
             ->latest()
             ->get();
+    }
+
+    public function getByMitra(int $mitraId): Collection
+    {
+        return $this->model->whereHas('penghuniKamar.kamar.kos', function ($q) use ($mitraId) {
+            $q->where('mitra_id', $mitraId);
+        })
+        ->with($this->defaultWith)
+        ->latest()
+        ->get();
     }
 
     public function getPendingByMitra(int $mitraId): Collection

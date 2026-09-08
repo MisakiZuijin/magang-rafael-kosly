@@ -80,6 +80,7 @@
                     <input :type="showToken ? 'text' : 'password'"
                         name="wa_gateway_token"
                         value="{{ old('wa_gateway_token', $token) }}"
+                        autocomplete="new-password"
                         placeholder="Contoh: 8xK9pL2mQ0vWnRtY..."
                         class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white pr-16 focus:ring-emerald-500">
                     <button type="button" @click="showToken = !showToken" class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xs">

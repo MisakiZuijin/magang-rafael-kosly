@@ -153,10 +153,8 @@ if (!empty($roommateUnpaidInitial) && !empty($myVerifiedInitial)) {
         ? (($p->jumlah_hari ?: 1) * $hargaHari)
         : ($isMingguanAwal ? $hargaMinggu : $hargaBulan);
 
-        $activeCount = ($p->penghuniKamar && $p->penghuniKamar->kamar_id)
-        ? \App\Models\PenghuniKamar::where('kamar_id', $p->penghuniKamar->kamar_id)->where('status', 'aktif')->count()
-        : 2;
-        if ($activeCount < 1) $activeCount=1;
+        $activeCount = $activeCount ?? ($activePenghuniCount ?? (($p->penghuniKamar && $p->penghuniKamar->kamar_id) ? 2 : 1));
+        if ($activeCount < 1) $activeCount = 1;
             @endphp
 
             <div class="space-y-0"

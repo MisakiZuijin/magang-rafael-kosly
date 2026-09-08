@@ -27,12 +27,13 @@ class MitraPengumumanController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $mitraKosMap = Kos::where('mitra_id', $user->id)->pluck('nama', 'id')->toArray();
         $pengumumans = \App\Models\Pengumuman::where('dibuat_oleh', $user->id)
-            ->with(['targets.kos', 'targets.kamar.kos', 'dibuatOleh'])
+            ->with(['targets.kamar', 'dibuatOleh'])
             ->latest()
             ->get();
 
-        return view('mitra.pengumuman.index', compact('pengumumans'));
+        return view('mitra.pengumuman.index', compact('pengumumans', 'mitraKosMap'));
     }
 
     public function create()

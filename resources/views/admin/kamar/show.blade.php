@@ -13,8 +13,9 @@ $hasExpiredPenghuni = $activePenghunis->contains(function($pk) {
 $kamarOverdueDays = $hasExpiredPenghuni ? ($activePenghunis->filter(function($pk) {
     return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
 })->map(function($pk) {
-    return max(1, (int) \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->diffInDays(now()));
-})->max() ?: 0) : 0;
+    $targetKeluar = \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0);
+    return (int) $targetKeluar->diffInDays(now());
+})->max() ?? 0) : 0;
 
 $fotos = is_array($kamar->foto) ? array_values($kamar->foto) : [];
 $fotoUrls = array_map(function($f) {
@@ -73,7 +74,7 @@ $fotoUrls = array_map(function($f) {
                 Tipe {{ ucfirst($kamar->tipe) }}
             </span>
             <x-badge type="{{ $hasExpiredPenghuni ? 'danger' : ($isTerisi ? 'success' : 'warning') }}" size="xs">
-                {{ $hasExpiredPenghuni ? 'Jatuh Tempo (Terlewat ' . $kamarOverdueDays . ' Hari)' : ($isTerisi ? 'Terisi (' . $activePenghunis->count() . '/' . $kamar->kapasitas . ')' : 'Kosong') }}
+                {{ $hasExpiredPenghuni ? ($kamarOverdueDays > 0 ? 'Jatuh Tempo (Terlewat ' . $kamarOverdueDays . ' Hari)' : 'Jatuh Tempo Hari Ini') : ($isTerisi ? 'Terisi (' . $activePenghunis->count() . '/' . $kamar->kapasitas . ')' : 'Kosong') }}
             </x-badge>
         </div>
     </x-page-header>
@@ -347,7 +348,7 @@ $fotoUrls = array_map(function($f) {
             $tglKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
             $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
             $isExpiredPenghuni = $targetKeluar && $targetKeluar->isPast();
-            $overdueDays = $isExpiredPenghuni ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
+            $overdueDays = $isExpiredPenghuni ? (int) $targetKeluar->diffInDays(now()) : 0;
             @endphp
             <div class="p-3 rounded-xl border bg-gray-50/70 border-gray-200 dark:bg-gray-800/50 dark:border-gray-800 space-y-2 text-xs shadow-2xs">
                 {{-- Baris 1: Profil Penghuni (Avatar, Nama, No HP) & Tombol WhatsApp --}}

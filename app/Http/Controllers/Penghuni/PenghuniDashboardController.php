@@ -32,6 +32,7 @@ class PenghuniDashboardController extends Controller
         $data = $this->dashboardService->getPenghuniData($user->id);
 
         if (!empty($data['penghuni_kamar'])) {
+            $user->setRelation('activePenghuniKamar', $data['penghuni_kamar']);
             $this->pembayaranService->checkAndGenerateAutoBilling($data['penghuni_kamar']);
         }
 
@@ -42,7 +43,13 @@ class PenghuniDashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->activePenghuniKamar ? $user->activePenghuniKamar->loadMissing('kamar.kos') : $user->activePenghuniKamar()->with('kamar.kos')->first();
+        $penghuniKamar = $user->relationLoaded('activePenghuniKamar') && $user->activePenghuniKamar
+            ? $user->activePenghuniKamar->loadMissing('kamar.kos')
+            : $user->activePenghuniKamar()->with('kamar.kos')->first();
+
+        if ($penghuniKamar) {
+            $user->setRelation('activePenghuniKamar', $penghuniKamar);
+        }
 
         if (!$penghuniKamar || !$penghuniKamar->kamar) {
             return redirect()->back()->with('error', 'Anda belum terdaftar di kamar manapun.');
@@ -58,7 +65,13 @@ class PenghuniDashboardController extends Controller
 
         /** @var User $user */
         $user = Auth::user();
-        $penghuniKamar = $user->activePenghuniKamar ? $user->activePenghuniKamar->loadMissing('kamar.kos') : $user->activePenghuniKamar()->with('kamar.kos')->first();
+        $penghuniKamar = $user->relationLoaded('activePenghuniKamar') && $user->activePenghuniKamar
+            ? $user->activePenghuniKamar->loadMissing('kamar.kos')
+            : $user->activePenghuniKamar()->with('kamar.kos')->first();
+
+        if ($penghuniKamar) {
+            $user->setRelation('activePenghuniKamar', $penghuniKamar);
+        }
 
         if (!$penghuniKamar || !$penghuniKamar->kamar) {
             return view('penghuni.pembayaran', [
@@ -78,6 +91,7 @@ class PenghuniDashboardController extends Controller
         $this->pembayaranService->checkAndGenerateAutoBilling($penghuniKamar);
 
         $pembayarans = $this->pembayaranService->getByPenghuniKamar($penghuniKamar->id);
+        $pembayarans->each(fn($p) => $p->setRelation('penghuniKamar', $penghuniKamar));
         $rekening = $penghuniKamar->kamar->kos;
         $kamar = $penghuniKamar->kamar;
         $isKamarBerbagi = ($kamar && $kamar->tipe === 'berbagi');

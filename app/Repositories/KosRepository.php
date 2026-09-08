@@ -25,7 +25,12 @@ class KosRepository extends BaseRepository implements KosRepositoryInterface
 
     public function getByMitra(int $mitraId): Collection
     {
-        return $this->model->where('mitra_id', $mitraId)->with(['mitra', 'kamar.penghuniKamar.penghuni', 'aturanKos'])->latest()->get();
+        return $this->model->where('mitra_id', $mitraId)->with([
+            'mitra',
+            'aturanKos',
+            'kamar.penghuniKamar.penghuni',
+            'kamar.penghuniKamar.pembayaran',
+        ])->latest()->get();
     }
 
     public function getWithKamar(): Collection
@@ -35,7 +40,12 @@ class KosRepository extends BaseRepository implements KosRepositoryInterface
                   ->orWhereHas('mitra', function ($q) {
                       $q->where('is_pro', false);
                   });
-        })->with(['mitra', 'kamar.penghuniKamar.penghuni', 'aturanKos'])->latest()->get();
+        })->with([
+            'mitra',
+            'aturanKos',
+            'kamar.penghuniKamar.penghuni',
+            'kamar.penghuniKamar.pembayaran',
+        ])->latest()->get();
     }
 
     public function getWithKamarCount(): Collection

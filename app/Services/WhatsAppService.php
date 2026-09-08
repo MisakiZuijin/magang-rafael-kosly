@@ -18,8 +18,8 @@ class WhatsAppService
      */
     public function getApiKey(?User $user = null): ?string
     {
-        if ($user && $user->is_pro && !empty($user->wa_gateway_token)) {
-            return $user->wa_gateway_token;
+        if ($user && $user->is_pro) {
+            return !empty($user->wa_gateway_token) ? $user->wa_gateway_token : null;
         }
         return Setting::getByKey('fonnte_api_key', config('services.whatsapp.api_key'));
     }
@@ -29,8 +29,8 @@ class WhatsAppService
      */
     public function getEndpoint(?User $user = null): string
     {
-        if ($user && $user->is_pro && !empty($user->wa_gateway_endpoint)) {
-            return $user->wa_gateway_endpoint;
+        if ($user && $user->is_pro) {
+            return !empty($user->wa_gateway_endpoint) ? $user->wa_gateway_endpoint : 'https://api.fonnte.com/send';
         }
         return Setting::getByKey('fonnte_endpoint', config('services.whatsapp.endpoint', 'https://api.fonnte.com/send'));
     }
@@ -38,10 +38,13 @@ class WhatsAppService
     /**
      * Cek status device Fonnte secara langsung via API Fonnte.
      */
-    public function checkDeviceStatus(?string $customApiKey = null): array
+    public function checkDeviceStatus(?string $customApiKey = null, bool $allowGlobalFallback = true): array
     {
-        $apiKey = $customApiKey ?: $this->getApiKey();
-        if (!$apiKey) {
+        $apiKey = ($customApiKey !== null)
+            ? trim($customApiKey)
+            : ($allowGlobalFallback ? $this->getApiKey() : null);
+
+        if (empty($apiKey)) {
             return [
                 'connected' => false,
                 'status_text' => 'API Token Belum Dikonfigurasi',
@@ -109,15 +112,30 @@ class WhatsAppService
                 ]);
 
                 if ($response->successful()) {
-                    return [
-                        'success' => true,
-                        'message' => 'Pesan WhatsApp berhasil dikirim ke ' . $target,
-                        'data' => $response->json(),
-                    ];
+                    $json = $response->json();
+                    $isSuccess = isset($json['status']) && filter_var($json['status'], FILTER_VALIDATE_BOOLEAN);
+
+                    if ($isSuccess) {
+                        return [
+                            'success' => true,
+                            'message' => 'Pesan WhatsApp berhasil dikirim ke ' . $target,
+                            'data' => $json,
+                        ];
+                    } else {
+                        $reason = $json['reason'] ?? 'Gagal diproses oleh Fonnte (status false)';
+                        Log::warning("Fonnte gagal mengirim WA ke {$target}: {$reason}", ['response' => $json]);
+                        return [
+                            'success' => false,
+                            'message' => "Fonnte gagal mengirim pesan: {$reason}",
+                            'data' => $json,
+                        ];
+                    }
                 } else {
+                    $errorBody = $response->body();
+                    Log::error("HTTP error saat request ke Fonnte ({$response->status()}): {$errorBody}");
                     return [
                         'success' => false,
-                        'message' => 'Fonnte mengembalikan status HTTP ' . $response->status() . ': ' . $response->body(),
+                        'message' => 'Fonnte mengembalikan status HTTP ' . $response->status() . ': ' . $errorBody,
                     ];
                 }
             } catch (\Throwable $e) {

@@ -25,7 +25,7 @@ class MitraPenggunaController extends Controller
             ->with(['penghuniKamar' => function ($query) use ($mitraId) {
                 $query->whereHas('kamar.kos', function ($k) use ($mitraId) {
                     $k->where('mitra_id', $mitraId);
-                })->with('kamar.kos')->latest();
+                })->with(['kamar.kos', 'pembayaran'])->latest();
             }])
             ->latest()
             ->get();

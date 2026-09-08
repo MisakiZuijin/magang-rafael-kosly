@@ -28,7 +28,7 @@
     <div class="space-y-3">
         @foreach($pengumumans as $p)
         @php
-        $targetDesc = $p->getTargetDescription(true);
+        $targetDesc = $p->getTargetDescription(true, $mitraKosMap ?? null);
 
         $itemData = [
             'id' => $p->id,

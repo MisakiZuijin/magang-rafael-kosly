@@ -228,11 +228,11 @@ class PenghuniKamarService
     /**
      * Memeriksa seluruh notifikasi sewa (H-7 Bulanan, H-3 Bulanan & Mingguan, Jatuh Tempo, serta H+3 Pasca Jatuh Tempo).
      */
-    public function periksaSemuaNotifikasiSewa(): array
+    public function periksaSemuaNotifikasiSewa(bool $force = false): array
     {
         // Jalankan throttle agar tidak dieksekusi berulang-ulang di setiap HTTP request (dibatasi 1x per 5 menit)
         $lockKey = 'periksa_notifikasi_sewa_throttle';
-        if (\Illuminate\Support\Facades\Cache::has($lockKey)) {
+        if (!$force && \Illuminate\Support\Facades\Cache::has($lockKey)) {
             return [
                 'status' => 'cached',
                 'message' => 'Pemeriksaan notifikasi sewa baru saja dijalankan.',
@@ -376,16 +376,28 @@ class PenghuniKamarService
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
-                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
-                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
-
-                    $whatsAppService->sendDirect(
-                        $kamar->wa_group_id,
-                        "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-7)",
-                        $waMessage,
-                        $customToken,
-                        $customEndpoint
-                    );
+                    if ($mitra && $mitra->is_pro) {
+                        // Kos Mitra Pro: HANYA kirim jika Mitra Pro memiliki wa_gateway_token pribadi
+                        // Jika Mitra Pro tidak mengisi token, Admin TIDAK ikut campur
+                        if (!empty($mitra->wa_gateway_token)) {
+                            $whatsAppService->sendDirect(
+                                $kamar->wa_group_id,
+                                "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-7)",
+                                $waMessage,
+                                $mitra->wa_gateway_token,
+                                $mitra->wa_gateway_endpoint
+                            );
+                        } else {
+                            \Illuminate\Support\Facades\Log::info("Kamar {$kodeKamar} milik Mitra Pro {$mitra->nama} tidak menggunakan gateway WA. Pesan otomatis dilewati (Admin tidak ikut campur).");
+                        }
+                    } else {
+                        // Kos Mitra Biasa / Kelolaan Admin: Gunakan Global Admin Token
+                        $whatsAppService->sendDirect(
+                            $kamar->wa_group_id,
+                            "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-7)",
+                            $waMessage
+                        );
+                    }
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-7 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
@@ -500,16 +512,28 @@ class PenghuniKamarService
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
-                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
-                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
-
-                    $whatsAppService->sendDirect(
-                        $kamar->wa_group_id,
-                        "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-3)",
-                        $waMessage,
-                        $customToken,
-                        $customEndpoint
-                    );
+                    if ($mitra && $mitra->is_pro) {
+                        // Kos Mitra Pro: HANYA kirim jika Mitra Pro memiliki wa_gateway_token pribadi
+                        // Jika Mitra Pro tidak mengisi token, Admin TIDAK ikut campur
+                        if (!empty($mitra->wa_gateway_token)) {
+                            $whatsAppService->sendDirect(
+                                $kamar->wa_group_id,
+                                "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-3)",
+                                $waMessage,
+                                $mitra->wa_gateway_token,
+                                $mitra->wa_gateway_endpoint
+                            );
+                        } else {
+                            \Illuminate\Support\Facades\Log::info("Kamar {$kodeKamar} milik Mitra Pro {$mitra->nama} tidak menggunakan gateway WA. Pesan otomatis dilewati (Admin tidak ikut campur).");
+                        }
+                    } else {
+                        // Kos Mitra Biasa / Kelolaan Admin: Gunakan Global Admin Token
+                        $whatsAppService->sendDirect(
+                            $kamar->wa_group_id,
+                            "PENGINGAT MASA SEWA KAMAR {$kodeKamar} (H-3)",
+                            $waMessage
+                        );
+                    }
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H-3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
@@ -538,15 +562,13 @@ class PenghuniKamarService
 
         // Cari seluruh data penghuni_kamar yang:
         // 1. Status masih aktif
-        // 2. Tanggal keluar berada di rentang Jatuh Tempo (H-0 hingga sebelum H+3):
-        //    (tanggal_keluar <= now dan tanggal_keluar > 3 hari yang lalu)
-        //    (Mencegah pengiriman ganda pesan jatuh tempo saat kamar sudah masuk periode H+3)
+        // 2. Tanggal keluar sudah lewat (<= now) dan belum lewat lebih dari 3 hari (agar tidak mengirim data lampau)
         // 3. Kamar belum pernah dikirimkan notifikasi jatuh tempo untuk periode ini (kamar.notif_jatuh_tempo_sent_at IS NULL)
         $expiredList = PenghuniKamar::with(['penghuni', 'kamar.kos.mitra'])
             ->where('status', 'aktif')
             ->whereNotNull('tanggal_keluar')
             ->where('tanggal_keluar', '<=', $now)
-            ->where('tanggal_keluar', '>', $threeDaysAgo)
+            ->where('tanggal_keluar', '>=', $threeDaysAgo)
             ->whereHas('kamar', function ($q) {
                 $q->whereNull('notif_jatuh_tempo_sent_at');
             })
@@ -590,8 +612,8 @@ class PenghuniKamarService
                 if ($pk->penghuni) {
                     \App\Models\Notifikasi::create([
                         'user_id' => $pk->penghuni->id,
-                        'judul' => 'Masa Sewa Kamar Telah Jatuh Tempo',
-                        'pesan' => "Perhatian: Masa sewa Kamar {$kodeKamar} di {$kosNama} telah berakhir pada {$tglKeluarFormatted} WIB. Silakan lakukan perpanjangan sewa melalui menu Pembayaran atau konfirmasi penyelesaian sewa.",
+                        'judul' => "Masa Sewa Kamar Telah Jatuh Tempo Hari Ini",
+                        'pesan' => "Pemberitahuan: Masa sewa Kamar {$kodeKamar} di {$kosNama} telah habis per {$tglKeluarFormatted} WIB. Silakan lakukan pembayaran perpanjangan sewa melalui menu Pembayaran atau konfirmasi selesai sewa.",
                         'channel' => 'web',
                         'status' => 'terkirim',
                     ]);
@@ -600,13 +622,13 @@ class PenghuniKamarService
 
             // 2. Pesan WhatsApp Jatuh Tempo (Hanya nama aplikasi tanpa link web)
             $waMessage = "Halo *{$combinedNames}* (Kamar *{$kodeKamar}*),\n\n"
-                . "⚠️ *PEMBERITAHUAN MASA SEWA JATUH TEMPO*\n\n"
-                . "Kami informasikan bahwa masa sewa kamar kos Anda telah *BERAKHIR / JATUH TEMPO*.\n\n"
+                . "⚠️ *PEMBERITAHUAN MASA SEWA JATUH TEMPO HARI INI*\n\n"
+                . "Kami menginformasikan bahwa masa sewa kamar kos Anda telah *BERAKHIR / JATUH TEMPO HARI INI* (*{$tglKeluarFormatted} WIB*).\n\n"
                 . "📋 *RINCIAN SEWA KAMAR:*\n"
                 . "• Kos: *{$kosNama}*\n"
                 . "• Kamar: *{$kodeKamar}*\n"
                 . "• Batas Waktu Sewa: *{$tglKeluarFormatted} WIB*\n\n"
-                . "💡 *PANDUAN SELANJUTNYA:*\n"
+                . "💡 *PANDUAN TINDAK LANJUT:*\n"
                 . "1. Jika ingin *MEMPERPANJANG SEWA*, silakan buka aplikasi *{$appName}*, masuk ke menu *Pembayaran*, lalu lakukan transfer dan upload bukti pembayaran perpanjangan sewa Anda.\n"
                 . "2. Jika Anda *SUDAH SELESAI / CHECKOUT*, silakan konfirmasi kepada pihak pengelola/admin kos.\n\n"
                 . "Terima kasih atas kerja sama Anda!";
@@ -620,16 +642,28 @@ class PenghuniKamarService
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
-                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
-                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
-
-                    $whatsAppService->sendDirect(
-                        $kamar->wa_group_id,
-                        "PERINGATAN JATUH TEMPO SEWA KAMAR {$kodeKamar}",
-                        $waMessage,
-                        $customToken,
-                        $customEndpoint
-                    );
+                    if ($mitra && $mitra->is_pro) {
+                        // Kos Mitra Pro: HANYA kirim jika Mitra Pro memiliki wa_gateway_token pribadi
+                        // Jika Mitra Pro tidak mengisi token, Admin TIDAK ikut campur
+                        if (!empty($mitra->wa_gateway_token)) {
+                            $whatsAppService->sendDirect(
+                                $kamar->wa_group_id,
+                                "PERINGATAN JATUH TEMPO SEWA KAMAR {$kodeKamar}",
+                                $waMessage,
+                                $mitra->wa_gateway_token,
+                                $mitra->wa_gateway_endpoint
+                            );
+                        } else {
+                            \Illuminate\Support\Facades\Log::info("Kamar {$kodeKamar} milik Mitra Pro {$mitra->nama} tidak menggunakan gateway WA. Pesan otomatis dilewati (Admin tidak ikut campur).");
+                        }
+                    } else {
+                        // Kos Mitra Biasa / Kelolaan Admin: Gunakan Global Admin Token
+                        $whatsAppService->sendDirect(
+                            $kamar->wa_group_id,
+                            "PERINGATAN JATUH TEMPO SEWA KAMAR {$kodeKamar}",
+                            $waMessage
+                        );
+                    }
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA jatuh tempo ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }
@@ -751,16 +785,28 @@ class PenghuniKamarService
             if (!empty($kamar->wa_group_id) && $kamar->wa_group_id !== '-') {
                 try {
                     $mitra = $kamar->kos->mitra ?? null;
-                    $customToken = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_token)) ? $mitra->wa_gateway_token : null;
-                    $customEndpoint = ($mitra && $mitra->is_pro && !empty($mitra->wa_gateway_endpoint)) ? $mitra->wa_gateway_endpoint : null;
-
-                    $whatsAppService->sendDirect(
-                        $kamar->wa_group_id,
-                        "HIMBAUAN PENYELESAIAN SEWA KAMAR {$kodeKamar} (H+3)",
-                        $waMessage,
-                        $customToken,
-                        $customEndpoint
-                    );
+                    if ($mitra && $mitra->is_pro) {
+                        // Kos Mitra Pro: HANYA kirim jika Mitra Pro memiliki wa_gateway_token pribadi
+                        // Jika Mitra Pro tidak mengisi token, Admin TIDAK ikut campur
+                        if (!empty($mitra->wa_gateway_token)) {
+                            $whatsAppService->sendDirect(
+                                $kamar->wa_group_id,
+                                "HIMBAUAN PENYELESAIAN SEWA KAMAR {$kodeKamar} (H+3)",
+                                $waMessage,
+                                $mitra->wa_gateway_token,
+                                $mitra->wa_gateway_endpoint
+                            );
+                        } else {
+                            \Illuminate\Support\Facades\Log::info("Kamar {$kodeKamar} milik Mitra Pro {$mitra->nama} tidak menggunakan gateway WA. Pesan otomatis dilewati (Admin tidak ikut campur).");
+                        }
+                    } else {
+                        // Kos Mitra Biasa / Kelolaan Admin: Gunakan Global Admin Token
+                        $whatsAppService->sendDirect(
+                            $kamar->wa_group_id,
+                            "HIMBAUAN PENYELESAIAN SEWA KAMAR {$kodeKamar} (H+3)",
+                            $waMessage
+                        );
+                    }
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error("Gagal kirim WA H+3 ke Grup Kamar {$kodeKamar} ({$kamar->wa_group_id}): " . $e->getMessage());
                 }

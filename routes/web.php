@@ -47,7 +47,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'active'])->group(function () {
 
     // Universal Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');

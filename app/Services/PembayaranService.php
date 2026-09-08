@@ -17,6 +17,11 @@ class PembayaranService
         return $this->repository->getAll();
     }
 
+    public function getAllForAdmin(): Collection
+    {
+        return $this->repository->getAllForAdmin();
+    }
+
     public function getByPenghuniKamar(int $penghuniKamarId): Collection
     {
         return $this->repository->getByPenghuniKamar($penghuniKamarId);
@@ -35,6 +40,11 @@ class PembayaranService
     public function getDitolak(): Collection
     {
         return $this->repository->getDitolak();
+    }
+
+    public function getByMitra(int $mitraId): Collection
+    {
+        return $this->repository->getByMitra($mitraId);
     }
 
     public function getPendingByMitra(int $mitraId): Collection

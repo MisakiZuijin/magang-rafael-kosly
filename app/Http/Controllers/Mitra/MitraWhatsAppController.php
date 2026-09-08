@@ -20,7 +20,7 @@ class MitraWhatsAppController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $deviceStatus = $this->whatsAppService->checkDeviceStatus($user->wa_gateway_token);
+        $deviceStatus = $this->whatsAppService->checkDeviceStatus($user->wa_gateway_token, false);
 
         return view('mitra.whatsapp.index', [
             'token' => $user->wa_gateway_token,

@@ -260,8 +260,9 @@ return [
                     $kamarOverdueDays = $hasExpiredPenghuni ? ($activePenghunis->filter(function($pk) {
                         return $pk->tanggal_keluar && \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->isPast();
                     })->map(function($pk) {
-                        return max(1, (int) \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0)->diffInDays(now()));
-                    })->max() ?: 0) : 0;
+                        $targetKeluar = \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0);
+                        return (int) $targetKeluar->diffInDays(now());
+                    })->max() ?? 0) : 0;
                     @endphp
 
                     <div x-show="matchKamar(@js($kamarMeta), @js($kosSearchText))"
@@ -295,7 +296,7 @@ return [
                                     <svg class="w-3 h-3 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
-                                    <span>Jatuh Tempo (Terlewat {{ $kamarOverdueDays }} Hari)</span>
+                                    <span>{{ $kamarOverdueDays > 0 ? 'Jatuh Tempo (Terlewat ' . $kamarOverdueDays . ' Hari)' : 'Jatuh Tempo Hari Ini' }}</span>
                                 </span>
                                 @elseif($isTerisi)
                                 <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
@@ -424,7 +425,7 @@ return [
                             @php
                             $targetKeluar = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->setTime(14, 0, 0) : null;
                             $isPkExpired = $targetKeluar && $targetKeluar->isPast();
-                            $overdueDays = $isPkExpired ? max(1, (int) $targetKeluar->diffInDays(now())) : 0;
+                            $overdueDays = $isPkExpired ? (int) $targetKeluar->diffInDays(now()) : 0;
                             $tglKeluarStr = $pk->tanggal_keluar ? \Carbon\Carbon::parse($pk->tanggal_keluar)->format('d M Y') : '-';
                             @endphp
                             <div class="p-3 sm:p-3.5 rounded-2xl border bg-gray-50/70 dark:bg-gray-800/50 border-gray-200/80 dark:border-gray-700/70 space-y-2.5 shadow-2xs">

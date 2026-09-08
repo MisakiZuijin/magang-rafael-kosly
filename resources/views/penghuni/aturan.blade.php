@@ -20,7 +20,7 @@
         <x-empty-state message="Belum ada aturan yang ditetapkan oleh pemilik kos." />
     </x-card>
     @else
-    <div class="space-y-3">
+    <div class="space-y-2.5">
         @foreach($aturans as $index => $aturan)
         @php
         $aturanData = [
@@ -31,15 +31,15 @@
         ];
         @endphp
         <div @click="openDetail({{ json_encode($aturanData) }}, {{ $index + 1 }})"
-             class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-xs cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
-            <div class="flex items-start gap-3.5">
+             class="bg-white dark:bg-gray-900 rounded-xl p-3 sm:p-3.5 border border-gray-200 dark:border-gray-800 shadow-xs cursor-pointer hover:border-emerald-300 dark:hover:border-emerald-700 transition-all">
+            <div class="flex items-start gap-2.5">
                 {{-- Nomor urut rapi di kiri --}}
-                <div class="w-8 h-8 bg-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-xs mt-0.5">
-                    <span class="text-xs font-bold text-white">{{ $index + 1 }}</span>
+                <div class="w-6 h-6 bg-emerald-500 rounded-lg flex items-center justify-center flex-shrink-0 shadow-xs">
+                    <span class="text-xs font-bold font-mono text-white">{{ $index + 1 }}</span>
                 </div>
 
-                <div class="flex-1 min-w-0 pt-0.5">
-                    <p class="text-xs text-gray-700 dark:text-gray-200 leading-relaxed line-clamp-3">{{ $aturan->isi_aturan }}</p>
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs text-gray-700 dark:text-gray-200 leading-snug line-clamp-3">{{ $aturan->isi_aturan }}</p>
                     <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                         <span class="text-[10px] text-gray-400 font-mono flex items-center gap-1">
                             <svg class="w-3 h-3 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

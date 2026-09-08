@@ -30,8 +30,16 @@ class SuperAdminPencairanController extends Controller
         $endDate = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->endOfDay();
         $nextMonthStart = (clone $endDate)->addSecond();
 
-        // Eager load Kos & Mitra & count kamar dalam 1 query utama
-        $kosList = Kos::with(['mitra', 'kamar'])->withCount('kamar')->get();
+        // Eager load Kos & Mitra & count kamar dalam 1 query utama (hanya untuk kos non-Mitra Pro)
+        $kosList = Kos::with(['mitra', 'kamar'])
+            ->withCount('kamar')
+            ->where(function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', function ($m) {
+                      $m->where('is_pro', false);
+                  });
+            })
+            ->get();
 
         // Eager load pencairan tersimpan untuk periode ini (1 query batch)
         $pencairanMap = Pencairan::where('bulan', $bulan)
@@ -148,7 +156,14 @@ class SuperAdminPencairanController extends Controller
             'bukti_transfer' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
-        $kos = Kos::with('mitra')->findOrFail($request->kos_id);
+        $kos = Kos::with('mitra')
+            ->where(function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', function ($m) {
+                      $m->where('is_pro', false);
+                  });
+            })
+            ->findOrFail($request->kos_id);
         $bulan = (int)$request->bulan;
         $tahun = (int)$request->tahun;
 

@@ -20,9 +20,14 @@ class MitraPembayaranController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $pending = $this->pembayaranService->getPendingByMitra($user->id);
-        $terverifikasi = $this->pembayaranService->getTerverifikasiByMitra($user->id);
-        $ditolak = $this->pembayaranService->getDitolakByMitra($user->id);
+        $pembayarans = $this->pembayaranService->getByMitra($user->id);
+
+        $pending = $pembayarans->where('status', 'pending')
+            ->whereNotNull('bukti_transfer_url')
+            ->filter(fn($p) => $p->bukti_transfer_url !== '')
+            ->values();
+        $terverifikasi = $pembayarans->where('status', 'terverifikasi')->values();
+        $ditolak = $pembayarans->where('status', 'ditolak')->values();
 
         return view('mitra.pembayaran.index', compact('pending', 'terverifikasi', 'ditolak'));
     }

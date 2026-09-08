@@ -17,9 +17,14 @@ class AdminPembayaranController extends Controller
 
     public function index()
     {
-        $pending = $this->pembayaranService->getPending();
-        $terverifikasi = $this->pembayaranService->getTerverifikasi();
-        $ditolak = $this->pembayaranService->getDitolak();
+        $pembayarans = $this->pembayaranService->getAllForAdmin();
+
+        $pending = $pembayarans->where('status', 'pending')
+            ->whereNotNull('bukti_transfer_url')
+            ->filter(fn($p) => $p->bukti_transfer_url !== '')
+            ->values();
+        $terverifikasi = $pembayarans->where('status', 'terverifikasi')->values();
+        $ditolak = $pembayarans->where('status', 'ditolak')->values();
 
         $view = request()->is('superadmin*') ? 'superadmin.pembayaran.index' : 'admin.pembayaran.index';
         return view($view, compact('pending', 'terverifikasi', 'ditolak'));
@@ -86,7 +91,7 @@ class AdminPembayaranController extends Controller
     {
         $pembayaran = \App\Models\Pembayaran::with([
             'penghuniKamar.penghuni',
-            'penghuniKamar.kamar.kos.mitra',
+            'penghuniKamar.kamar.kos',
             'diverifikasiOleh'
         ])->where('kode_invoice', $id)
           ->orWhere('id', is_numeric($id) ? (int)$id : 0)

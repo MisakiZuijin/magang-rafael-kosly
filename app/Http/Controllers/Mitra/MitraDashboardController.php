@@ -31,7 +31,10 @@ class MitraDashboardController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
-        $kosList = Kos::where('mitra_id', $user->id)->with(['kamar.penghuniKamar.penghuni'])->get();
+        $kosList = Kos::where('mitra_id', $user->id)->with([
+            'kamar.penghuniKamar.penghuni',
+            'kamar.penghuniKamar.pembayaran',
+        ])->get();
         $kamarData = $kosList->pluck('kamar')->flatten();
 
         return view('mitra.kamar', compact('kamarData', 'kosList'));

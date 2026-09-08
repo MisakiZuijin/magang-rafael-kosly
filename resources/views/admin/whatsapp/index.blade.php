@@ -81,30 +81,30 @@ $testRoute = $isSuperAdmin ? route('superadmin.whatsapp.test') : route('admin.wh
             @csrf
             <div>
                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    API Token Fonnte <span class="text-red-500">*</span>
+                    API Token Fonnte <span class="text-[11px] font-normal text-gray-400">(Opsional)</span>
                 </label>
                 <div class="relative">
                     <input :type="showToken ? 'text' : 'password'"
                         name="fonnte_api_key"
                         value="{{ old('fonnte_api_key', $apiKey) }}"
-                        placeholder="Contoh: 8xK9pL2mQ0vWnRtY..."
-                        required
+                        autocomplete="new-password"
+                        placeholder="Contoh: 8xK9pL2mQ0vWnRtY... (Kosongkan jika tidak menggunakan WA Gateway)"
                         class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white pr-10 focus:ring-emerald-500">
                     <button type="button" @click="showToken = !showToken" class="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-white text-xs">
                         <span x-text="showToken ? 'Sembunyikan' : 'Lihat'"></span>
                     </button>
                 </div>
-                <p class="text-[10px] text-gray-400 mt-1 italic">* Token API unik ini didapatkan dari dashboard akun Fonnte Anda di fonnte.com.</p>
+                <p class="text-[10px] text-gray-400 mt-1 italic">* Token API unik ini didapatkan dari dashboard akun Fonnte Anda di fonnte.com. Kosongkan jika ingin menonaktifkan gateway.</p>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-                    Endpoint API Fonnte
+                    Endpoint API Fonnte <span class="text-[11px] font-normal text-gray-400">(Opsional)</span>
                 </label>
                 <input type="url"
                     name="fonnte_endpoint"
                     value="{{ old('fonnte_endpoint', $endpoint) }}"
-                    required
+                    placeholder="https://api.fonnte.com/send"
                     class="w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono text-gray-900 dark:text-white focus:ring-emerald-500">
             </div>
 

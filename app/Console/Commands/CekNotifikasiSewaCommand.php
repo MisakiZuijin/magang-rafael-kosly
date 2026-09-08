@@ -28,7 +28,7 @@ class CekNotifikasiSewaCommand extends Command
     {
         $this->info('Memeriksa masa sewa penghuni kos...');
 
-        $hasil = $penghuniKamarService->periksaSemuaNotifikasiSewa();
+        $hasil = $penghuniKamarService->periksaSemuaNotifikasiSewa(true);
 
         $h7Processed = $hasil['h7']['processed'] ?? 0;
         $h7Total = $hasil['h7']['total_kamar_h7'] ?? ($hasil['h7']['total_h7'] ?? 0);

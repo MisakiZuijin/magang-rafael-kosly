@@ -49,7 +49,7 @@ class Pengumuman extends Model
     /**
      * Menghasilkan teks deskripsi target pengumuman secara in-memory tanpa query N+1.
      */
-    public function getTargetDescription(bool $isMitra = false): string
+    public function getTargetDescription(bool $isMitra = false, ?array $kosMap = null): string
     {
         if (!$this->relationLoaded('targets') || $this->targets->isEmpty()) {
             return $isMitra ? 'Semua Kos Milik Anda' : 'Semua User / Anak Kos';
@@ -59,15 +59,20 @@ class Pengumuman extends Model
         $targetTipe = $firstTarget->target_tipe;
 
         if ($targetTipe === 'kos') {
-            $kosNames = $this->targets->map(function ($t) {
+            $kosNames = $this->targets->map(function ($t) use ($kosMap) {
+                if ($kosMap && isset($kosMap[$t->target_id])) {
+                    return $kosMap[$t->target_id];
+                }
                 return $t->kos ? $t->kos->nama : null;
             })->filter()->unique()->values()->toArray();
 
             return !empty($kosNames) ? 'Target Kos: ' . implode(', ', $kosNames) : ($isMitra ? 'Semua Kos Milik Anda' : 'Semua User / Anak Kos');
         } elseif ($targetTipe === 'kamar') {
-            $kamarNames = $this->targets->map(function ($t) {
+            $kamarNames = $this->targets->map(function ($t) use ($kosMap) {
                 if ($t->kamar) {
-                    $kosNama = $t->kamar->kos ? $t->kamar->kos->nama : '-';
+                    $kosNama = ($kosMap && isset($kosMap[$t->kamar->kos_id]))
+                        ? $kosMap[$t->kamar->kos_id]
+                        : ($t->kamar->kos ? $t->kamar->kos->nama : '-');
                     return 'Kamar ' . $t->kamar->kode_kamar . ' (' . $kosNama . ')';
                 }
                 return null;

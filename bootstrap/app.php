@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\RoleMiddleware::class,
             'mitra.pro' => \App\Http\Middleware\EnsureMitraPro::class,
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
