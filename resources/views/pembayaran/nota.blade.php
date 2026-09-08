@@ -36,7 +36,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
     </div>
 
     {{-- HALAMAN 1: Lembar Rincian Nota Resmi (Mobile-First di Web, Desktop A4 di Print) --}}
-    <div class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 relative overflow-hidden print:overflow-visible print:shadow-none print:border-none print:p-0 print:rounded-none print:space-y-4 print:bg-white print:text-black">
+    <div class="print-page-1 bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-4 relative overflow-hidden print:overflow-visible print:shadow-none print:border-none print:rounded-none print:space-y-4 print:bg-white print:text-black">
         {{-- Stamp Watermark --}}
         <div class="absolute right-3 top-3 sm:right-6 sm:top-6 opacity-10 sm:opacity-15 pointer-events-none transform rotate-12 border-2 sm:border-4 border-emerald-600 p-1.5 sm:p-3 rounded-xl text-center select-none print:opacity-20">
             <div class="text-xs sm:text-xl font-black uppercase text-emerald-600 tracking-widest">LUNAS</div>
@@ -64,24 +64,50 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
         <div class="grid grid-cols-1 print:grid-cols-2 gap-3.5 print:gap-4 p-3.5 sm:p-4 bg-gray-50/80 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-800 print:bg-gray-50 print:border-gray-200 text-xs">
             {{-- Data Penghuni (Atas di Web, Kiri di PDF) --}}
             <div class="space-y-1 pb-3 print:pb-0 border-b print:border-b-0 print:border-r border-gray-200/60 dark:border-gray-700/60 print:border-gray-300 print:pr-4">
-                <span class="text-[9px] font-bold text-gray-400 print:text-gray-600 uppercase tracking-wider block">👤 Ditujukan Kepada (Penghuni)</span>
+                <span class="text-[9px] font-bold text-gray-400 print:text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-gray-400 print:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <span>Ditujukan Kepada (Penghuni)</span>
+                </span>
                 <p class="font-bold text-sm text-gray-900 dark:text-white print:text-black">{{ $pembayaran->penghuniKamar->penghuni->nama ?? '-' }}</p>
                 <div class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400 print:text-gray-700 font-mono">
-                    <p>📞 {{ $pembayaran->penghuniKamar->penghuni->no_hp ?? '-' }}</p>
-                    <p class="truncate font-sans text-[11px]">✉️ {{ $pembayaran->penghuniKamar->penghuni->email ?? '-' }}</p>
+                    <p class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-gray-400 print:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        <span>{{ $pembayaran->penghuniKamar->penghuni->no_hp ?? '-' }}</span>
+                    </p>
+                    <p class="truncate font-sans text-[11px] flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-gray-400 print:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        <span>{{ $pembayaran->penghuniKamar->penghuni->email ?? '-' }}</span>
+                    </p>
                 </div>
             </div>
 
             {{-- Data Lokasi Hunian (Bawah di Web, Kanan di PDF) --}}
             <div class="space-y-1 print:pl-2">
-                <span class="text-[9px] font-bold text-gray-400 print:text-gray-600 uppercase tracking-wider block">🏠 {{ $userRole === 'mitra' ? 'Lokasi Kos' : 'Lokasi Hunian' }}</span>
+                <span class="text-[9px] font-bold text-gray-400 print:text-gray-600 uppercase tracking-wider flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-gray-400 print:text-gray-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                    </svg>
+                    <span>{{ $userRole === 'mitra' ? 'Lokasi Kos' : 'Lokasi Hunian' }}</span>
+                </span>
                 @if($userRole === 'mitra')
                 <p class="font-bold text-sm text-gray-900 dark:text-white print:text-black">{{ $pembayaran->penghuniKamar->kamar->kos->nama ?? '-' }} <span class="text-emerald-600 dark:text-emerald-400 font-mono text-xs">(Kamar {{ $pembayaran->penghuniKamar->kamar->kode_kamar ?? '-' }})</span></p>
                 @else
                 <p class="font-bold text-sm text-gray-900 dark:text-white print:text-black">Kamar {{ $pembayaran->penghuniKamar->kamar->kode_kamar ?? '-' }}</p>
                 @endif
                 <div class="space-y-0.5 text-xs text-gray-500 dark:text-gray-400 print:text-gray-700">
-                    <p class="text-[11px] leading-relaxed">{{ $pembayaran->penghuniKamar->kamar->kos->alamat ?? 'Alamat Kos' }}</p>
+                    <p class="text-[11px] leading-relaxed flex items-start gap-1.5">
+                        <svg class="w-3.5 h-3.5 text-gray-400 print:text-gray-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span>{{ $pembayaran->penghuniKamar->kamar->kos->alamat ?? 'Alamat Kos' }}</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -162,7 +188,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
     ? $effectiveBukti
     : asset('storage/' . $effectiveBukti);
     @endphp
-    <div class="print-page-break bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3 print:shadow-none print:border-none print:p-0 print:rounded-none print:space-y-4 print:bg-white print:text-black">
+    <div class="print-page-break mt-4 sm:mt-6 bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-4 sm:p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm space-y-3 print:shadow-none print:border-none print:p-0 print:rounded-none print:space-y-4 print:bg-white print:text-black">
         {{-- Header Lampiran --}}
         <div class="flex items-center justify-between pb-2.5 border-b border-gray-100 dark:border-gray-800 print:border-gray-300">
             <div class="space-y-0.5">
@@ -178,7 +204,6 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
                 </p>
             </div>
             <div class="text-right">
-                <span class="text-[10px] text-gray-500 font-mono hidden print:inline-block">Halaman 2 / 2</span>
                 <a href="{{ $buktiImg }}" target="_blank" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline print:hidden flex items-center gap-1">
                     <span>Buka Foto</span>
                 </a>
@@ -187,7 +212,9 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
 
         @if($isDiwakilkan && $uploaderName)
         <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/50 rounded-xl flex items-center gap-2 text-[11px] text-blue-800 dark:text-blue-300 print:bg-blue-50 print:border-blue-200">
-            <span class="text-sm">👥</span>
+            <svg class="w-4 h-4 text-blue-700 dark:text-blue-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
             <span>Pembayaran kamar diwakilkan oleh <strong>{{ $uploaderName }}</strong> (Bukti transfer sekamar).</span>
         </div>
         @endif
@@ -228,7 +255,7 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
     @media print {
         @page {
             size: A4 portrait;
-            margin: 12mm 15mm;
+            margin: 0;
         }
 
         html,
@@ -241,6 +268,8 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
             font-size: 11pt !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
 
         /* Override wrapper aplikasi mobile agar saat cetak PDF menjadi format desktop A4 penuh */
@@ -287,14 +316,20 @@ $invoiceNumber = $pembayaran->kode_invoice ?? ('INV-' . date('Ymd', strtotime($p
             border-color: #e5e7eb !important;
         }
 
-        /* Pemisah Halaman untuk Cetak PDF */
+        /* Halaman 1 Spacing saat Cetak PDF */
+        .print-page-1 {
+            padding: 12mm 15mm !important;
+            margin: 0 !important;
+        }
+
+        /* Pemisah & Jarak Halaman 2 untuk Cetak PDF */
         .print-page-break {
             page-break-before: always !important;
             break-before: page !important;
             clear: both !important;
             display: block !important;
-            margin-top: 0 !important;
-            padding-top: 0 !important;
+            margin: 0 !important;
+            padding: 15mm 15mm 12mm 15mm !important;
         }
 
         .print-img-full {
