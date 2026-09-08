@@ -143,7 +143,7 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
         @endphp
 
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-4 border border-gray-200 dark:border-gray-800 shadow-sm space-y-4">
-            <div class="flex items-center justify-between pb-1 border-b border-gray-100 dark:border-gray-800">
+            <div class="pb-2 border-b border-gray-100 dark:border-gray-800 space-y-1.5">
                 <div>
                     <h3 class="font-bold text-sm text-gray-900 dark:text-white flex items-center gap-1.5">
                         <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -151,11 +151,13 @@ $exportRoute = $isSuperAdmin ? route('superadmin.laporan.export') : route('admin
                         </svg>
                         <span>Grafik Pendapatan Per Bulan</span>
                     </h3>
-                    <p class="text-[10px] text-gray-400">Tren pendapatan sewa terverifikasi selama 6 bulan terakhir</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Tren pendapatan sewa terverifikasi selama 6 bulan terakhir</p>
                 </div>
-                <span class="text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
-                    6 Bulan Terakhir
-                </span>
+                <div>
+                    <span class="inline-flex items-center text-[10px] font-bold font-mono px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                        6 Bulan Terakhir
+                    </span>
+                </div>
             </div>
 
             {{-- Ringkasan 6 Bulan --}}
