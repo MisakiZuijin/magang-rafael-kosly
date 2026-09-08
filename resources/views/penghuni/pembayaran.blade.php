@@ -674,7 +674,7 @@ $riwayat = $pembayarans->whereIn('status', ['terverifikasi', 'ditolak']);
             </div>
             @else
                 @if($isVerified)
-                <div class="flex items-center justify-between flex-wrap gap-2 text-gray-600 dark:text-gray-300">
+                <div class="space-y-1 text-gray-600 dark:text-gray-300">
                     <span class="flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -682,9 +682,9 @@ $riwayat = $pembayarans->whereIn('status', ['terverifikasi', 'ditolak']);
                         <span>Diverifikasi: {{ $waktuVerifTolak ?: '-' }}</span>
                     </span>
                     @if($tglTampil)
-                    <span class="text-gray-400 dark:text-gray-500 font-mono text-[11px]">
-                        📅 Tgl Bayar: {{ $tglTampil }}
-                    </span>
+                    <div class="text-gray-400 dark:text-gray-500 font-mono text-[11px] flex items-center gap-1">
+                        <span>📅 Tgl Bayar: {{ $tglTampil }}</span>
+                    </div>
                     @endif
                 </div>
                 @else
