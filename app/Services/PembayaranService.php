@@ -233,7 +233,7 @@ class PembayaranService
                         'tanggal_bayar' => now(),
                         'status' => 'pending',
                         'porsi_bayar' => 100,
-                        'jumlah' => $jumlahBiaya,
+                        'jumlah' => 0,
                         'catatan_verifikasi' => "Menunggu verifikasi admin (Pelunasan 1 kamar {$tarifLabel} diunggah oleh {$uploaderName} pada {$uploadTimeStr})",
                     ];
 
@@ -387,7 +387,7 @@ class PembayaranService
 
                     if ($existingVerified) {
                         $existingVerified->update([
-                            'jumlah' => $fullAmount,
+                            'jumlah' => 0,
                             'porsi_bayar' => 100,
                             'bukti_transfer_url' => $pembayaran->bukti_transfer_url,
                             'tanggal_bayar' => $paymentDate,
@@ -409,7 +409,7 @@ class PembayaranService
 
                         if ($roommatePending) {
                             $roommatePending->update([
-                                'jumlah' => $fullAmount,
+                                'jumlah' => 0,
                                 'status' => 'terverifikasi',
                                 'porsi_bayar' => 100,
                                 'bukti_transfer_url' => $pembayaran->bukti_transfer_url,
@@ -421,7 +421,7 @@ class PembayaranService
                         } else {
                             Pembayaran::create([
                                 'penghuni_kamar_id' => $roommatePk->id,
-                                'jumlah' => $fullAmount,
+                                'jumlah' => 0,
                                 'porsi_bayar' => 100,
                                 'bukti_transfer_url' => $pembayaran->bukti_transfer_url,
                                 'tipe_perpanjangan' => $pembayaran->tipe_perpanjangan,

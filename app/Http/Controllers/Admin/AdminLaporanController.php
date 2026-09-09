@@ -30,17 +30,7 @@ class AdminLaporanController extends Controller
     {
         $pembayarans = $this->pembayaranService->getTerverifikasi();
         $kosList = $this->kosService->getWithKamar();
-        $logs = LogAktivitas::where(function ($q) {
-                $q->whereNull('user_id')
-                  ->orWhereHas('user', function ($u) {
-                      $u->where('role', '!=', 'mitra')
-                        ->orWhere('is_pro', false);
-                  });
-            })
-            ->with('user')
-            ->latest()
-            ->limit(100)
-            ->get();
+        $logs = $this->logAktivitasService->getLatest(100);
 
         $allKamars = $kosList->flatMap->kamar;
         $totalKamar = $allKamars->count();
@@ -70,13 +60,6 @@ class AdminLaporanController extends Controller
 
         $pembayarans = $this->pembayaranService->getLaporan($start, $end);
         $logs = LogAktivitas::whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59'])
-            ->where(function ($q) {
-                $q->whereNull('user_id')
-                  ->orWhereHas('user', function ($u) {
-                      $u->where('role', '!=', 'mitra')
-                        ->orWhere('is_pro', false);
-                  });
-            })
             ->with('user')
             ->latest()
             ->get();
@@ -101,15 +84,8 @@ class AdminLaporanController extends Controller
             ->latest()
             ->get();
 
-        // Query log aktivitas sistem (hanya admin/non-pro)
+        // Query log aktivitas sistem (seluruh log aktivitas sistem)
         $logs = LogAktivitas::whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59'])
-            ->where(function ($q) {
-                $q->whereNull('user_id')
-                  ->orWhereHas('user', function ($u) {
-                      $u->where('role', '!=', 'mitra')
-                        ->orWhere('is_pro', false);
-                  });
-            })
             ->with('user')
             ->latest()
             ->get();
