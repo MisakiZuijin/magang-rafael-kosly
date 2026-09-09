@@ -13,10 +13,10 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
     filterKosId: 'all',
     search: '',
     tambahKosId: 'all',
-    tambahKosNama: 'Semua Gedung Kos',
+    tambahKosNama: 'Semua Kos',
     editData: { id: '', kos_id: '', kos_nama: '', isi_aturan: '' },
     editUrl: '',
-    openTambahModal(kosId = 'all', kosNama = 'Semua Gedung Kos') {
+    openTambahModal(kosId = 'all', kosNama = 'Semua Kos') {
         this.tambahKosId = kosId;
         this.tambahKosNama = kosNama;
         this.modalTambah = true;
@@ -47,11 +47,11 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
     }
 }">
     {{-- Header --}}
-    <x-page-header title="Kelola Aturan Kos" subtitle="Atur tata tertib sewa dikelompokkan per gedung kos" backUrl="{{ route('dashboard') }}" />
+    <x-page-header title="Kelola Aturan Kos" subtitle="Atur tata tertib sewa dikelompokkan per kos" backUrl="{{ route('dashboard') }}" />
 
     {{-- Top Action & Summary Bar --}}
     <div class="space-y-3">
-        <button @click="openTambahModal('all', 'Semua Gedung Kos')" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-2">
+        <button @click="openTambahModal('all', 'Semua Kos')" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-sm active:scale-95 transition-all text-xs flex items-center justify-center gap-2">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
@@ -69,7 +69,7 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
                     <span>Filter & Pencarian</span>
                 </span>
                 <span class="font-mono text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    {{ $kosList->count() }} Gedung · {{ $aturans->count() }} Total Aturan
+                    {{ $kosList->count() }} Kos · {{ $aturans->count() }} Total Aturan
                 </span>
             </div>
 
@@ -90,7 +90,7 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
                     <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
-                    <span>Pilih Gedung Kos:</span>
+                    <span>Pilih Kos:</span>
                 </label>
                 <select x-model="filterKosId" class="w-full py-2 px-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold text-gray-900 dark:text-white focus:ring-emerald-500">
                     <option value="all">-- Tampilkan Semua Kos ({{ $kosList->count() }}) --</option>
@@ -105,7 +105,7 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
 
     {{-- Grouped Aturan per Kos --}}
     @if($kosList->isEmpty())
-    <x-empty-state message="Belum ada gedung kos terdaftar di sistem. Silakan tambahkan kos terlebih dahulu." />
+    <x-empty-state message="Belum ada kos terdaftar di sistem. Silakan tambahkan kos terlebih dahulu." />
     @else
     <div class="space-y-6">
         @foreach($kosList as $kos)
@@ -118,7 +118,7 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
             x-transition
             class="bg-white dark:bg-gray-900 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-sm overflow-hidden">
 
-            {{-- Header Gedung Kos --}}
+            {{-- Header Kos --}}
             <div class="p-4 sm:p-5 bg-gray-50/90 dark:bg-gray-800/60 border-b border-gray-200/80 dark:border-gray-800">
                 <div class="flex items-start gap-3 min-w-0">
                     <div class="w-11 h-11 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-700 dark:text-emerald-400 flex items-center justify-center flex-shrink-0 shadow-2xs mt-0.5">
@@ -251,8 +251,8 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
                     </template>
                 </div>
                 <div class="min-w-0 flex-1">
-                    <p class="font-bold text-[11px] uppercase tracking-wider" x-text="tambahKosId === 'all' ? 'Target: SEMUA GEDUNG KOS' : 'Target: GEDUNG KOS KHUSUS'"></p>
-                    <p class="text-xs font-semibold mt-0.5 truncate" x-text="tambahKosId === 'all' ? 'Aturan ini akan otomatis diterapkan ke seluruh ({{ $kosList->count() }}) gedung kos.' : tambahKosNama"></p>
+                    <p class="font-bold text-[11px] uppercase tracking-wider" x-text="tambahKosId === 'all' ? 'Target: SEMUA KOS' : 'Target: KOS KHUSUS'"></p>
+                    <p class="text-xs font-semibold mt-0.5 truncate" x-text="tambahKosId === 'all' ? 'Aturan ini akan otomatis diterapkan ke seluruh ({{ $kosList->count() }}) kos.' : tambahKosNama"></p>
                 </div>
             </div>
 
@@ -284,7 +284,7 @@ $prefix = $isSuperAdmin ? 'superadmin' : 'admin';
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 </div>
-                <span class="font-bold">Gedung Kos:</span>
+                <span class="font-bold">Kos:</span>
                 <span class="font-semibold text-emerald-600 dark:text-emerald-400" x-text="editData.kos_nama"></span>
             </div>
 

@@ -30,7 +30,17 @@ class AdminLaporanController extends Controller
     {
         $pembayarans = $this->pembayaranService->getTerverifikasi();
         $kosList = $this->kosService->getWithKamar();
-        $logs = $this->logAktivitasService->getLatest(100);
+        $logs = LogAktivitas::where(function ($q) {
+                $q->whereNull('user_id')
+                  ->orWhereHas('user', function ($u) {
+                      $u->where('role', '!=', 'mitra')
+                        ->orWhere('is_pro', false);
+                  });
+            })
+            ->with('user')
+            ->latest()
+            ->limit(100)
+            ->get();
 
         $allKamars = $kosList->flatMap->kamar;
         $totalKamar = $allKamars->count();
@@ -60,6 +70,13 @@ class AdminLaporanController extends Controller
 
         $pembayarans = $this->pembayaranService->getLaporan($start, $end);
         $logs = LogAktivitas::whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59'])
+            ->where(function ($q) {
+                $q->whereNull('user_id')
+                  ->orWhereHas('user', function ($u) {
+                      $u->where('role', '!=', 'mitra')
+                        ->orWhere('is_pro', false);
+                  });
+            })
             ->with('user')
             ->latest()
             ->get();
@@ -73,24 +90,44 @@ class AdminLaporanController extends Controller
         $start = $request->input('start', date('Y-m-01'));
         $end = $request->input('end', date('Y-m-d'));
 
-        // Query data transaksi pembayaran terverifikasi
+        // Query data transaksi pembayaran terverifikasi (hanya admin/non-pro)
         $pembayarans = Pembayaran::with(['penghuniKamar.penghuni', 'penghuniKamar.kamar.kos.mitra'])
             ->where('status', 'terverifikasi')
+            ->whereHas('penghuniKamar.kamar.kos', function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
             ->whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59'])
             ->latest()
             ->get();
 
-        // Query log aktivitas sistem
+        // Query log aktivitas sistem (hanya admin/non-pro)
         $logs = LogAktivitas::whereBetween('created_at', [$start . ' 00:00:00', $end . ' 23:59:59'])
+            ->where(function ($q) {
+                $q->whereNull('user_id')
+                  ->orWhereHas('user', function ($u) {
+                      $u->where('role', '!=', 'mitra')
+                        ->orWhere('is_pro', false);
+                  });
+            })
             ->with('user')
             ->latest()
             ->get();
 
-        // Query data kos untuk rekapitulasi pendapatan per kos
-        $kosList = Kos::with('mitra')->get();
+        // Query data kos untuk rekapitulasi pendapatan per kos (hanya admin/non-pro)
+        $kosList = Kos::where(function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
+            ->with('mitra')
+            ->get();
 
-        // Query data okupansi kamar kos
-        $kamars = Kamar::with(['kos.mitra', 'penghuniKamar' => function($q) {
+        // Query data okupansi kamar kos (hanya kos admin/non-pro)
+        $kamars = Kamar::whereHas('kos', function ($q) {
+                $q->whereNull('mitra_id')
+                  ->orWhereHas('mitra', fn($m) => $m->where('is_pro', false));
+            })
+            ->with(['kos.mitra', 'penghuniKamar' => function($q) {
                 $q->where('status', 'aktif')->with('penghuni');
             }])
             ->get();
