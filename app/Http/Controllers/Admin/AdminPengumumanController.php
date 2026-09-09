@@ -53,8 +53,10 @@ class AdminPengumumanController extends Controller
             $prefilledKamar = $allKamars->firstWhere('id', (int)$selectedKamarId);
         }
 
+        $waStatus = $this->whatsAppService->checkDeviceStatus();
+
         $view = request()->is('superadmin*') ? 'superadmin.pengumuman.create' : 'admin.pengumuman.create';
-        return view($view, compact('kosList', 'allKamars', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar'));
+        return view($view, compact('kosList', 'allKamars', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar', 'waStatus'));
     }
 
     public function store(Request $request)

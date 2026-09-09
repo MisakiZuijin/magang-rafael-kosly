@@ -101,6 +101,35 @@ $initIsi = "Halo Penghuni Kos,\n\nPemberitahuan penting bagi Anda yang mendapati
                         </span>
                     </label>
                 </div>
+
+                {{-- Peringatan Status WhatsApp Gateway --}}
+                <div x-show="channel === 'whatsapp' || channel === 'keduanya'" x-transition class="mt-2.5">
+                    @if(!empty($waStatus['connected']))
+                    <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0"></span>
+                            <span class="text-[11px] font-semibold">WhatsApp Gateway <strong>Terhubung</strong> ({{ $waStatus['device'] ?? 'Device Aktif' }})</span>
+                        </div>
+                    </div>
+                    @else
+                    <div class="p-2.5 bg-amber-50/90 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-800 dark:text-amber-300 flex items-start justify-between gap-2">
+                        <div class="flex items-start gap-2">
+                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <div class="text-[11px] leading-relaxed">
+                                <span class="font-bold">Perhatian:</span> WhatsApp Gateway saat ini <strong>{{ $waStatus['status_text'] ?? 'Belum Terhubung / Token Kosong' }}</strong>. Pesan WhatsApp tidak akan terkirim ke penghuni jika gateway offline.
+                            </div>
+                        </div>
+                        @php
+                        $waSettingUrl = $isSuperAdmin ? route('superadmin.whatsapp.index') : route('admin.whatsapp.index');
+                        @endphp
+                        <a href="{{ $waSettingUrl }}" class="flex-shrink-0 text-[10px] font-bold px-2 py-1 bg-amber-200/70 hover:bg-amber-300 dark:bg-amber-900/60 dark:hover:bg-amber-800 text-amber-900 dark:text-amber-200 rounded-lg transition-colors">
+                            Atur &rarr;
+                        </a>
+                    </div>
+                    @endif
+                </div>
             </div>
 
             {{-- Judul --}}

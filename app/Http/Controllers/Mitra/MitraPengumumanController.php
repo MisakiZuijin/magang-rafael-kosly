@@ -58,7 +58,9 @@ class MitraPengumumanController extends Controller
             $prefilledKamar = Kamar::with('kos')->find($selectedKamarId);
         }
 
-        return view('mitra.pengumuman.create', compact('kosList', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar'));
+        $waStatus = $this->whatsAppService->checkDeviceStatus($user->wa_gateway_token, false);
+
+        return view('mitra.pengumuman.create', compact('kosList', 'selectedKamarId', 'selectedKamarIds', 'prefilledKamar', 'waStatus'));
     }
 
     public function store(Request $request)
